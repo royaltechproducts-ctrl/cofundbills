@@ -182,6 +182,7 @@ export default function App() {
   const [cashoutErr,setCashoutErr]   = useState("");
   const [loanForm,setLoanForm]       = useState({amount:"",purpose:"",billType:""});
   const [loanErr,setLoanErr]         = useState("");
+  const [loanCalc,setLoanCalc]       = useState({directInput:0,indirectInput:0,extendedInput:0});
 
   const showNote = (msg,type="success") => { setNote({msg,type}); setTimeout(()=>setNote(null),4500); };
   const urlRef = new URLSearchParams(window.location.search).get("ref")||"";
@@ -378,7 +379,8 @@ export default function App() {
 
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
-    await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:LOAN_INTEREST,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimit});
+    const effectiveRate = m.memberType==="founding" ? 0.03 : LOAN_INTEREST;
+    await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimit});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Co-Fund Loan Request — ${m.fullName}`,
       message:`Loan request:\nName: ${m.fullName}\nCode: ${m.linkCode}\nAmount: ${fmtNGN(amt)}\nBill Type: ${loanForm.billType}\nPurpose: ${loanForm.purpose}\nNetwork: Direct(${direct}), Indirect(${indirect}), Extended(${extended})\nProjected 3-month limit: ${fmtNGN(loanLimit)}`});
@@ -411,7 +413,8 @@ export default function App() {
     const m = members[loan.link_code];
     if(!m) return;
     const amt = Number(loan.amount);
-    const totalRepay = amt + (amt*LOAN_INTEREST*3);
+    const approvedRate = Number(loan.interest_rate)||LOAN_INTEREST;
+    const totalRepay = amt + (amt*approvedRate*3);
     await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString(),total_repayable:totalRepay}).eq("id",loan.id);
     await supabase.from("cfb_members").update({loan_balance:m.loanBalance+totalRepay}).eq("link_code",loan.link_code);
     await supabase.rpc("cfb_add_to_pool",{p_amount:-amt}).catch(()=>{});
@@ -1080,9 +1083,45 @@ export default function App() {
                   <div className="warn-box">You have an outstanding loan balance of <strong>{fmtNGN(currentMember.loanBalance)}</strong>. Please clear your existing loan before applying for a new one. Repayments are being automatically applied from your incoming network credits.</div>
                 ):(
                   <>
+                    {/* Loan Calculator */}
+                    <div style={{background:BLUE_LIGHT,borderRadius:12,padding:20,marginBottom:20,border:`1.5px solid ${BLUE}`}}>
+                      <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:12}}>🧮 Co-Fund Loan Calculator</div>
+                      <div style={{fontSize:12,color:MUTED,marginBottom:14,lineHeight:1.7}}>Estimate your loan limit based on your network size:</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+                        {[["directInput","Direct Invites"],["indirectInput","Indirect Invites"],["extendedInput","Circuitous Invites"]].map(([key,label])=>(
+                          <div key={key}>
+                            <div style={{fontSize:11,fontWeight:700,color:NAVY,marginBottom:4}}>{label}</div>
+                            <input type="number" placeholder="0" min="0"
+                              value={loanCalc[key]||""}
+                              onChange={e=>setLoanCalc({...loanCalc,[key]:Number(e.target.value)||0})}
+                              style={{width:"100%",padding:"8px 10px",border:`1.5px solid ${BLUE}`,borderRadius:8,fontSize:14,fontFamily:"inherit",outline:"none",color:DARK}}/>
+                          </div>
+                        ))}
+                      </div>
+                      {(()=>{
+                        const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*10000*3;
+                        const rate=currentMember.memberType==="founding"?3:5;
+                        const interest=total3mo*rate/100*3;
+                        return total3mo>0?(
+                          <div style={{background:WHITE,borderRadius:8,padding:14}}>
+                            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13}}>
+                              <div style={{color:MUTED}}>3-Month Network Projection:</div>
+                              <div style={{fontWeight:700,color:NAVY,textAlign:"right"}}>{fmtNGN(total3mo)}</div>
+                              <div style={{color:MUTED}}>Estimated Loan Limit:</div>
+                              <div style={{fontWeight:900,color:BLUE,fontSize:16,textAlign:"right"}}>{fmtNGN(total3mo)}</div>
+                              <div style={{color:MUTED}}>Interest Rate:</div>
+                              <div style={{fontWeight:700,color:NAVY,textAlign:"right"}}>{rate}% per month</div>
+                              <div style={{color:MUTED}}>Total Repayable (3 months):</div>
+                              <div style={{fontWeight:700,color:ERROR,textAlign:"right"}}>{fmtNGN(total3mo+interest)}</div>
+                            </div>
+                          </div>
+                        ):null;
+                      })()}
+                    </div>
+
                     <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
                       Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
-                      Interest: <strong>5% per month</strong> on outstanding balance.<br/>
+                      Interest: <strong>{currentMember.memberType==="founding"?"3% per month (Investor Rate)":"5% per month"}</strong> on outstanding balance.<br/>
                       Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
                     </div>
                     <div className="field">
