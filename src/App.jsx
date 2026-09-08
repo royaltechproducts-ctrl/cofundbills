@@ -1099,7 +1099,7 @@ export default function App() {
                         ))}
                       </div>
                       {(()=>{
-                        const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*10000*3;
+                        const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
                         const rate=currentMember.memberType==="founding"?3:5;
                         const interest=total3mo*rate/100*3;
                         return total3mo>0?(
