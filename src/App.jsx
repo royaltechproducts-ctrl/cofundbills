@@ -625,7 +625,7 @@ export default function App() {
           <div className="hero">
             <div className="hero-badge">🤝 {COMPANY}</div>
             <h1 className="hero-title">Don't Face Bills Alone.<br/><span>Let's Co-Fund Them.</span></h1>
-            <p className="hero-sub">A member-powered cooperative designed to help you collectively prepare for and finance essential bills — rent, school fees, medical bills and more.</p>
+            <p className="hero-sub">CoFundBills Cooperative - Your One-stop Solution to Excruciating Bills</p>
             <p className="hero-tagline">"{TAGLINE}"</p>
             <div className="hero-steps">
               {["JOIN","→","CONTRIBUTE","→","BUILD NETWORK","→","REQUEST","→","CASH-OUT"].map((s,i)=>(
@@ -642,7 +642,7 @@ export default function App() {
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000","Per Direct Invite Contributor Monthly"],["Receive ₦2,000","Per Indirect Invite Contributor Monthly"],["Receive ₦2,000","Per Extended Invite Contributor Monthly"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000","monthly per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000","monthly per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000","monthly per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
@@ -653,10 +653,10 @@ export default function App() {
             <p className="section-sub">Five simple steps to collective bill financing — powered by your network.</p>
             <div className="how-grid">
               {[
-                ["🚀","Join & Activate Two CoFund Accounts","With your first ₦10,000 contribution, unlock your personal Invite Link and activate two accounts: your Expendable CoFund Account and your Fixed Savings CoFund Account. Share your link and grow your network of contributors."],
-                ["💳","Receive ₦2,000 Per Direct Invite Contribution","For every monthly contribution made by a member from your direct invite network — ₦2,000 is split and credited into your two CoFund Accounts."],
-                ["🔗","Receive ₦2,000 Per Indirect Invite Contribution","When members from your direct invite share their personal invite link and grow their own network — your CoFund Account is again credited with ₦2,000 per contributor from their network."],
-                ["🌐","Receive ₦2,000 Per Extended Invite Contribution","When members from your indirect invite share their personal invite link and grow their network — your CoFund Account is further credited with ₦2,000 per contributor from these extended networks."],
+                ["🚀","Join & Activate Two CoFund Accounts","With your first ₦10,000 contribution, unlock your personal Invite Link and activate two accounts: (your Expendable CoFund Account and your Fixed Savings CoFund Account). Share your invite link and grow your network of contributors."],
+                ["💳","Receive ₦2,000 Per Directly Invited Contributor","For every monthly contribution made by a member from your direct invite network — ₦2,000 is split and credited into your two CoFund Accounts."],
+                ["🔗","Receive ₦2,000 Per Indirectly Invited Contributor","When members from your direct invite share their personal invite link and grow their own network — your CoFund Account is again credited with ₦2,000 for every monthly contribution made by contributors from their network."],
+                ["🌐","Receive ₦2,000 Per Circuitously Invited Contributor","When members from your indirect invite share their personal invite link and grow their own network — your CoFund Account is further credited with ₦2,000 for every monthly contribution made by contributors from these networks."],
                 ["💸","Cash Out from Your Expendable CoFund Account Anytime","Make cash withdrawals from your Expendable CoFund Account at any time for any purpose. Subject to admin processing within 24 hours."],
                 ["🏦","Cash Out from Fixed Savings CoFund Account for Essential Bills Only","Access your Fixed Savings CoFund Account for essential bills only — House Rent, School Fees, Medical Bills, and similar critical expenses."],
               ].map(([icon,title,desc],i)=>(
@@ -730,9 +730,9 @@ export default function App() {
                   <div style={{display:"flex",alignItems:"center",gap:16}}>
                     <div style={{fontSize:36,fontWeight:900,color:"#0A3860",minWidth:48,textAlign:"center"}}>1,000</div>
                     <div style={{flex:1}}>
-                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Extended Invites</div>
+                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Circuitously Invited Contributors</div>
                       <div style={{fontSize:12,color:MUTED,marginTop:2,lineHeight:1.7}}>
-                        Here is where the magic happens — By the time these 100 Indirect invites develop their respective network with just 10 invites each, you will have 1,000 contributors × ₦2,000 = <strong style={{color:"#0A3860"}}>₦2,000,000 credited to your account monthly from your extended contributors nationwide</strong>
+                        Here is where the magic happens — By the time these 100 Indirect invites develop their respective network with just 10 invites each, you will have 1,000 contributors × ₦2,000 = <strong style={{color:"#0A3860"}}>₦2,000,000 credited to your account monthly from your circuitously invited contributors nationwide</strong>
                       </div>
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
@@ -769,9 +769,9 @@ export default function App() {
                 {[
                   ["Credit Per Direct Invites","₦2,000","Credited to the member whose direct invite link brought in this contributor"],
                   ["Credit Per Indirect Invites","₦2,000","Credited to the member whose indirect invite is associated with this contributor"],
-                  ["Credit Per Extended Invites","₦2,000","Credited to the member whose extended invite is associated with this contributor"],
-                  ["Admin Operations","₦2,000","Platform operations, maintenance and administrative compensation"],
-                  ["Loan Fund Pool","₦2,000","Funds the Co-Fund loan pool available to members. Forfeited credits from inactive links also go here."],
+                  ["Credit Per Circuitously Invited Contributor","₦2,000","Credited to the member whose circuitously circulated invite can be traced to this contributor"],
+                  ["Admin Operations","₦2,000","Platform operational & maintenance cost, administrative running cost, staff wages and associated consultant fees."],
+                  ["Loan Fund Pool","₦2,000","Funds the Co-Fund loan pool available to members. Forfeited credits from inactive membership status also go here."],
                 ].map(([label,amt,desc])=>(
                   <div key={label} className="dist-cell">
                     <div className="dist-label">{label}</div>
@@ -811,10 +811,10 @@ export default function App() {
               <p className="section-sub">Face a big bill? Your network is your credit score.</p>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
-                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and extended invite chain."},
+                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and extended invite chain. With a matured network as illustrated above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
                   {icon:"💰",title:"Loan Rate",desc:"5% per month on outstanding balance — fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
-                  {icon:"📈",title:"Investor Returns",desc:"Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
+                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 3% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
                 ].map(c=>(
                   <div key={c.title} className="card" style={{padding:20}}>
                     <div style={{fontSize:28,marginBottom:8}}>{c.icon}</div>
