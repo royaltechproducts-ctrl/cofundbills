@@ -187,6 +187,24 @@ export default function App() {
   const showNote = (msg,type="success") => { setNote({msg,type}); setTimeout(()=>setNote(null),4500); };
   const urlRef = new URLSearchParams(window.location.search).get("ref")||"";
 
+  // ── Live countdown timer ─────────────────────────────────────
+  const [countdown,setCountdown] = useState("");
+  useEffect(()=>{
+    if(!currentMember||currentMember.memberType==="founding"||!currentMember.expiresAt) return;
+    const tick = ()=>{
+      const diff = new Date(currentMember.expiresAt) - new Date();
+      if(diff<=0){ setCountdown("EXPIRED"); return; }
+      const d = Math.floor(diff/86400000);
+      const h = Math.floor((diff%86400000)/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      setCountdown(`${d}d ${String(h).padStart(2,"0")}h ${String(m).padStart(2,"0")}m ${String(s).padStart(2,"0")}s`);
+    };
+    tick();
+    const timer = setInterval(tick,1000);
+    return ()=>clearInterval(timer);
+  },[currentMember]);
+
   const loadMembers = useCallback(async()=>{ setMembers(await DB.getMembers()); },[]);
   useEffect(()=>{ loadMembers(); DB.getLoanPool().then(setLoanPool); },[loadMembers]);
   useEffect(()=>{
@@ -943,9 +961,19 @@ export default function App() {
                   </span>
                   {currentMember.memberType==="founding"&&<span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>🏅 Founding Member</span>}
                   {currentMember.expiresAt&&currentMember.memberType!=="founding"&&(
-                    <span style={{fontSize:11,opacity:.75}}>
-                      Renews: {new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric"})}
-                    </span>
+                    <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
+                      background:countdown==="EXPIRED"?"rgba(159,18,57,0.25)":
+                        countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
+                        "rgba(234,179,8,0.25)":"rgba(255,255,255,0.12)",
+                      borderRadius:8,padding:"6px 14px"}}>
+                      <span style={{fontSize:11,opacity:.75}}>Link expires in:</span>
+                      <span style={{fontSize:13,fontWeight:900,letterSpacing:1,
+                        color:countdown==="EXPIRED"?"#FCA5A5":
+                          countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
+                          "#FDE68A":WHITE}}>
+                        ⏱ {countdown||"Loading..."}
+                      </span>
+                    </div>
                   )}
                 </div>
                 {currentMember.loanBalance>0&&(
@@ -1002,7 +1030,9 @@ export default function App() {
           {portalTab==="overview" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
-              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="founding"?"Founding Member 🏅":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"]].map(([k,v])=>(
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="founding"?"Founding Member 🏅":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
+              ...(currentMember.memberType!=="founding"&&currentMember.expiresAt?[["Link Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
+              .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
                   <span style={{color:MUTED}}>{k}</span>
                   <span style={{fontWeight:700,color:NAVY}}>{v}</span>
@@ -1210,7 +1240,16 @@ export default function App() {
               </div>
               {currentMember.expiresAt&&(
                 <div style={{background:BLUE_LIGHT,borderRadius:8,padding:12,fontSize:13,color:NAVY,marginBottom:16}}>
-                  Current expiry: <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong>
+                  <div>Expiry date: <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
+                  <div style={{marginTop:6,display:"flex",alignItems:"center",gap:8}}>
+                    <span>Time remaining:</span>
+                    <span style={{fontWeight:900,fontSize:15,color:
+                      countdown==="EXPIRED"?ERROR:
+                      countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
+                      "#92400E":NAVY}}>
+                      ⏱ {countdown||"—"}
+                    </span>
+                  </div>
                 </div>
               )}
               <div className="info-box">
