@@ -732,7 +732,7 @@ export default function App() {
                     <div style={{flex:1}}>
                       <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Circuitously Invited Contributors</div>
                       <div style={{fontSize:12,color:MUTED,marginTop:2,lineHeight:1.7}}>
-                        Here is where the magic happens — By the time these 100 Indirect invites develop their respective network with just 10 invites each, you will have 1,000 contributors × ₦2,000 = <strong style={{color:"#0A3860"}}>₦2,000,000 credited to your account monthly from your circuitously invited contributors nationwide</strong>
+                        Here is where the magic happens — By the time these 100 Indirect invites develop their respective network with just 10 invites each, you will have 1,000 contributors × ₦2,000 = <strong style={{color:"#0A3860"}}>₦2,000,000 credited to your account monthly from contributors you don't even know nationwide</strong>
                       </div>
                     </div>
                     <div style={{textAlign:"right",flexShrink:0}}>
