@@ -676,32 +676,76 @@ export default function App() {
               <h2 className="section-title">See How Your Essential Bills Get Sorted</h2>
               <p className="section-sub">A simple illustration of how your CoFundBills network works for you over time.</p>
               <div style={{background:BLUE_LIGHT,borderRadius:14,padding:28}}>
-                {[
-                  {label:"Your Direct Invites",count:10,monthly:10,credit:2000,color:BLUE},
-                  {label:"Their Invites (Indirect)",count:100,monthly:100,credit:2000,color:NAVY},
-                  {label:"Extended Invites",count:1000,monthly:1000,credit:2000,color:"#0A3860"},
-                ].map((tier,i)=>(
-                  <div key={i} style={{display:"flex",alignItems:"center",gap:16,marginBottom:20,
-                    background:WHITE,borderRadius:10,padding:16,
-                    borderLeft:`4px solid ${tier.color}`}}>
-                    <div style={{fontSize:28,fontWeight:900,color:tier.color,minWidth:40,textAlign:"center"}}>{tier.count}</div>
+                {/* Step 0 — You */}
+                <div style={{background:WHITE,borderRadius:10,padding:16,marginBottom:20,
+                  borderLeft:`4px solid ${GOLD}`,display:"flex",alignItems:"center",gap:16}}>
+                  <div style={{fontSize:28,fontWeight:900,color:GOLD,minWidth:40,textAlign:"center"}}>1</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontWeight:700,color:NAVY,fontSize:14}}>You Join & Contribute ₦10,000 Monthly</div>
+                    <div style={{fontSize:12,color:MUTED,marginTop:2}}>
+                      Stay active and ready to receive credits from your growing network of contributors.
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tier 1 — Direct */}
+                <div style={{background:WHITE,borderRadius:10,padding:16,marginBottom:20,
+                  borderLeft:`4px solid ${BLUE}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{fontSize:36,fontWeight:900,color:BLUE,minWidth:48,textAlign:"center"}}>10</div>
                     <div style={{flex:1}}>
-                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>{tier.label}</div>
-                      <div style={{fontSize:12,color:MUTED,marginTop:2}}>
-                        {tier.count} contributors × ₦{tier.credit.toLocaleString()} = <strong style={{color:tier.color}}>₦{(tier.count*tier.credit).toLocaleString()} credited to your account monthly</strong>
+                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Your Direct Invites</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2,lineHeight:1.7}}>
+                        Let's assume you are able to get 10 invites to join the cooperative through your invite link shared = 10 contributors × ₦2,000 = <strong style={{color:BLUE}}>₦20,000 credited to your account monthly</strong>
                       </div>
                     </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:18,fontWeight:900,color:tier.color}}>₦{(tier.count*tier.credit).toLocaleString()}</div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:20,fontWeight:900,color:BLUE}}>₦20,000</div>
                       <div style={{fontSize:10,color:MUTED}}>per month</div>
                     </div>
                   </div>
-                ))}
+                </div>
+
+                {/* Tier 2 — Indirect */}
+                <div style={{background:WHITE,borderRadius:10,padding:16,marginBottom:20,
+                  borderLeft:`4px solid ${NAVY}`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{fontSize:36,fontWeight:900,color:NAVY,minWidth:48,textAlign:"center"}}>100</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Their Invites (Indirect)</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2,lineHeight:1.7}}>
+                        Imagine all 10 invites from your personal Invite Links have unlocked and shared their own invite links and have likewise brought in 10 invites each to join the cooperative = 100 contributors × ₦2,000 = <strong style={{color:NAVY}}>₦200,000 credited to your account monthly from your indirect contributor network</strong>
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:20,fontWeight:900,color:NAVY}}>₦200,000</div>
+                      <div style={{fontSize:10,color:MUTED}}>per month</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tier 3 — Extended */}
+                <div style={{background:WHITE,borderRadius:10,padding:16,marginBottom:20,
+                  borderLeft:`4px solid #0A3860`}}>
+                  <div style={{display:"flex",alignItems:"center",gap:16}}>
+                    <div style={{fontSize:36,fontWeight:900,color:"#0A3860",minWidth:48,textAlign:"center"}}>1,000</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>Extended Invites</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2,lineHeight:1.7}}>
+                        Here is where the magic happens — By the time these 100 Indirect invites develop their respective network with just 10 invites each, you will have 1,000 contributors × ₦2,000 = <strong style={{color:"#0A3860"}}>₦2,000,000 credited to your account monthly from your extended contributors nationwide</strong>
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right",flexShrink:0}}>
+                      <div style={{fontSize:20,fontWeight:900,color:"#0A3860"}}>₦2,000,000</div>
+                      <div style={{fontSize:10,color:MUTED}}>per month</div>
+                    </div>
+                  </div>
+                </div>
                 <div style={{background:GOLD_LIGHT,border:`2px solid ${GOLD}`,borderRadius:10,padding:16,marginTop:8}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                     <div>
                       <div style={{fontWeight:800,color:NAVY,fontSize:15}}>Total Monthly Credit (Illustrative)</div>
-                      <div style={{fontSize:12,color:MUTED,marginTop:2}}>Assuming 10 direct, 100 indirect, 1,000 extended contributors</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2}}>10 direct + 100 indirect + 1,000 extended contributors</div>
                     </div>
                     <div style={{textAlign:"right"}}>
                       <div style={{fontSize:26,fontWeight:900,color:NAVY}}>₦2,220,000</div>
