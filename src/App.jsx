@@ -642,7 +642,7 @@ export default function App() {
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000","monthly per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000","monthly per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000","monthly per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
