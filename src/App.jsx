@@ -653,11 +653,12 @@ export default function App() {
             <p className="section-sub">Five simple steps to collective bill financing — powered by your network.</p>
             <div className="how-grid">
               {[
-                ["🚀","JOIN","Register free. Get your unique CoFundBills link code instantly."],
-                ["💳","CONTRIBUTE","Pay ₦10,000 monthly to activate and maintain your Co-Fund Link — your gateway to collective earnings."],
-                ["🔗","BUILD NETWORK","Share your link with friends and family. Every person who joins and contributes through your link builds your earning network — up to 3 generations deep."],
-                ["📋","REQUEST","Apply for a Co-Fund loan when you face a big bill — rent, school fees, medical bills. Loan limit is calculated from your network's projected 3-month contributions."],
-                ["🤝","CO-FUND","Receive your loan from the cooperative pool. Repayments are automatically handled from your incoming network credits. No manual repayment stress."],
+                ["🚀","Join & Activate Two CoFund Accounts","With your first ₦10,000 contribution, unlock your personal Invite Link and activate two accounts: your Expendable CoFund Account and your Fixed Savings CoFund Account. Share your link and grow your network of contributors."],
+                ["💳","Receive ₦2,000 Per Direct Invite Contribution","For every monthly contribution made by a member from your direct invite network — ₦2,000 is split and credited into your two CoFund Accounts."],
+                ["🔗","Receive ₦2,000 Per Indirect Invite Contribution","When members from your direct invite share their personal invite link and grow their own network — your CoFund Account is again credited with ₦2,000 per contributor from their network."],
+                ["🌐","Receive ₦2,000 Per Extended Invite Contribution","When members from your indirect invite share their personal invite link and grow their network — your CoFund Account is further credited with ₦2,000 per contributor from these extended networks."],
+                ["💸","Cash Out from Your Expendable CoFund Account Anytime","Make cash withdrawals from your Expendable CoFund Account at any time for any purpose. Subject to admin processing within 24 hours."],
+                ["🏦","Cash Out from Fixed Savings CoFund Account for Essential Bills Only","Access your Fixed Savings CoFund Account for essential bills only — House Rent, School Fees, Medical Bills, and similar critical expenses."],
               ].map(([icon,title,desc],i)=>(
                 <div key={title} className="how-card">
                   <div className="how-num">{i+1}</div>
@@ -669,6 +670,52 @@ export default function App() {
             </div>
           </div>
 
+          {/* Illustration */}
+          <div style={{background:WHITE,padding:"48px 24px",borderTop:"1px solid #E8F0FA"}}>
+            <div style={{maxWidth:760,margin:"0 auto"}}>
+              <h2 className="section-title">See How Your Essential Bills Get Sorted</h2>
+              <p className="section-sub">A simple illustration of how your CoFundBills network works for you over time.</p>
+              <div style={{background:BLUE_LIGHT,borderRadius:14,padding:28}}>
+                {[
+                  {label:"Your Direct Invites",count:10,monthly:10,credit:2000,color:BLUE},
+                  {label:"Their Invites (Indirect)",count:100,monthly:100,credit:2000,color:NAVY},
+                  {label:"Extended Invites",count:1000,monthly:1000,credit:2000,color:"#0A3860"},
+                ].map((tier,i)=>(
+                  <div key={i} style={{display:"flex",alignItems:"center",gap:16,marginBottom:20,
+                    background:WHITE,borderRadius:10,padding:16,
+                    borderLeft:`4px solid ${tier.color}`}}>
+                    <div style={{fontSize:28,fontWeight:900,color:tier.color,minWidth:40,textAlign:"center"}}>{tier.count}</div>
+                    <div style={{flex:1}}>
+                      <div style={{fontWeight:700,color:NAVY,fontSize:14}}>{tier.label}</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2}}>
+                        {tier.count} contributors × ₦{tier.credit.toLocaleString()} = <strong style={{color:tier.color}}>₦{(tier.count*tier.credit).toLocaleString()} credited to your account monthly</strong>
+                      </div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:18,fontWeight:900,color:tier.color}}>₦{(tier.count*tier.credit).toLocaleString()}</div>
+                      <div style={{fontSize:10,color:MUTED}}>per month</div>
+                    </div>
+                  </div>
+                ))}
+                <div style={{background:GOLD_LIGHT,border:`2px solid ${GOLD}`,borderRadius:10,padding:16,marginTop:8}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <div style={{fontWeight:800,color:NAVY,fontSize:15}}>Total Monthly Credit (Illustrative)</div>
+                      <div style={{fontSize:12,color:MUTED,marginTop:2}}>Assuming 10 direct, 100 indirect, 1,000 extended contributors</div>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:26,fontWeight:900,color:NAVY}}>₦2,220,000</div>
+                      <div style={{fontSize:11,color:MUTED}}>₦1,110,000 Expendable + ₦1,110,000 Fixed Savings</div>
+                    </div>
+                  </div>
+                </div>
+                <div style={{fontSize:12,color:MUTED,marginTop:12,textAlign:"center",fontStyle:"italic"}}>
+                  * Illustrative figures only. Actual earnings depend on your network activity and member renewals.
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Distribution */}
           <div style={{background:WHITE,padding:"48px 24px"}}>
             <div style={{maxWidth:900,margin:"0 auto"}}>
@@ -676,9 +723,9 @@ export default function App() {
               <p className="section-sub">Every contribution is split equally into 5 parts of ₦2,000 each — transparent, fair, and automatic.</p>
               <div className="dist-row">
                 {[
-                  ["Direct Network","₦2,000","Credited to the member whose direct invite brought in this contributor"],
-                  ["Indirect Network","₦2,000","Credited to the member whose indirect invite is associated with this contributor"],
-                  ["Extended Network","₦2,000","Credited to the member whose extended invite is associated with this contributor"],
+                  ["Credit Per Direct Invites","₦2,000","Credited to the member whose direct invite link brought in this contributor"],
+                  ["Credit Per Indirect Invites","₦2,000","Credited to the member whose indirect invite is associated with this contributor"],
+                  ["Credit Per Extended Invites","₦2,000","Credited to the member whose extended invite is associated with this contributor"],
                   ["Admin Operations","₦2,000","Platform operations, maintenance and administrative compensation"],
                   ["Loan Fund Pool","₦2,000","Funds the Co-Fund loan pool available to members. Forfeited credits from inactive links also go here."],
                 ].map(([label,amt,desc])=>(
