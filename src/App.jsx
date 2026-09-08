@@ -202,6 +202,23 @@ export default function App() {
     if(currentMember) setCurrentMember(m[currentMember.linkCode]||null);
   };
 
+  // ── Compute member's network counts ─────────────────────────
+  const getNetworkCounts = (code) => {
+    const allArr = Object.values(members);
+    const direct   = allArr.filter(x=>x.refCode===code && x.linkActive).length;
+    const indirect = allArr.filter(x=>{
+      const parent = allArr.find(d=>d.linkCode===x.refCode);
+      return parent?.refCode===code && x.linkActive;
+    }).length;
+    const extended = allArr.filter(x=>{
+      const parent = allArr.find(d=>d.linkCode===x.refCode);
+      if(!parent) return false;
+      const gp = allArr.find(d=>d.linkCode===parent.refCode);
+      return gp?.refCode===code && x.linkActive;
+    }).length;
+    return {direct, indirect, extended};
+  };
+
   // ── REGISTER ─────────────────────────────────────────────────
   const handleRegister = async () => {
     if(!tcAccepted){ setRegErrors({general:"Please accept the Terms & Conditions."}); return; }
@@ -962,7 +979,13 @@ export default function App() {
             {[["home","🏠"],["overview","Overview"],["link","My Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
               ...( currentMember.memberType!=="founding"?[["renew","Renew"]]:[] )
             ].map(([id,label])=>(
-              <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>setPortalTab(id)}>{label}</button>
+              <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>{
+                setPortalTab(id);
+                if(id==="loan"&&currentMember){
+                  const {direct,indirect,extended}=getNetworkCounts(currentMember.linkCode);
+                  setLoanCalc({directInput:direct,indirectInput:indirect,extendedInput:extended});
+                }
+              }}>{label}</button>
             ))}
           </div>
 
@@ -1086,7 +1109,21 @@ export default function App() {
                     {/* Loan Calculator */}
                     <div style={{background:BLUE_LIGHT,borderRadius:12,padding:20,marginBottom:20,border:`1.5px solid ${BLUE}`}}>
                       <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:12}}>🧮 Co-Fund Loan Calculator</div>
-                      <div style={{fontSize:12,color:MUTED,marginBottom:14,lineHeight:1.7}}>Estimate your loan limit based on your network size:</div>
+                      {(()=>{
+                        const {direct,indirect,extended}=getNetworkCounts(currentMember.linkCode);
+                        return(
+                          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+                            {[["Direct Invites",direct,BLUE],["Indirect Invites",indirect,NAVY],["Circuitous Invites",extended,"#0A3860"]].map(([label,count,color])=>(
+                              <div key={label} style={{background:WHITE,borderRadius:8,padding:10,textAlign:"center",borderTop:`3px solid ${color}`}}>
+                                <div style={{fontSize:22,fontWeight:900,color}}>{count}</div>
+                                <div style={{fontSize:10,fontWeight:700,color:MUTED,marginTop:2}}>{label}</div>
+                                <div style={{fontSize:10,color:MUTED}}>{count>0?"Active":"None yet"}</div>
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                      <div style={{fontSize:12,color:MUTED,marginBottom:14,lineHeight:1.7}}>Your network figures are pre-filled below. You can adjust them to model different scenarios:</div>
                       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
                         {[["directInput","Direct Invites"],["indirectInput","Indirect Invites"],["extendedInput","Circuitous Invites"]].map(([key,label])=>(
                           <div key={key}>
