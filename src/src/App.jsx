@@ -1,0 +1,1317 @@
+import { useState, useEffect, useCallback } from "react";
+import emailjs from "@emailjs/browser";
+import { createClient } from "@supabase/supabase-js";
+
+// ── CONSTANTS ──────────────────────────────────────────────────
+const SUPABASE_URL     = "https://rzivcbhjyxspfcuopjjb.supabase.co";
+const SUPABASE_KEY     = "sb_publishable_hE_FRwUG_Z40IYclv6SFYA_DNfLWFQU";
+const EMAILJS_SERVICE  = "service_f7cd7ma";
+const EMAILJS_TEMPLATE = "template_prggu9e";
+const EMAILJS_PUBLIC   = "Jc6XKqOSgzxuJEs1G";
+const ADMIN_PASSWORD   = "CoFundBills2026@RoyalTech";
+const MONTHLY_CONTRIB  = 10000;
+const CONTRIB_PART     = 2000;   // 1/5th of monthly contribution
+const LOAN_INTEREST    = 0.05;   // 5% per month
+const INVESTOR_SLOTS   = 10;
+const COMPANY          = "CoFundBills Cooperative";
+const TAGLINE          = "Don't face bills alone. Let's co-fund them.";
+const ADDRESS          = "2B, Olawale Cole, Onitiri Avenue, Lekki Phase 1, Lagos, Nigeria.";
+const EMAIL_ADDR       = "cofundbills@gmail.com";
+const PHONE            = "+234 806 163 1222";
+const WEBSITE          = "CoFundBills.ng";
+
+// ── COLOURS ────────────────────────────────────────────────────
+const NAVY       = "#0D2137";
+const BLUE       = "#1A4F8A";
+const BLUE_LIGHT = "#E8F0FA";
+const GOLD       = "#C9A84C";
+const GOLD_LIGHT = "#FFF9EC";
+const GREEN      = "#166534";
+const GREEN_LIGHT= "#DCFCE7";
+const WHITE      = "#FFFFFF";
+const DARK       = "#1A1A1A";
+const MUTED      = "#6B7280";
+const ERROR      = "#9F1239";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── HELPERS ────────────────────────────────────────────────────
+const fmtNGN  = v => "₦" + Number(v||0).toLocaleString("en-NG");
+const genCode = name => {
+  const ini = name.trim().split(" ").map(w=>w[0]?.toUpperCase()||"X").join("").slice(0,3);
+  return `CFB-${ini}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+};
+const addDays  = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r.toISOString(); };
+const addMonths= (d,n) => { const r=new Date(d); r.setMonth(r.getMonth()+n); return r.toISOString(); };
+const validateEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+const validatePhone = p => /^(\+?234|0)[789][01]\d{8}$/.test(p.replace(/\s/g,""));
+
+// ── TC SECTIONS ────────────────────────────────────────────────
+const TC_SECTIONS = [
+  { title:"1. About CoFundBills Cooperative",
+    body:"CoFundBills Cooperative is a member-powered digital cooperative designed to help members collectively prepare for and finance essential bills. It is NOT an insurance company, bank, financial investment scheme, pyramid scheme, or Multi-Level Marketing (MLM) organisation. Contributions are voluntary monthly membership payments — not premiums, deposits, or investment capital. Credits distributed are contributed funds redistributed through a network integration algorithm — not dividends, returns on investment, or profit-sharing. Operated by RoyalTech Partnership & Investment Limited, 2B, Olawale Cole, Onitiri Avenue, Lekki Phase 1, Lagos, Nigeria." },
+  { title:"2. Membership and Contributions",
+    items:[
+      "Registration is free. Membership activation requires a monthly contribution of ₦10,000 to maintain an active link status.",
+      "Each individual may hold only one CoFundBills account. Duplicate registrations are prohibited and will result in suspension and permanent forfeiture of all credits.",
+      "Founding/Investor members hold perpetually active links with no monthly contribution requirement.",
+      "Failure to make a monthly contribution on time results in immediate deactivation of the member's link. All incoming credits during inactive status are permanently lost and channelled to the Loan Fund Pool.",
+      "Members are notified by email upon link deactivation and are responsible for renewing promptly to avoid further losses.",
+    ]},
+  { title:"3. Fund Distribution",
+    items:[
+      "Every ₦10,000 monthly contribution received is split equally into five parts of ₦2,000 each.",
+      "One part (₦2,000) is credited to the member whose direct invite link generated the contributing member.",
+      "One part (₦2,000) is credited to the member whose indirect invite link is associated with the contributing member.",
+      "One part (₦2,000) is credited to the member whose extended invite link is associated with the contributing member.",
+      "One part (₦2,000) is retained by CoFundBills administration for platform operations and compensation.",
+      "One part (₦2,000) is deposited into the CoFundBills Loan Fund Pool to finance co-fund loans to members.",
+      "Credits on inactive accounts and forfeited credits from lapsed links are also channelled into the Loan Fund Pool.",
+    ]},
+  { title:"4. Member Accounts",
+    items:[
+      "Each member holds two internal accounts: an Expendable Account and a Reserve Account.",
+      "Every ₦2,000 credit received is split 50/50 — ₦1,000 to the Expendable Account and ₦1,000 to the Reserve Account.",
+      "The Expendable Account is available for regular cashout requests, subject to admin approval.",
+      "The Reserve Account accumulates as a dedicated fund for essential bills — rent, school fees, medical bills, and similar expenses. It cannot be accessed for general spending.",
+      "Both accounts are subject to loan repayment deductions. Outstanding loan repayments are automatically applied to incoming credits before they are credited to member accounts.",
+    ]},
+  { title:"5. Co-Fund Loans",
+    items:[
+      "Members may apply for a Co-Fund Loan from the CoFundBills Loan Fund Pool.",
+      "Loan eligibility and limit are assessed by admin based on the member's network performance — the projected 3-month contribution volume from the member's direct, indirect, and extended invite network.",
+      "Loans attract a flat interest rate of 5% per month on the outstanding balance.",
+      "Loan approval is at the sole discretion of CoFundBills admin. No loan is guaranteed.",
+      "Loan repayments are automatically deducted from incoming network credits before those credits are applied to the member's Expendable and Reserve Accounts.",
+      "Interest proceeds from loans are distributed monthly to Investor/Founding members in proportion to their share holdings.",
+    ]},
+  { title:"6. Investor Shares",
+    items:[
+      "A total of 10 investor slots are available — 9 open to investors and 1 reserved for CoFundBills administration.",
+      "Each investor slot represents an equal 1/10th share of monthly loan interest proceeds.",
+      "Investor distributions are made monthly from confirmed interest collections — not from member contributions.",
+      "Investor slots are by invitation only and are not available to the general public.",
+    ]},
+  { title:"7. Prohibited Conduct",
+    items:[
+      "Creating more than one CoFundBills account under any identity.",
+      "Providing false or misleading personal information.",
+      "Using automated tools or artificial means to generate fake contributions or manipulate credit distributions.",
+      "Misrepresenting CoFundBills as an insurance company, investment scheme, or financial institution.",
+    ]},
+  { title:"8. Limitation of Liability",
+    body:"CoFundBills Cooperative and its administrators shall not be liable for any loss of credits due to link inactivity, loan deductions, or platform changes. All participation is voluntary and at the member's own risk and judgment." },
+  { title:"9. Governing Law",
+    body:"These Terms are governed by the laws of the Federal Republic of Nigeria. All disputes shall first be referred to CoFundBills administration for resolution." },
+  { title:"10. Contact",
+    body:`${COMPANY} | ${ADDRESS} | Email: ${EMAIL_ADDR} | Phone: ${PHONE} | Website: ${WEBSITE}` },
+];
+
+// ── DATABASE ───────────────────────────────────────────────────
+const DB = {
+  async getMembers() {
+    const {data} = await supabase.from("cfb_members").select("*");
+    const map = {};
+    (data||[]).forEach(m => { map[m.link_code] = {
+      linkCode:m.link_code, fullName:m.full_name, email:m.email, phone:m.phone,
+      occupation:m.occupation, state:m.state, country:m.country,
+      refCode:m.ref_code, status:m.status, memberType:m.member_type,
+      linkActive:m.link_active, activatedAt:m.activated_at, expiresAt:m.expires_at,
+      expendable:Number(m.expendable||0), reserve:Number(m.reserve||0),
+      totalCredited:Number(m.total_credited||0), loanBalance:Number(m.loan_balance||0),
+      investorSlot:m.investor_slot, createdAt:m.created_at,
+    };});
+    return map;
+  },
+  async getCredits(code) {
+    const {data} = await supabase.from("cfb_credits").select("*").eq("beneficiary_code",code).order("created_at",{ascending:false});
+    return data||[];
+  },
+  async getCashouts(code) {
+    const {data} = await supabase.from("cfb_cashouts").select("*").eq("link_code",code).order("created_at",{ascending:false});
+    return data||[];
+  },
+  async getLoans(code) {
+    const {data} = await supabase.from("cfb_loans").select("*").eq("link_code",code).order("created_at",{ascending:false});
+    return data||[];
+  },
+  async getAllCashouts() {
+    const {data} = await supabase.from("cfb_cashouts").select("*").order("created_at",{ascending:false});
+    return data||[];
+  },
+  async getAllLoans() {
+    const {data} = await supabase.from("cfb_loans").select("*").order("created_at",{ascending:false});
+    return data||[];
+  },
+  async getLoanPool() {
+    const {data} = await supabase.from("cfb_pool").select("*").eq("id",1).single();
+    return data ? Number(data.balance||0) : 0;
+  },
+};
+
+const sendEmail = async ({to_email,to_name,subject,message}) => {
+  try { await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{to_email,to_name,subject,message},EMAILJS_PUBLIC); }
+  catch(e) { console.error("EmailJS:",e); }
+};
+
+// ── APP ────────────────────────────────────────────────────────
+export default function App() {
+  const [view,setView]               = useState("landing");
+  const [modal,setModal]             = useState(null);
+  const [members,setMembers]         = useState({});
+  const [note,setNote]               = useState(null);
+  const [adminAuth,setAdminAuth]     = useState(false);
+  const [adminPwd,setAdminPwd]       = useState("");
+  const [adminPwdErr,setAdminPwdErr] = useState("");
+  const [adminTab,setAdminTab]       = useState("members");
+  const [portalTab,setPortalTab]     = useState("overview");
+  const [currentMember,setCurrentMember] = useState(null);
+  const [credits,setCredits]         = useState([]);
+  const [cashouts,setCashouts]       = useState([]);
+  const [loans,setLoans]             = useState([]);
+  const [allCashouts,setAllCashouts] = useState([]);
+  const [allLoans,setAllLoans]       = useState([]);
+  const [loanPool,setLoanPool]       = useState(0);
+  const [loginCode,setLoginCode]     = useState("");
+  const [loginErr,setLoginErr]       = useState("");
+  const [tcAccepted,setTcAccepted]   = useState(false);
+  const [showTC,setShowTC]           = useState(false);
+  const [regForm,setRegForm]         = useState({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria"});
+  const [regErrors,setRegErrors]     = useState({});
+  const [cashoutForm,setCashoutForm] = useState({amount:"",type:"expendable",purpose:""});
+  const [cashoutErr,setCashoutErr]   = useState("");
+  const [loanForm,setLoanForm]       = useState({amount:"",purpose:"",billType:""});
+  const [loanErr,setLoanErr]         = useState("");
+
+  const showNote = (msg,type="success") => { setNote({msg,type}); setTimeout(()=>setNote(null),4500); };
+  const urlRef = new URLSearchParams(window.location.search).get("ref")||"";
+
+  const loadMembers = useCallback(async()=>{ setMembers(await DB.getMembers()); },[]);
+  useEffect(()=>{ loadMembers(); DB.getLoanPool().then(setLoanPool); },[loadMembers]);
+  useEffect(()=>{
+    if(!currentMember) return;
+    DB.getCredits(currentMember.linkCode).then(setCredits);
+    DB.getCashouts(currentMember.linkCode).then(setCashouts);
+    DB.getLoans(currentMember.linkCode).then(setLoans);
+  },[currentMember]);
+
+  const refreshMember = async () => {
+    const m = await DB.getMembers();
+    setMembers(m);
+    if(currentMember) setCurrentMember(m[currentMember.linkCode]||null);
+  };
+
+  // ── REGISTER ─────────────────────────────────────────────────
+  const handleRegister = async () => {
+    if(!tcAccepted){ setRegErrors({general:"Please accept the Terms & Conditions."}); return; }
+    const errs={};
+    ["fullName","email","phone","occupation","state"].forEach(k=>{ if(!regForm[k].trim()) errs[k]="Required"; });
+    if(regForm.email && !validateEmail(regForm.email)) errs.email="Invalid email address.";
+    if(regForm.phone && !validatePhone(regForm.phone)) errs.phone="Invalid Nigerian phone number.";
+    if(regForm.fullName.trim().split(" ").length<2) errs.fullName="Please enter your full name.";
+    if(Object.keys(errs).length){ setRegErrors(errs); return; }
+
+    const {data:existE} = await supabase.from("cfb_members").select("link_code").eq("email",regForm.email.trim().toLowerCase()).limit(1);
+    if(existE?.length>0){ setRegErrors({email:"This email is already registered."}); return; }
+    const {data:existP} = await supabase.from("cfb_members").select("link_code").eq("phone",regForm.phone.trim()).limit(1);
+    if(existP?.length>0){ setRegErrors({phone:"This phone number is already registered."}); return; }
+
+    const linkCode = genCode(regForm.fullName);
+    const {error} = await supabase.from("cfb_members").insert({
+      link_code:linkCode, full_name:regForm.fullName.trim(),
+      email:regForm.email.trim().toLowerCase(), phone:regForm.phone.trim(),
+      occupation:regForm.occupation.trim(), state:regForm.state.trim(),
+      country:regForm.country, ref_code:urlRef||null,
+      status:"pending", member_type:"regular", link_active:false,
+      expendable:0, reserve:0, total_credited:0, loan_balance:0,
+    });
+    if(error){ showNote("Registration failed. Please try again.","error"); return; }
+
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`New CoFundBills Registration — ${regForm.fullName}`,
+      message:`New member registered:\nName: ${regForm.fullName}\nEmail: ${regForm.email}\nPhone: ${regForm.phone}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation}\nState: ${regForm.state}\nReferred by: ${urlRef||"Direct"}\n\nMust pay ₦10,000 first monthly contribution to activate.`});
+
+    setModal({type:"reg_success",linkCode,name:regForm.fullName});
+    setRegForm({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria"});
+    setRegErrors({});
+    loadMembers();
+  };
+
+  // ── LOGIN ─────────────────────────────────────────────────────
+  const handleLogin = async () => {
+    setLoginErr("");
+    const code = loginCode.trim().toUpperCase();
+    const m = await DB.getMembers();
+    const found = m[code];
+    if(!found){ setLoginErr("Link Code not found. Please check and try again."); return; }
+    setCurrentMember(found);
+    setLoginCode("");
+    setModal(null);
+    setPortalTab("overview");
+    setView("portal");
+  };
+
+  // ── DISTRIBUTE CREDITS ────────────────────────────────────────
+  const distributeCredits = async (sourceCode, refCode, triggerType="contribution") => {
+    if(!refCode) return;
+    const m = await DB.getMembers();
+    const levels = ["direct","indirect","extended"];
+    let cur = refCode;
+    for(let i=0;i<3;i++){
+      const b = m[cur];
+      if(!b) break;
+      if(!b.linkActive){
+        // Inactive — credit goes to loan pool
+        await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(async()=>{
+          await supabase.from("cfb_pool").update({balance:loanPool+CONTRIB_PART}).eq("id",1);
+        });
+        cur = b.refCode;
+        continue;
+      }
+      // Auto-apply to loan repayment first
+      let creditAmt = CONTRIB_PART;
+      if(b.loanBalance > 0){
+        const repay = Math.min(creditAmt, b.loanBalance);
+        await supabase.from("cfb_members").update({loan_balance:b.loanBalance-repay}).eq("link_code",cur);
+        await supabase.from("cfb_loan_payments").insert({link_code:cur,amount:repay,auto:true});
+        creditAmt -= repay;
+      }
+      if(creditAmt > 0){
+        const half = creditAmt/2;
+        await supabase.from("cfb_credits").insert({beneficiary_code:cur,source_code:sourceCode,level:levels[i],amount:creditAmt,trigger:triggerType});
+        await supabase.rpc("cfb_credit_member",{p_code:cur,p_amount:creditAmt}).catch(async()=>{
+          await supabase.from("cfb_members").update({
+            expendable:b.expendable+half,
+            reserve:b.reserve+half,
+            total_credited:b.totalCredited+creditAmt,
+          }).eq("link_code",cur);
+        });
+      }
+      cur = b.refCode;
+    }
+  };
+
+  // ── ADMIN: ACTIVATE MEMBER ────────────────────────────────────
+  const handleActivate = async (code) => {
+    const m = members[code];
+    const now = new Date().toISOString();
+    const expires = addMonths(now,1);
+    await supabase.from("cfb_members").update({status:"active",link_active:true,activated_at:now,expires_at:expires}).eq("link_code",code);
+    // Credit chain for activation
+    await distributeCredits(code, m.refCode, "activation");
+    // Admin pool share + loan pool
+    await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(()=>{});
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Forward to: ${m.fullName} | ${m.email} — CoFundBills Activated`,
+      message:`Dear ${m.fullName},\n\nYour CoFundBills Cooperative link is now ACTIVE!\n\nYour Unique Link Code: ${code}\nYour Co-Fund Link: https://cofundbills.vercel.app?ref=${code}\n\nShare your link with everyone. Every monthly contribution from your network earns you ₦2,000 per contributor — up to 3 generations deep.\n\nRemember: renew your ₦10,000 monthly contribution before the end of each month to stay active and keep earning.\n\n"${TAGLINE}"\n\n${COMPANY}\n${ADDRESS}\n${EMAIL_ADDR}`});
+    await loadMembers();
+    showNote(`${m.fullName} activated successfully.`);
+  };
+
+  // ── ADMIN: RENEW MEMBER ───────────────────────────────────────
+  const handleRenew = async (code) => {
+    const m = members[code];
+    const now = new Date().toISOString();
+    const expires = addMonths(now,1);
+    await supabase.from("cfb_members").update({status:"active",link_active:true,expires_at:expires}).eq("link_code",code);
+    await distributeCredits(code, m.refCode, "renewal");
+    await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(()=>{});
+    await loadMembers();
+    showNote(`${m.fullName} renewed for 1 month.`);
+  };
+
+  // ── ADMIN: DEACTIVATE EXPIRED ─────────────────────────────────
+  const handleDeactivate = async (code) => {
+    const m = members[code];
+    await supabase.from("cfb_members").update({link_active:false,status:"inactive"}).eq("link_code",code);
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Forward to: ${m.fullName} | ${m.email} — Link Deactivated`,
+      message:`Dear ${m.fullName},\n\nYour CoFundBills link has been DEACTIVATED due to non-renewal.\n\n⚠️ IMPORTANT: Any contributions that arrive through your network while your link is inactive will be permanently lost to the Loan Fund Pool — they cannot be recovered.\n\nTo reactivate immediately, pay ₦10,000 to:\nRoyal Tech Partnership & Investment Limited\nZenith Bank — 1016621205\nReference: ${code} — RENEWAL\n\nThen WhatsApp: +234 909 999 4816\n\n"${TAGLINE}"\n${COMPANY}`});
+    await loadMembers();
+    showNote(`${m.fullName} deactivated. Email alert sent.`);
+  };
+
+  // ── CASHOUT REQUEST ───────────────────────────────────────────
+  const handleCashoutRequest = async () => {
+    setCashoutErr("");
+    const amt = Number(cashoutForm.amount);
+    if(!amt||amt<5000){ setCashoutErr("Minimum cashout is ₦5,000."); return; }
+    const m = currentMember;
+    if(cashoutForm.type==="expendable"){
+      if(amt>m.expendable){ setCashoutErr(`Insufficient expendable balance. Available: ${fmtNGN(m.expendable)}.`); return; }
+    } else {
+      if(amt>m.reserve){ setCashoutErr(`Insufficient reserve balance. Available: ${fmtNGN(m.reserve)}.`); return; }
+      if(!cashoutForm.purpose.trim()){ setCashoutErr("Please describe the bill purpose for reserve withdrawal."); return; }
+    }
+    await supabase.from("cfb_cashouts").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,type:cashoutForm.type,purpose:cashoutForm.purpose,status:"pending"});
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Cashout Request — ${m.fullName} (${cashoutForm.type})`,
+      message:`Cashout request:\nName: ${m.fullName}\nCode: ${m.linkCode}\nType: ${cashoutForm.type}\nAmount: ${fmtNGN(amt)}\nPurpose: ${cashoutForm.purpose||"N/A"}`});
+    setCashoutForm({amount:"",type:"expendable",purpose:""});
+    setModal(null);
+    showNote("Cashout request submitted. Admin will process within 24 hours.");
+    DB.getCashouts(m.linkCode).then(setCashouts);
+  };
+
+  // ── LOAN REQUEST ──────────────────────────────────────────────
+  const handleLoanRequest = async () => {
+    setLoanErr("");
+    const amt = Number(loanForm.amount);
+    if(!amt||amt<10000){ setLoanErr("Minimum loan amount is ₦10,000."); return; }
+    if(!loanForm.purpose.trim()){ setLoanErr("Please describe the purpose of the co-fund loan."); return; }
+    if(!loanForm.billType.trim()){ setLoanErr("Please select a bill type."); return; }
+    const m = currentMember;
+    if(m.loanBalance>0){ setLoanErr("You have an outstanding loan. Please clear your existing balance before applying for a new loan."); return; }
+
+    // Calculate loan limit — projected 3-month network contributions
+    const allArr = Object.values(members);
+    const direct   = allArr.filter(x=>x.refCode===m.linkCode&&x.linkActive).length;
+    const indirect = allArr.filter(x=>allArr.find(d=>d.linkCode===x.refCode&&d.refCode===m.linkCode)&&x.linkActive).length;
+    const extended = allArr.filter(x=>{
+      const parent = allArr.find(d=>d.linkCode===x.refCode);
+      if(!parent) return false;
+      const gp = allArr.find(d=>d.linkCode===parent.refCode);
+      return gp?.refCode===m.linkCode && x.linkActive;
+    }).length;
+    const monthlyNetwork = (direct+indirect+extended)*MONTHLY_CONTRIB;
+    const loanLimit = monthlyNetwork*3;
+
+    if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
+
+    await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:LOAN_INTEREST,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimit});
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Co-Fund Loan Request — ${m.fullName}`,
+      message:`Loan request:\nName: ${m.fullName}\nCode: ${m.linkCode}\nAmount: ${fmtNGN(amt)}\nBill Type: ${loanForm.billType}\nPurpose: ${loanForm.purpose}\nNetwork: Direct(${direct}), Indirect(${indirect}), Extended(${extended})\nProjected 3-month limit: ${fmtNGN(loanLimit)}`});
+    setLoanForm({amount:"",purpose:"",billType:""});
+    setModal(null);
+    showNote("Co-Fund loan request submitted. Admin will review your network performance and respond within 48 hours.");
+    DB.getLoans(m.linkCode).then(setLoans);
+  };
+
+  // ── ADMIN: APPROVE CASHOUT ────────────────────────────────────
+  const handleApproveCashout = async (c) => {
+    const m = members[c.link_code];
+    if(!m) return;
+    const amt = Number(c.amount);
+    const updates = c.type==="expendable"
+      ? {expendable:Math.max(0,m.expendable-amt)}
+      : {reserve:Math.max(0,m.reserve-amt)};
+    await supabase.from("cfb_cashouts").update({status:"approved"}).eq("id",c.id);
+    await supabase.from("cfb_members").update(updates).eq("link_code",c.link_code);
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Forward to: ${c.full_name} | ${c.email} — Cashout Approved`,
+      message:`Dear ${c.full_name},\n\nYour cashout of ${fmtNGN(amt)} (${c.type}) has been APPROVED and will be processed to your bank account within 24 hours.\n\n"${TAGLINE}"\n${COMPANY}`});
+    setAllCashouts(await DB.getAllCashouts());
+    await loadMembers();
+    showNote(`Cashout approved for ${c.full_name}.`);
+  };
+
+  // ── ADMIN: APPROVE LOAN ───────────────────────────────────────
+  const handleApproveLoan = async (loan) => {
+    const m = members[loan.link_code];
+    if(!m) return;
+    const amt = Number(loan.amount);
+    const totalRepay = amt + (amt*LOAN_INTEREST*3);
+    await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString(),total_repayable:totalRepay}).eq("id",loan.id);
+    await supabase.from("cfb_members").update({loan_balance:m.loanBalance+totalRepay}).eq("link_code",loan.link_code);
+    await supabase.rpc("cfb_add_to_pool",{p_amount:-amt}).catch(()=>{});
+    await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+      subject:`Forward to: ${loan.full_name} | ${loan.email} — Co-Fund Loan Approved`,
+      message:`Dear ${loan.full_name},\n\nYour Co-Fund Loan of ${fmtNGN(amt)} has been APPROVED!\n\nLoan Amount: ${fmtNGN(amt)}\nInterest Rate: 5% per month\nTotal Repayable (3 months): ${fmtNGN(totalRepay)}\n\nRepayments will be automatically deducted from your incoming network credits.\n\n"${TAGLINE}"\n${COMPANY}`});
+    setAllLoans(await DB.getAllLoans());
+    await loadMembers();
+    showNote(`Loan approved for ${loan.full_name}.`);
+  };
+
+  const handleRejectLoan = async (loan) => {
+    await supabase.from("cfb_loans").update({status:"rejected"}).eq("id",loan.id);
+    setAllLoans(await DB.getAllLoans());
+    showNote("Loan rejected.");
+  };
+
+  const handleRejectCashout = async (c) => {
+    await supabase.from("cfb_cashouts").update({status:"rejected"}).eq("id",c.id);
+    setAllCashouts(await DB.getAllCashouts());
+    showNote("Cashout rejected.");
+  };
+
+  const handleDelete = async (code,name) => {
+    if(!window.confirm(`Permanently delete member "${name}" (${code})? This cannot be undone.`)) return;
+    await supabase.from("cfb_credits").delete().eq("beneficiary_code",code);
+    await supabase.from("cfb_cashouts").delete().eq("link_code",code);
+    await supabase.from("cfb_loans").delete().eq("link_code",code);
+    await supabase.from("cfb_members").delete().eq("link_code",code);
+    await loadMembers();
+    showNote(`${name} permanently deleted.`);
+  };
+
+  // ── CSS ────────────────────────────────────────────────────────
+  const css = `
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',sans-serif;background:#F0F4FA;color:${DARK};min-height:100vh}
+    .nav{background:linear-gradient(135deg,${NAVY},${BLUE});padding:12px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(13,33,55,0.3)}
+    .nav-logo{width:38px;height:38px;background:${WHITE};border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;font-weight:900;color:${NAVY}}
+    .nav-name{color:${WHITE};font-weight:900;font-size:15px;cursor:pointer;letter-spacing:.3px}
+    .nav-sub{font-size:10px;color:rgba(255,255,255,0.6)}
+    .nav-links{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .nav-btn{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:${WHITE};padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;transition:all .2s}
+    .nav-btn:hover{background:rgba(255,255,255,0.25)}
+    .nav-btn-gold{background:${GOLD}!important;border-color:${GOLD}!important;color:${DARK}!important}
+    .hero{background:linear-gradient(135deg,${NAVY} 0%,${BLUE} 70%,#1E6BBA 100%);padding:72px 24px 56px;text-align:center;position:relative;overflow:hidden}
+    .hero-badge{display:inline-block;background:rgba(201,168,76,0.25);border:1px solid ${GOLD};color:${GOLD};font-size:12px;font-weight:700;padding:4px 16px;border-radius:20px;margin-bottom:16px;letter-spacing:1px}
+    .hero-title{font-size:clamp(28px,5vw,52px);font-weight:900;color:${WHITE};line-height:1.15;margin-bottom:12px}
+    .hero-title span{color:${GOLD}}
+    .hero-sub{font-size:clamp(13px,2vw,17px);color:rgba(255,255,255,0.82);max-width:600px;margin:0 auto 16px;line-height:1.7}
+    .hero-tagline{font-size:15px;font-style:italic;color:${GOLD};margin-bottom:32px;font-weight:600}
+    .hero-steps{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:32px}
+    .hero-step{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:${WHITE};padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;letter-spacing:.5px}
+    .hero-step-arrow{color:${GOLD};font-size:14px;display:flex;align-items:center}
+    .hero-btns{display:flex;flex-direction:column;align-items:center;gap:12px}
+    .btn{padding:12px 28px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;border:none;font-family:inherit;transition:all .2s}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .btn-navy{background:${NAVY};color:${WHITE}}
+    .btn-navy:hover:not(:disabled){background:#0A1B2E}
+    .btn-blue{background:${BLUE};color:${WHITE}}
+    .btn-blue:hover:not(:disabled){background:#163F70}
+    .btn-gold{background:${GOLD};color:${DARK}}
+    .btn-gold:hover{opacity:.9}
+    .btn-outline{background:transparent;border:2px solid rgba(255,255,255,0.5);color:${WHITE}}
+    .btn-outline:hover{background:rgba(255,255,255,0.1)}
+    .btn-outline-blue{background:transparent;border:2px solid ${BLUE};color:${BLUE}}
+    .btn-green{background:${GREEN};color:${WHITE}}
+    .btn-sm{padding:7px 16px;font-size:12px}
+    .btn-lg{padding:14px 36px;font-size:15px;width:100%;max-width:300px}
+    .stats-bar{background:${GOLD};padding:14px 24px;display:flex;justify-content:space-around;gap:12px;flex-wrap:wrap}
+    .stat-item{text-align:center}
+    .stat-val{font-size:20px;font-weight:900;color:${NAVY}}
+    .stat-lbl{font-size:10px;font-weight:700;color:${NAVY};opacity:.8;text-transform:uppercase;letter-spacing:.5px}
+    .section{padding:56px 24px;max-width:1100px;margin:0 auto}
+    .section-title{font-size:clamp(22px,3vw,32px);font-weight:900;color:${NAVY};text-align:center;margin-bottom:8px}
+    .section-sub{font-size:15px;color:${MUTED};text-align:center;margin-bottom:40px;line-height:1.7}
+    .card{background:${WHITE};border-radius:16px;padding:28px;box-shadow:0 4px 24px rgba(13,33,55,0.08);border:1px solid #D0DAED}
+    .how-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+    .how-card{background:${WHITE};border-radius:14px;padding:24px;box-shadow:0 2px 12px rgba(13,33,55,0.07);border:1px solid #D0DAED;text-align:center;border-top:4px solid ${BLUE}}
+    .how-icon{font-size:36px;margin-bottom:12px}
+    .how-num{width:28px;height:28px;background:${NAVY};color:${WHITE};border-radius:50%;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+    .how-title{font-size:14px;font-weight:800;color:${NAVY};margin-bottom:6px}
+    .how-desc{font-size:12px;color:${MUTED};line-height:1.7}
+    .dist-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-top:20px}
+    .dist-cell{background:${BLUE_LIGHT};border-radius:10px;padding:14px;text-align:center;border-top:3px solid ${BLUE}}
+    .dist-label{font-size:10px;font-weight:700;color:${BLUE};text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+    .dist-amt{font-size:18px;font-weight:900;color:${NAVY}}
+    .dist-desc{font-size:10px;color:${MUTED};margin-top:4px;line-height:1.5}
+    .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal{background:${WHITE};border-radius:16px;padding:32px;max-width:520px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,0.2)}
+    .modal-title{font-size:20px;font-weight:900;color:${NAVY};margin-bottom:6px}
+    .modal-sub{font-size:13px;color:${MUTED};margin-bottom:20px}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:13px;font-weight:600;color:${NAVY};margin-bottom:5px}
+    .field input,.field select,.field textarea{width:100%;padding:10px 14px;border:1.5px solid #C8D4E8;border-radius:8px;font-size:14px;font-family:inherit;outline:none;background:${WHITE};color:${DARK};transition:border .2s}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:${BLUE}}
+    .field-err{border-color:${ERROR}!important}
+    .err-msg{font-size:11px;color:${ERROR};margin-top:3px}
+    .notification{position:fixed;top:80px;right:20px;z-index:9999;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.15);max-width:340px}
+    .note-success{background:#DCFCE7;color:${GREEN};border:1px solid #86EFAC}
+    .note-error{background:#FEE2E2;color:${ERROR};border:1px solid #FCA5A5}
+    .portal-wrap{max-width:900px;margin:0 auto;padding:32px 20px}
+    .portal-header{background:linear-gradient(135deg,${NAVY},${BLUE});border-radius:16px;padding:28px;color:${WHITE};margin-bottom:24px}
+    .balance-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px}
+    .balance-card{background:rgba(255,255,255,0.12);border-radius:10px;padding:14px}
+    .balance-label{font-size:11px;font-weight:700;opacity:.75;text-transform:uppercase;letter-spacing:.5px}
+    .balance-val{font-size:20px;font-weight:900;margin-top:4px}
+    .portal-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .portal-tab{padding:8px 18px;border-radius:8px;border:2px solid #C8D4E8;background:${WHITE};font-size:13px;font-weight:600;cursor:pointer;color:${NAVY};font-family:inherit;transition:all .2s}
+    .portal-tab.active{background:${BLUE};border-color:${BLUE};color:${WHITE}}
+    .status-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700}
+    .pill-active{background:#DCFCE7;color:${GREEN}}
+    .pill-pending{background:#FEF9C3;color:#92400E}
+    .pill-inactive{background:#FEE2E2;color:${ERROR}}
+    .pill-approved{background:#DBEAFE;color:${BLUE}}
+    .admin-wrap{max-width:1200px;margin:0 auto;padding:32px 20px}
+    .admin-header{background:linear-gradient(135deg,${NAVY},${BLUE});border-radius:16px;padding:24px 28px;color:${WHITE};margin-bottom:24px}
+    .admin-tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+    .admin-tab{padding:8px 18px;border-radius:8px;border:2px solid #C8D4E8;background:${WHITE};font-size:13px;font-weight:600;cursor:pointer;color:${NAVY};font-family:inherit;transition:all .2s}
+    .admin-tab.active{background:${NAVY};border-color:${NAVY};color:${WHITE}}
+    .table-wrap{background:${WHITE};border-radius:12px;overflow:hidden;border:1px solid #D0DAED;box-shadow:0 2px 8px rgba(13,33,55,0.06)}
+    .table-head{background:${BLUE_LIGHT};padding:12px 16px;font-size:11px;font-weight:700;color:${NAVY};text-transform:uppercase;letter-spacing:.5px}
+    .table-row{padding:14px 16px;border-top:1px solid #EBF0F8;font-size:13px;align-items:center}
+    .table-row:hover{background:#F7FAFF}
+    .link-box{background:${BLUE_LIGHT};border:1.5px solid #A8C0DC;border-radius:10px;padding:16px;word-break:break-all;font-size:13px;color:${NAVY};margin-bottom:12px}
+    .info-box{background:${GOLD_LIGHT};border:1.5px solid ${GOLD};border-radius:10px;padding:16px;margin-bottom:16px}
+    .warn-box{background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:14px;margin-bottom:16px;font-size:12px;color:${ERROR};line-height:1.7}
+    .cta-section{background:linear-gradient(135deg,${NAVY},${BLUE});padding:64px 24px;text-align:center;color:${WHITE}}
+    .footer{background:${NAVY};color:rgba(255,255,255,0.7);padding:32px 24px;text-align:center;font-size:13px;line-height:1.8}
+    @media(max-width:600px){.balance-grid{grid-template-columns:1fr}.dist-row{grid-template-columns:1fr 1fr}.how-grid{grid-template-columns:1fr}}
+  `;
+
+  const allArr = Object.values(members);
+  const activeArr = allArr.filter(m=>m.status==="active");
+  const pendingArr = allArr.filter(m=>m.status==="pending");
+
+  return (
+    <>
+      <style>{css}</style>
+      {note && <div className={`notification ${note.type==="error"?"note-error":"note-success"}`}>{note.msg}</div>}
+
+      {/* NAV */}
+      <nav className="nav">
+        <div style={{display:"flex",alignItems:"center",gap:10,cursor:"pointer"}} onClick={()=>setView("landing")}>
+          <div className="nav-logo">CFB</div>
+          <div>
+            <div className="nav-name">CoFundBills</div>
+            <div className="nav-sub">Cooperative</div>
+          </div>
+        </div>
+        <div className="nav-links">
+          {currentMember ? (
+            <>
+              <button className="nav-btn" onClick={()=>{setPortalTab("overview");setView("portal");}}>My Portal</button>
+              <button className="nav-btn" onClick={()=>{setCurrentMember(null);setView("landing");}}>Log Out</button>
+            </>
+          ) : (
+            <>
+              <button className="nav-btn" onClick={()=>setModal({type:"login"})}>Log In</button>
+              <button className="nav-btn nav-btn-gold" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join Free</button>
+            </>
+          )}
+          <button style={{opacity:.12,fontSize:10,padding:"4px 8px",background:"none",border:"none",color:"white",cursor:"pointer"}}
+            onClick={()=>{setAdminPwd("");setAdminPwdErr("");setModal({type:"admin_login"});}}>
+            [ADM]
+          </button>
+        </div>
+      </nav>
+
+      {/* T&C VIEW */}
+      {showTC && (
+        <div style={{padding:"40px 24px",background:"#F0F4FA",minHeight:"80vh"}}>
+          <div style={{background:WHITE,borderRadius:16,padding:40,maxWidth:800,margin:"0 auto",boxShadow:"0 4px 32px rgba(13,33,55,0.08)"}}>
+            <button onClick={()=>setShowTC(false)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,marginBottom:16}}>← Back</button>
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:22,fontWeight:900,color:NAVY,marginBottom:4}}>Terms & Conditions</div>
+              <div style={{fontSize:13,color:MUTED}}>{COMPANY}<br/>Operated by RoyalTech Partnership & Investment Limited</div>
+            </div>
+            <div className="warn-box">
+              <strong>⚠️ Legal Notice:</strong> CoFundBills is NOT an insurance company, financial investment scheme, pyramid scheme, or MLM organisation. Monthly contributions are NOT insurance premiums or investment capital. Credits distributed are contributed funds redistributed through a network algorithm — not dividends or investment returns. Participation is voluntary and at your own discretion.
+            </div>
+            {TC_SECTIONS.map((sec,i)=>(
+              <div key={i} style={{marginBottom:20,paddingBottom:20,borderBottom:i<TC_SECTIONS.length-1?"1px solid #F3F4F6":"none"}}>
+                <div style={{fontWeight:800,fontSize:14,color:NAVY,marginBottom:8}}>{sec.title}</div>
+                {sec.body&&<div style={{fontSize:13,color:"#374151",lineHeight:1.85}}>{sec.body}</div>}
+                {sec.items&&sec.items.map((item,j)=>(
+                  <div key={j} style={{display:"flex",gap:10,marginBottom:8,fontSize:13,color:"#374151",lineHeight:1.75}}>
+                    <span style={{color:BLUE,fontWeight:700,flexShrink:0}}>{i+1}.{j+1}</span>
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div style={{background:BLUE_LIGHT,borderRadius:10,padding:16,display:"flex",alignItems:"center",gap:12,marginTop:8}}>
+              <input type="checkbox" id="tc_check" style={{width:18,height:18,cursor:"pointer"}} checked={tcAccepted} onChange={e=>setTcAccepted(e.target.checked)}/>
+              <label htmlFor="tc_check" style={{fontSize:13,color:NAVY,cursor:"pointer",lineHeight:1.6}}>
+                I have read and agree to the CoFundBills Cooperative Terms & Conditions.
+              </label>
+            </div>
+            <button className="btn btn-blue" style={{width:"100%",marginTop:16,fontSize:15,padding:14}} disabled={!tcAccepted}
+              onClick={()=>{setShowTC(false);setView("register");}}>
+              Accept & Continue to Registration
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* LANDING */}
+      {view==="landing" && !showTC && (
+        <>
+          <div className="hero">
+            <div className="hero-badge">🤝 {COMPANY}</div>
+            <h1 className="hero-title">Don't Face Bills Alone.<br/><span>Let's Co-Fund Them.</span></h1>
+            <p className="hero-sub">A member-powered cooperative designed to help you collectively prepare for and finance essential bills — rent, school fees, medical bills and more.</p>
+            <p className="hero-tagline">"{TAGLINE}"</p>
+            <div className="hero-steps">
+              {["JOIN","→","CONTRIBUTE","→","BUILD NETWORK","→","REQUEST","→","CO-FUND"].map((s,i)=>(
+                s==="→"
+                  ? <div key={i} className="hero-step-arrow">{s}</div>
+                  : <div key={i} className="hero-step">{s}</div>
+              ))}
+            </div>
+            <div className="hero-btns">
+              <button className="btn btn-gold btn-lg" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join Free Today</button>
+              <button className="btn btn-outline btn-lg" onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
+            </div>
+          </div>
+
+          {/* Stats bar */}
+          <div className="stats-bar">
+            {[["₦10,000","Monthly Contribution"],["₦2,000","Per Direct Network Credit"],["₦2,000","Per Indirect Network Credit"],["₦2,000","Per Extended Network Credit"],["5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+              <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
+            ))}
+          </div>
+
+          {/* How it works */}
+          <div className="section">
+            <h2 className="section-title">How CoFundBills Works</h2>
+            <p className="section-sub">Five simple steps to collective bill financing — powered by your network.</p>
+            <div className="how-grid">
+              {[
+                ["🚀","JOIN","Register free. Get your unique CoFundBills link code instantly."],
+                ["💳","CONTRIBUTE","Pay ₦10,000 monthly to activate and maintain your Co-Fund Link — your gateway to collective earnings."],
+                ["🔗","BUILD NETWORK","Share your link with friends and family. Every person who joins and contributes through your link builds your earning network — up to 3 generations deep."],
+                ["📋","REQUEST","Apply for a Co-Fund loan when you face a big bill — rent, school fees, medical bills. Loan limit is calculated from your network's projected 3-month contributions."],
+                ["🤝","CO-FUND","Receive your loan from the cooperative pool. Repayments are automatically handled from your incoming network credits. No manual repayment stress."],
+              ].map(([icon,title,desc],i)=>(
+                <div key={title} className="how-card">
+                  <div className="how-num">{i+1}</div>
+                  <div className="how-icon">{icon}</div>
+                  <div className="how-title">{title}</div>
+                  <div className="how-desc">{desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Distribution */}
+          <div style={{background:WHITE,padding:"48px 24px"}}>
+            <div style={{maxWidth:900,margin:"0 auto"}}>
+              <h2 className="section-title">How Every ₦10,000 Contribution is Distributed</h2>
+              <p className="section-sub">Every contribution is split equally into 5 parts of ₦2,000 each — transparent, fair, and automatic.</p>
+              <div className="dist-row">
+                {[
+                  ["Direct Network","₦2,000","Credited to the member whose direct invite brought in this contributor"],
+                  ["Indirect Network","₦2,000","Credited to the member whose indirect invite is associated with this contributor"],
+                  ["Extended Network","₦2,000","Credited to the member whose extended invite is associated with this contributor"],
+                  ["Admin Operations","₦2,000","Platform operations, maintenance and administrative compensation"],
+                  ["Loan Fund Pool","₦2,000","Funds the Co-Fund loan pool available to members. Forfeited credits from inactive links also go here."],
+                ].map(([label,amt,desc])=>(
+                  <div key={label} className="dist-cell">
+                    <div className="dist-label">{label}</div>
+                    <div className="dist-amt">{amt}</div>
+                    <div className="dist-desc">{desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{marginTop:20,background:BLUE_LIGHT,borderRadius:12,padding:20,textAlign:"center",fontSize:13,color:NAVY,lineHeight:1.8}}>
+                Every credit you receive is automatically split <strong>50% Expendable</strong> (cashable on demand) and <strong>50% Reserve</strong> (for essential bills only). Your incoming network credits are also applied automatically to any outstanding Co-Fund loan repayments before crediting your account.
+              </div>
+            </div>
+          </div>
+
+          {/* Accounts */}
+          <div className="section">
+            <h2 className="section-title">Your Two Co-Fund Accounts</h2>
+            <p className="section-sub">Every credit you earn is automatically split — keeping you both liquid and prepared.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,maxWidth:700,margin:"0 auto"}}>
+              {[
+                {icon:"💸",title:"Expendable Account",color:BLUE,desc:"50% of every credit. Request a cashout anytime for any purpose. Subject to admin approval and processed within 24 hours."},
+                {icon:"🏦",title:"Reserve Account",color:NAVY,desc:"50% of every credit. Accumulates as your dedicated bill financing reserve — for rent, school fees, medical bills, and essential expenses. Cannot be used for general spending."},
+              ].map(b=>(
+                <div key={b.title} className="card" style={{textAlign:"center",borderTop:`4px solid ${b.color}`}}>
+                  <div style={{fontSize:40,marginBottom:12}}>{b.icon}</div>
+                  <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:8}}>{b.title}</div>
+                  <div style={{fontSize:13,color:MUTED,lineHeight:1.7}}>{b.desc}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Co-Fund Loan */}
+          <div style={{background:WHITE,padding:"48px 24px"}}>
+            <div style={{maxWidth:800,margin:"0 auto"}}>
+              <h2 className="section-title">The Co-Fund Loan</h2>
+              <p className="section-sub">Face a big bill? Your network is your credit score.</p>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+                {[
+                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and extended invite chain."},
+                  {icon:"💰",title:"Loan Rate",desc:"5% per month on outstanding balance — fair, transparent, and fully disclosed upfront."},
+                  {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
+                  {icon:"📈",title:"Investor Returns",desc:"Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
+                ].map(c=>(
+                  <div key={c.title} className="card" style={{padding:20}}>
+                    <div style={{fontSize:28,marginBottom:8}}>{c.icon}</div>
+                    <div style={{fontWeight:700,color:NAVY,marginBottom:6,fontSize:14}}>{c.title}</div>
+                    <div style={{fontSize:13,color:MUTED,lineHeight:1.7}}>{c.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="cta-section">
+            <h2 style={{fontSize:"clamp(22px,3vw,36px)",fontWeight:900,marginBottom:12}}>Ready to Co-Fund Your Bills?</h2>
+            <p style={{fontSize:15,opacity:.85,maxWidth:560,margin:"0 auto 28px",lineHeight:1.7}}>
+              Join free today. Start contributing ₦10,000 monthly to build your network and your bill financing power — collectively.
+            </p>
+            <button className="btn btn-gold btn-lg" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join CoFundBills Free</button>
+          </div>
+
+          <div className="footer">
+            <div style={{fontWeight:900,color:WHITE,fontSize:16,marginBottom:4}}>{COMPANY}</div>
+            <div style={{fontStyle:"italic",color:"rgba(255,255,255,0.5)",marginBottom:8}}>"{TAGLINE}"</div>
+            <div>{ADDRESS}</div>
+            <div>Email: {EMAIL_ADDR} | Phone: {PHONE} | {WEBSITE}</div>
+            <div style={{marginTop:12,fontSize:11,opacity:.5}}>
+              © 2026 {COMPANY}. All rights reserved. CoFundBills is a cooperative and is not an insurance company, financial institution, or investment scheme.
+            </div>
+            <div style={{marginTop:8}}>
+              <button style={{background:"none",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer",textDecoration:"underline",fontSize:12}}
+                onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Terms & Conditions</button>
+              {" | "}
+              <button style={{background:"none",border:"none",color:"rgba(255,255,255,0.6)",cursor:"pointer",textDecoration:"underline",fontSize:12}}
+                onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Legal Disclaimer</button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* REGISTER */}
+      {view==="register" && (
+        <div style={{padding:"40px 24px",background:"#F0F4FA",minHeight:"80vh"}}>
+          <div className="card" style={{maxWidth:560,margin:"0 auto"}}>
+            <button onClick={()=>setView("landing")} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,marginBottom:16}}>← Back</button>
+            <div className="modal-title">Join CoFundBills Cooperative</div>
+            <div className="modal-sub">Free registration. Activate your Co-Fund Link with ₦10,000 first monthly contribution.</div>
+            {urlRef && <div className="info-box" style={{fontSize:13,color:NAVY}}>🔗 Referred by: <strong>{urlRef}</strong></div>}
+            {regErrors.general&&<div className="warn-box">{regErrors.general}</div>}
+            {[["fullName","Full Name","text","Your legal full name"],["email","Email Address","email",""],["phone","Phone Number","tel","e.g. 08012345678"],["occupation","Occupation / Employer","text",""],["state","State of Residence","text",""]].map(([key,label,type,ph])=>(
+              <div className="field" key={key}>
+                <label>{label}</label>
+                <input type={type} placeholder={ph} className={regErrors[key]?"field-err":""} value={regForm[key]} onChange={e=>setRegForm({...regForm,[key]:e.target.value})}/>
+                {regErrors[key]&&<div className="err-msg">{regErrors[key]}</div>}
+              </div>
+            ))}
+            <div className="field">
+              <label>Country</label>
+              <select value={regForm.country} onChange={e=>setRegForm({...regForm,country:e.target.value})}>
+                {["Nigeria","Ghana","Kenya","United Kingdom","United States","Canada","Other"].map(c=><option key={c}>{c}</option>)}
+              </select>
+            </div>
+            <div className="info-box">
+              <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>After Registration — Activate Your Co-Fund Link:</div>
+              <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
+                Pay <strong>₦10,000</strong> first monthly contribution to activate.<br/>
+                Account Name: <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                Account Number: <strong>1016621205</strong> | Bank: <strong>Zenith Bank</strong><br/>
+                Reference: Your name + CFB<br/>
+                Then WhatsApp: <strong>+234 909 999 4816</strong>
+              </div>
+            </div>
+            <div className="warn-box">
+              <strong>⚠️ One account per person.</strong> Duplicate registrations result in suspension and permanent forfeiture of all credits. All information must be true and verifiable.
+            </div>
+            <div style={{background:BLUE_LIGHT,border:"1px solid #A8C0DC",borderRadius:8,padding:14,marginBottom:16,display:"flex",alignItems:"flex-start",gap:12}}>
+              <input type="checkbox" id="reg_tc" style={{width:18,height:18,marginTop:2,cursor:"pointer",flexShrink:0}} checked={tcAccepted} onChange={e=>setTcAccepted(e.target.checked)}/>
+              <label htmlFor="reg_tc" style={{fontSize:13,color:NAVY,cursor:"pointer",lineHeight:1.6}}>
+                I have read and agree to the{" "}
+                <button type="button" style={{background:"none",border:"none",color:BLUE,fontWeight:700,cursor:"pointer",fontSize:13,padding:0,textDecoration:"underline"}}
+                  onClick={()=>setShowTC(true)}>CoFundBills Terms & Conditions</button>.
+                CoFundBills is not an insurance plan, investment scheme, or MLM.
+              </label>
+            </div>
+            <button className="btn btn-blue" style={{width:"100%"}} disabled={!tcAccepted} onClick={handleRegister}>Join CoFundBills Free</button>
+          </div>
+        </div>
+      )}
+
+      {/* PORTAL */}
+      {view==="portal" && currentMember && (
+        <div className="portal-wrap">
+          <div className="portal-header">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{fontWeight:900,fontSize:22}}>{currentMember.fullName}</div>
+                <div style={{fontSize:13,opacity:.75,marginTop:4}}>Co-Fund Link Code: {currentMember.linkCode}</div>
+                <div style={{marginTop:8,display:"flex",gap:8,flexWrap:"wrap",alignItems:"center"}}>
+                  <span className={`status-pill ${currentMember.status==="active"?"pill-active":currentMember.status==="inactive"?"pill-inactive":"pill-pending"}`}>
+                    {currentMember.status==="active"?"✅ Active":currentMember.status==="inactive"?"⛔ Inactive":"⏳ Pending"}
+                  </span>
+                  {currentMember.memberType==="founding"&&<span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>🏅 Founding Member</span>}
+                  {currentMember.expiresAt&&currentMember.memberType!=="founding"&&(
+                    <span style={{fontSize:11,opacity:.75}}>
+                      Renews: {new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric"})}
+                    </span>
+                  )}
+                </div>
+                {currentMember.loanBalance>0&&(
+                  <div style={{marginTop:8,background:"rgba(159,18,57,0.2)",borderRadius:8,padding:"6px 12px",fontSize:12,color:"#FCA5A5"}}>
+                    ⚠️ Outstanding Loan: <strong>{fmtNGN(currentMember.loanBalance)}</strong> — being repaid automatically from network credits
+                  </div>
+                )}
+              </div>
+              <button className="btn btn-outline btn-sm" onClick={()=>{setCurrentMember(null);setView("landing");}}>Log Out</button>
+            </div>
+            <div className="balance-grid">
+              <div className="balance-card">
+                <div className="balance-label">💸 Expendable</div>
+                <div className="balance-val">{fmtNGN(currentMember.expendable)}</div>
+                <div style={{fontSize:11,opacity:.65,marginTop:2}}>Available for cashout</div>
+              </div>
+              <div className="balance-card">
+                <div className="balance-label">🏦 Reserve</div>
+                <div className="balance-val">{fmtNGN(currentMember.reserve)}</div>
+                <div style={{fontSize:11,opacity:.65,marginTop:2}}>Essential bills only</div>
+              </div>
+              <div className="balance-card">
+                <div className="balance-label">📊 Total Credited</div>
+                <div className="balance-val">{fmtNGN(currentMember.totalCredited)}</div>
+                <div style={{fontSize:11,opacity:.65,marginTop:2}}>Lifetime earnings</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="portal-tabs">
+            {[["home","🏠"],["overview","Overview"],["link","My Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
+              ...( currentMember.memberType!=="founding"?[["renew","Renew"]]:[] )
+            ].map(([id,label])=>(
+              <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>setPortalTab(id)}>{label}</button>
+            ))}
+          </div>
+
+          {portalTab==="home" && (
+            <div style={{textAlign:"center",padding:"20px 0"}}>
+              <div style={{fontSize:48,marginBottom:12}}>🤝</div>
+              <div style={{fontWeight:900,fontSize:20,color:NAVY,marginBottom:8}}>{COMPANY}</div>
+              <div style={{fontStyle:"italic",color:MUTED,fontSize:14,marginBottom:24}}>"{TAGLINE}"</div>
+              <button className="btn btn-blue btn-lg" style={{marginBottom:12}} onClick={()=>{setCurrentMember(null);setView("landing");}}>Go to Home Page</button>
+              <div style={{fontSize:12,color:MUTED,marginTop:16,lineHeight:1.8}}>{ADDRESS}<br/>{EMAIL_ADDR} | {PHONE}</div>
+            </div>
+          )}
+
+          {portalTab==="overview" && (
+            <div className="card">
+              <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="founding"?"Founding Member 🏅":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"]].map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
+                  <span style={{color:MUTED}}>{k}</span>
+                  <span style={{fontWeight:700,color:NAVY}}>{v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {portalTab==="link" && (
+            <div className="card">
+              <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:12}}>Your Co-Fund Link</div>
+              {!currentMember.linkActive ? (
+                <div className="info-box">
+                  <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>🔒 Link Not Active</div>
+                  <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
+                    Pay ₦10,000 monthly contribution to activate your Co-Fund Link.<br/>
+                    Royal Tech Partnership & Investment Limited<br/>
+                    Zenith Bank — 1016621205 | Reference: {currentMember.linkCode}<br/>
+                    WhatsApp: +234 909 999 4816
+                  </div>
+                </div>
+              ):(
+                <>
+                  <div style={{fontSize:13,color:MUTED,marginBottom:10}}>Share this link with everyone on your contact list. Every monthly contribution from your network earns you ₦2,000 — up to 3 generations deep.</div>
+                  <div className="link-box">https://cofundbills.vercel.app?ref={currentMember.linkCode}</div>
+                  <button className="btn btn-blue btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${currentMember.linkCode}`);showNote("Link copied!");}}>Copy Link</button>
+                </>
+              )}
+            </div>
+          )}
+
+          {portalTab==="credits" && (
+            <div className="table-wrap">
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                <span>Date</span><span>From</span><span>Level</span><span>Trigger</span><span>Amount</span>
+              </div>
+              {credits.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No credits yet. Share your link to start earning.</div>:credits.map((c,i)=>(
+                <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                  <div>{new Date(c.created_at).toLocaleDateString("en-NG")}</div>
+                  <div style={{fontSize:12,color:MUTED}}>{c.source_code}</div>
+                  <div><span className="status-pill pill-approved" style={{textTransform:"capitalize"}}>{c.level}</span></div>
+                  <div style={{fontSize:11,textTransform:"capitalize",color:MUTED}}>{c.trigger}</div>
+                  <div style={{fontWeight:700,color:NAVY}}>{fmtNGN(c.amount)}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {portalTab==="cashout" && (
+            <div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:14}}>Request a Cashout</div>
+                <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
+                  <strong>Expendable:</strong> {fmtNGN(currentMember.expendable)} available — any purpose<br/>
+                  <strong>Reserve:</strong> {fmtNGN(currentMember.reserve)} available — essential bills only (rent, school fees, medical)
+                </div>
+                <div className="field">
+                  <label>Account Type</label>
+                  <select value={cashoutForm.type} onChange={e=>setCashoutForm({...cashoutForm,type:e.target.value})}>
+                    <option value="expendable">Expendable Account — Any Purpose</option>
+                    <option value="reserve">Reserve Account — Essential Bills Only</option>
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Amount (₦)</label>
+                  <input type="number" placeholder="Enter amount" value={cashoutForm.amount} onChange={e=>setCashoutForm({...cashoutForm,amount:e.target.value})}/>
+                </div>
+                {cashoutForm.type==="reserve"&&(
+                  <div className="field">
+                    <label>Bill Purpose</label>
+                    <input type="text" placeholder="e.g. House rent, School fees, Medical bill..." value={cashoutForm.purpose} onChange={e=>setCashoutForm({...cashoutForm,purpose:e.target.value})}/>
+                  </div>
+                )}
+                {cashoutErr&&<div style={{color:ERROR,fontSize:13,marginBottom:10}}>{cashoutErr}</div>}
+                <button className="btn btn-blue" style={{width:"100%"}} onClick={handleCashoutRequest}>Submit Cashout Request</button>
+              </div>
+              {cashouts.length>0&&(
+                <div className="table-wrap">
+                  <div className="table-head" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                    <span>Date</span><span>Type</span><span>Purpose</span><span>Amount</span><span>Status</span>
+                  </div>
+                  {cashouts.map((c,i)=>(
+                    <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                      <div>{new Date(c.created_at).toLocaleDateString("en-NG")}</div>
+                      <div style={{textTransform:"capitalize",fontSize:12}}>{c.type}</div>
+                      <div style={{fontSize:11,color:MUTED}}>{c.purpose||"—"}</div>
+                      <div style={{fontWeight:700}}>{fmtNGN(c.amount)}</div>
+                      <div><span className={`status-pill ${c.status==="approved"?"pill-active":c.status==="rejected"?"pill-inactive":"pill-pending"}`}>{c.status}</span></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {portalTab==="loan" && (
+            <div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Apply for a Co-Fund Loan</div>
+                {currentMember.loanBalance>0?(
+                  <div className="warn-box">You have an outstanding loan balance of <strong>{fmtNGN(currentMember.loanBalance)}</strong>. Please clear your existing loan before applying for a new one. Repayments are being automatically applied from your incoming network credits.</div>
+                ):(
+                  <>
+                    <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
+                      Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
+                      Interest: <strong>5% per month</strong> on outstanding balance.<br/>
+                      Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
+                    </div>
+                    <div className="field">
+                      <label>Bill Type</label>
+                      <select value={loanForm.billType} onChange={e=>setLoanForm({...loanForm,billType:e.target.value})}>
+                        <option value="">Select bill type...</option>
+                        {["House Rent","School Fees","Medical Bills","Utility Bills","Business Bills","Other"].map(b=><option key={b}>{b}</option>)}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Loan Amount (₦)</label>
+                      <input type="number" placeholder="Enter amount" value={loanForm.amount} onChange={e=>setLoanForm({...loanForm,amount:e.target.value})}/>
+                    </div>
+                    <div className="field">
+                      <label>Purpose / Details</label>
+                      <textarea rows={3} placeholder="Describe the bill you need to co-fund..." value={loanForm.purpose} onChange={e=>setLoanForm({...loanForm,purpose:e.target.value})} style={{resize:"vertical"}}/>
+                    </div>
+                    {loanErr&&<div style={{color:ERROR,fontSize:13,marginBottom:10}}>{loanErr}</div>}
+                    <button className="btn btn-blue" style={{width:"100%"}} onClick={handleLoanRequest}>Submit Co-Fund Loan Request</button>
+                  </>
+                )}
+              </div>
+              {loans.length>0&&(
+                <div className="table-wrap">
+                  <div className="table-head" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                    <span>Date</span><span>Bill Type</span><span>Amount</span><span>Repayable</span><span>Status</span>
+                  </div>
+                  {loans.map((l,i)=>(
+                    <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr 1fr",gap:12}}>
+                      <div>{new Date(l.created_at).toLocaleDateString("en-NG")}</div>
+                      <div style={{fontSize:12}}>{l.bill_type}</div>
+                      <div style={{fontWeight:700}}>{fmtNGN(l.amount)}</div>
+                      <div style={{fontSize:12,color:MUTED}}>{l.total_repayable?fmtNGN(l.total_repayable):"—"}</div>
+                      <div><span className={`status-pill ${l.status==="approved"?"pill-active":l.status==="rejected"?"pill-inactive":"pill-pending"}`}>{l.status}</span></div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {portalTab==="renew" && currentMember.memberType!=="founding" && (
+            <div className="card">
+              <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Link</div>
+              <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
+                Monthly renewal: <strong style={{color:NAVY}}>₦10,000</strong><br/>
+                Renew before expiry to keep your link active and all credit channels earning.<br/>
+                <strong>Credits earned during inactive periods are permanently lost and channelled to the Loan Fund Pool.</strong>
+              </div>
+              {currentMember.expiresAt&&(
+                <div style={{background:BLUE_LIGHT,borderRadius:8,padding:12,fontSize:13,color:NAVY,marginBottom:16}}>
+                  Current expiry: <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong>
+                </div>
+              )}
+              <div className="info-box">
+                <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Renewal Payment Details</div>
+                <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
+                  Amount: ₦10,000 | Reference: {currentMember.linkCode} — RENEWAL<br/>
+                  Royal Tech Partnership & Investment Limited<br/>
+                  Zenith Bank — 1016621205<br/>
+                  WhatsApp: +234 909 999 4816
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ADMIN */}
+      {view==="admin" && !adminAuth && (
+        <div style={{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"60vh",flexDirection:"column",gap:16}}>
+          <div style={{fontSize:18,fontWeight:700,color:NAVY}}>Admin access required</div>
+          <button className="btn btn-blue" onClick={()=>{setAdminPwd("");setAdminPwdErr("");setModal({type:"admin_login"});}}>Log In</button>
+          <button className="btn btn-sm btn-outline-blue" onClick={()=>setView("landing")}>Back</button>
+        </div>
+      )}
+
+      {view==="admin" && adminAuth && (
+        <div className="admin-wrap">
+          <div className="admin-header">
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+              <div>
+                <div style={{fontWeight:900,fontSize:22}}>CoFundBills Admin Dashboard</div>
+                <div style={{fontSize:13,opacity:.7,marginTop:2}}>{COMPANY}</div>
+              </div>
+              <button className="btn btn-outline btn-sm" onClick={()=>{setAdminAuth(false);setAdminPwd("");setView("landing");}}>🔒 Lock & Exit</button>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginTop:20}}>
+              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Founding",allArr.filter(m=>m.memberType==="founding").length],["Invited",allArr.filter(m=>m.refCode).length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
+                <div key={l} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:12}}>
+                  <div style={{fontSize:18,fontWeight:900}}>{v}</div>
+                  <div style={{fontSize:11,opacity:.7,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="admin-tabs">
+            {[["members","All Members"],["pending","Pending Activation"],["renewals","Pending Renewal"],["cashouts","Cashout Queue"],["loans","Loan Queue"],["investors","Investors"]].map(([id,label])=>(
+              <button key={id} className={`admin-tab${adminTab===id?" active":""}`}
+                onClick={async()=>{
+                  setAdminTab(id);
+                  if(id==="cashouts"){setAllCashouts(await DB.getAllCashouts());}
+                  if(id==="loans"){setAllLoans(await DB.getAllLoans());}
+                  if(id==="loans"||id==="investors"){setLoanPool(await DB.getLoanPool());}
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* All Members */}
+          {adminTab==="members" && (
+            <div className="table-wrap">
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 1fr 80px",gap:12}}>
+                <span>Member</span><span>Type</span><span>Expendable</span><span>Reserve</span><span>Loan Bal</span><span>Status</span><span>Del</span>
+              </div>
+              {allArr.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No members yet.</div>:allArr.map(m=>(
+                <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 1fr 80px",gap:12,alignItems:"center"}}>
+                  <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
+                  <div><span style={{fontSize:11,background:m.memberType==="founding"?GOLD_LIGHT:BLUE_LIGHT,color:m.memberType==="founding"?GOLD:BLUE,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="founding"?"Founding":"Regular"}</span></div>
+                  <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.expendable)}</div>
+                  <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.reserve)}</div>
+                  <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
+                  <div>
+                    <span className={`status-pill ${m.status==="active"?"pill-active":m.status==="inactive"?"pill-inactive":"pill-pending"}`}>{m.status}</span>
+                    {m.status==="active"&&m.memberType!=="founding"&&(
+                      <button style={{display:"block",marginTop:4,fontSize:10,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer"}} onClick={()=>handleDeactivate(m.linkCode)}>Deactivate</button>
+                    )}
+                  </div>
+                  <div><button onClick={()=>handleDelete(m.linkCode,m.fullName)} style={{background:"#FEE2E2",border:"none",borderRadius:6,color:ERROR,fontSize:11,fontWeight:700,padding:"6px 8px",cursor:"pointer"}}>🗑</button></div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending Activation */}
+          {adminTab==="pending" && (
+            <div className="table-wrap">
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 160px",gap:12}}>
+                <span>Member</span><span>Occupation</span><span>State</span><span>Referred By</span><span>Action</span>
+              </div>
+              {pendingArr.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No pending activations.</div>:pendingArr.map(m=>(
+                <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 160px",gap:12,alignItems:"center"}}>
+                  <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:MUTED}}>{m.phone}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
+                  <div style={{fontSize:12}}>{m.occupation}</div>
+                  <div style={{fontSize:12}}>{m.state}</div>
+                  <div style={{fontSize:12,color:MUTED}}>{m.refCode||"Direct"}</div>
+                  <div>
+                    <button className="btn btn-blue btn-sm" style={{width:"100%",marginBottom:4}} onClick={()=>handleActivate(m.linkCode)}>✅ Activate Link</button>
+                    <button style={{width:"100%",padding:"5px",fontSize:11,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,cursor:"pointer"}} onClick={()=>handleDelete(m.linkCode,m.fullName)}>🗑 Delete</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending Renewal */}
+          {adminTab==="renewals" && (
+            <div className="table-wrap">
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 160px",gap:12}}>
+                <span>Member</span><span>Expires</span><span>Status</span><span>Action</span>
+              </div>
+              {allArr.filter(m=>m.memberType==="regular"&&(m.status==="inactive"||m.status==="pending")).length===0?
+                <div style={{padding:32,textAlign:"center",color:MUTED}}>No pending renewals.</div>:
+                allArr.filter(m=>m.memberType==="regular"&&(m.status==="inactive"||m.status==="pending")).map(m=>(
+                <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 160px",gap:12,alignItems:"center"}}>
+                  <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
+                  <div style={{fontSize:12}}>{m.expiresAt?new Date(m.expiresAt).toLocaleDateString("en-NG"):"—"}</div>
+                  <div><span className={`status-pill ${m.status==="inactive"?"pill-inactive":"pill-pending"}`}>{m.status}</span></div>
+                  <div>
+                    <button className="btn btn-blue btn-sm" style={{width:"100%"}} onClick={()=>handleRenew(m.linkCode)}>✅ Confirm Renewal</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Cashout Queue */}
+          {adminTab==="cashouts" && (
+            <div className="table-wrap">
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 160px",gap:12}}>
+                <span>Member</span><span>Type</span><span>Purpose</span><span>Amount</span><span>Status</span><span>Action</span>
+              </div>
+              {allCashouts.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No cashout requests.</div>:allCashouts.map((c,i)=>(
+                <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 160px",gap:12,alignItems:"center"}}>
+                  <div><div style={{fontWeight:700}}>{c.full_name}</div><div style={{fontSize:11,color:MUTED}}>{c.link_code}</div></div>
+                  <div style={{textTransform:"capitalize",fontSize:12,fontWeight:600,color:c.type==="reserve"?NAVY:BLUE}}>{c.type}</div>
+                  <div style={{fontSize:11,color:MUTED}}>{c.purpose||"—"}</div>
+                  <div style={{fontWeight:700,color:NAVY}}>{fmtNGN(c.amount)}</div>
+                  <div><span className={`status-pill ${c.status==="approved"?"pill-active":c.status==="rejected"?"pill-inactive":"pill-pending"}`}>{c.status}</span></div>
+                  <div>
+                    {c.status==="pending"&&(<>
+                      <button className="btn btn-blue btn-sm" style={{width:"100%",marginBottom:4}} onClick={()=>handleApproveCashout(c)}>✅ Approve</button>
+                      <button style={{width:"100%",padding:"5px",fontSize:11,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,cursor:"pointer"}} onClick={()=>handleRejectCashout(c)}>✗ Reject</button>
+                    </>)}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Loan Queue */}
+          {adminTab==="loans" && (
+            <div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div style={{fontWeight:800,color:NAVY}}>Loan Fund Pool Balance</div>
+                  <div style={{fontSize:24,fontWeight:900,color:GREEN}}>{fmtNGN(loanPool)}</div>
+                </div>
+              </div>
+              <div className="table-wrap">
+                <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 160px",gap:12}}>
+                  <span>Member</span><span>Bill Type</span><span>Amount</span><span>Network</span><span>Status</span><span>Action</span>
+                </div>
+                {allLoans.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No loan requests.</div>:allLoans.map((l,i)=>(
+                  <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 160px",gap:12,alignItems:"center"}}>
+                    <div><div style={{fontWeight:700}}>{l.full_name}</div><div style={{fontSize:11,color:MUTED}}>{l.link_code}</div><div style={{fontSize:11,color:MUTED}}>{l.purpose}</div></div>
+                    <div style={{fontSize:12}}>{l.bill_type}</div>
+                    <div><div style={{fontWeight:700,color:NAVY}}>{fmtNGN(l.amount)}</div><div style={{fontSize:11,color:MUTED}}>Limit: {fmtNGN(l.loan_limit)}</div></div>
+                    <div style={{fontSize:11,color:MUTED}}>D:{l.network_direct} I:{l.network_indirect} E:{l.network_extended}</div>
+                    <div><span className={`status-pill ${l.status==="approved"?"pill-active":l.status==="rejected"?"pill-inactive":"pill-pending"}`}>{l.status}</span></div>
+                    <div>
+                      {l.status==="pending"&&(<>
+                        <button className="btn btn-green btn-sm" style={{width:"100%",marginBottom:4}} onClick={()=>handleApproveLoan(l)}>✅ Approve Loan</button>
+                        <button style={{width:"100%",padding:"5px",fontSize:11,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,cursor:"pointer"}} onClick={()=>handleRejectLoan(l)}>✗ Reject</button>
+                      </>)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Investors */}
+          {adminTab==="investors" && (
+            <div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:8}}>Founding / Investor Members</div>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8}}>
+                  Founding members hold perpetually active Co-Fund links with no monthly contribution. They share monthly loan interest proceeds equally across all investor slots. Each slot represents 1/{INVESTOR_SLOTS}th of total monthly interest collected.
+                </div>
+              </div>
+              <div className="table-wrap">
+                <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
+                  <span>Name</span><span>Link Code</span><span>Expendable</span><span>Reserve</span><span>Total Credited</span>
+                </div>
+                {allArr.filter(m=>m.memberType==="founding").length===0?
+                  <div style={{padding:32,textAlign:"center",color:MUTED}}>No founding members. Insert them directly in Supabase with member_type = 'founding'.</div>:
+                  allArr.filter(m=>m.memberType==="founding").map(m=>(
+                  <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
+                    <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div></div>
+                    <div style={{fontSize:12,color:BLUE,fontWeight:600}}>{m.linkCode}</div>
+                    <div style={{fontWeight:700,color:NAVY}}>{fmtNGN(m.expendable)}</div>
+                    <div style={{fontWeight:700,color:NAVY}}>{fmtNGN(m.reserve)}</div>
+                    <div style={{fontWeight:700}}>{fmtNGN(m.totalCredited)}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODALS */}
+      {modal?.type==="admin_login" && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
+          <div className="modal" style={{maxWidth:380}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-title">Admin Access</div>
+            <div className="modal-sub">CoFundBills Admin Dashboard</div>
+            <div className="field">
+              <label>Password</label>
+              <input type="password" placeholder="Enter admin password" value={adminPwd}
+                onChange={e=>{setAdminPwd(e.target.value);setAdminPwdErr("");}}
+                onKeyDown={e=>{if(e.key==="Enter"){if(adminPwd===ADMIN_PASSWORD){setAdminAuth(true);setModal(null);setView("admin");setAdminTab("members");}else setAdminPwdErr("Incorrect password.");}}}/>
+              {adminPwdErr&&<div className="err-msg">{adminPwdErr}</div>}
+            </div>
+            <button className="btn btn-blue" style={{width:"100%",marginBottom:8}}
+              onClick={()=>{if(adminPwd===ADMIN_PASSWORD){setAdminAuth(true);setModal(null);setView("admin");setAdminTab("members");}else setAdminPwdErr("Incorrect password.");}}>Log In</button>
+            <button className="btn btn-sm btn-outline-blue" style={{width:"100%"}} onClick={()=>setModal(null)}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      {modal?.type==="login" && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}} onClick={()=>setModal(null)}>
+          <div className="modal" style={{maxWidth:400}} onClick={e=>e.stopPropagation()}>
+            <div className="modal-title">Log In to Your Portal</div>
+            <div className="modal-sub">Enter your Co-Fund Link Code to access your account.</div>
+            <div className="field">
+              <label>Co-Fund Link Code</label>
+              <input type="text" placeholder="e.g. CFB-EIG-AB12" value={loginCode}
+                onChange={e=>{setLoginCode(e.target.value.toUpperCase());setLoginErr("");}}
+                onKeyDown={e=>e.key==="Enter"&&handleLogin()}/>
+              {loginErr&&<div className="err-msg">{loginErr}</div>}
+            </div>
+            <button className="btn btn-blue" style={{width:"100%",marginBottom:8}} onClick={handleLogin}>Log In</button>
+            <button className="btn btn-sm btn-outline-blue" style={{width:"100%"}} onClick={()=>setModal(null)}>Cancel</button>
+            <div style={{fontSize:12,color:MUTED,marginTop:12,textAlign:"center"}}>
+              Not yet a member?{" "}<button style={{background:"none",border:"none",color:BLUE,cursor:"pointer",fontWeight:600,fontSize:12}} onClick={()=>{setModal(null);setTcAccepted(false);setShowTC(true);}}>Join Free</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modal?.type==="reg_success" && (
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:9999,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+          <div className="modal" style={{maxWidth:460,textAlign:"center"}}>
+            <div style={{fontSize:48,marginBottom:12}}>🎉</div>
+            <div className="modal-title" style={{textAlign:"center"}}>Welcome to CoFundBills!</div>
+            <div style={{fontSize:14,color:MUTED,margin:"12px 0 20px",lineHeight:1.7}}>Registration successful, <strong>{modal.name}</strong>!<br/>Your Co-Fund Link Code is:</div>
+            <div style={{background:BLUE_LIGHT,border:`2px solid ${BLUE}`,borderRadius:10,padding:16,fontSize:18,fontWeight:900,color:NAVY,marginBottom:20,letterSpacing:2}}>{modal.linkCode}</div>
+            <div className="info-box" style={{textAlign:"left"}}>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Next Step — Activate Your Co-Fund Link:</div>
+              <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
+                Pay <strong>₦10,000</strong> first monthly contribution to activate.<br/>
+                Royal Tech Partnership & Investment Limited<br/>
+                Zenith Bank — 1016621205<br/>
+                Reference: <strong>{modal.linkCode}</strong><br/>
+                Then WhatsApp: <strong>+234 909 999 4816</strong>
+              </div>
+            </div>
+            <button className="btn btn-blue" style={{width:"100%"}} onClick={()=>{setModal(null);setView("landing");}}>Done</button>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
