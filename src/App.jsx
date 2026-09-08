@@ -628,7 +628,7 @@ export default function App() {
             <p className="hero-sub">A member-powered cooperative designed to help you collectively prepare for and finance essential bills — rent, school fees, medical bills and more.</p>
             <p className="hero-tagline">"{TAGLINE}"</p>
             <div className="hero-steps">
-              {["JOIN","→","CONTRIBUTE","→","BUILD NETWORK","→","REQUEST","→","CO-FUND"].map((s,i)=>(
+              {["JOIN","→","CONTRIBUTE","→","BUILD NETWORK","→","REQUEST","→","CASH-OUT"].map((s,i)=>(
                 s==="→"
                   ? <div key={i} className="hero-step-arrow">{s}</div>
                   : <div key={i} className="hero-step">{s}</div>
@@ -642,7 +642,7 @@ export default function App() {
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["₦10,000","Monthly Contribution"],["₦2,000","Per Direct Invite Contributor Monthly"],["₦2,000","Per Indirect Invite Contributor Monthly"],["₦2,000","Per Extended Invite Contributor Monthly"],["5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000","Per Direct Invite Contributor Monthly"],["Receive ₦2,000","Per Indirect Invite Contributor Monthly"],["Receive ₦2,000","Per Extended Invite Contributor Monthly"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
