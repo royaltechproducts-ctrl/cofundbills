@@ -585,7 +585,10 @@ export default function App() {
       {showTC && (
         <div style={{padding:"40px 24px",background:"#F0F4FA",minHeight:"80vh"}}>
           <div style={{background:WHITE,borderRadius:16,padding:40,maxWidth:800,margin:"0 auto",boxShadow:"0 4px 32px rgba(13,33,55,0.08)"}}>
-            <button onClick={()=>setShowTC(false)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,marginBottom:16}}>← Back</button>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <button onClick={()=>setShowTC(false)} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13}}>← Back</button>
+              <button onClick={()=>{setShowTC(false);setView("landing");}} style={{background:BLUE_LIGHT,border:`1px solid ${BLUE}`,color:BLUE,cursor:"pointer",fontSize:12,fontWeight:700,padding:"5px 14px",borderRadius:8,fontFamily:"inherit"}}>🏠 Home</button>
+            </div>
             <div style={{textAlign:"center",marginBottom:24}}>
               <div style={{fontSize:22,fontWeight:900,color:NAVY,marginBottom:4}}>Terms & Conditions</div>
               <div style={{fontSize:13,color:MUTED}}>{COMPANY}<br/>Operated by RoyalTech Partnership & Investment Limited</div>
@@ -858,7 +861,10 @@ export default function App() {
       {view==="register" && (
         <div style={{padding:"40px 24px",background:"#F0F4FA",minHeight:"80vh"}}>
           <div className="card" style={{maxWidth:560,margin:"0 auto"}}>
-            <button onClick={()=>setView("landing")} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13,marginBottom:16}}>← Back</button>
+            <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16}}>
+              <button onClick={()=>setView("landing")} style={{background:"none",border:"none",color:MUTED,cursor:"pointer",fontSize:13}}>← Back</button>
+              <button onClick={()=>setView("landing")} style={{background:BLUE_LIGHT,border:`1px solid ${BLUE}`,color:BLUE,cursor:"pointer",fontSize:12,fontWeight:700,padding:"5px 14px",borderRadius:8,fontFamily:"inherit"}}>🏠 Home</button>
+            </div>
             <div className="modal-title">Join CoFundBills Cooperative</div>
             <div className="modal-sub">Free registration. Activate your Co-Fund Link with ₦10,000 first monthly contribution.</div>
             {urlRef && <div className="info-box" style={{fontSize:13,color:NAVY}}>🔗 Referred by: <strong>{urlRef}</strong></div>}
@@ -1162,7 +1168,10 @@ export default function App() {
                 <div style={{fontWeight:900,fontSize:22}}>CoFundBills Admin Dashboard</div>
                 <div style={{fontSize:13,opacity:.7,marginTop:2}}>{COMPANY}</div>
               </div>
-              <button className="btn btn-outline btn-sm" onClick={()=>{setAdminAuth(false);setAdminPwd("");setView("landing");}}>🔒 Lock & Exit</button>
+              <div style={{display:"flex",gap:8}}>
+                <button className="btn btn-outline btn-sm" onClick={()=>setView("landing")} style={{background:"rgba(255,255,255,0.15)"}}>🏠 Home</button>
+                <button className="btn btn-outline btn-sm" onClick={()=>{setAdminAuth(false);setAdminPwd("");setView("landing");}}>🔒 Lock & Exit</button>
+              </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginTop:20}}>
               {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Founding",allArr.filter(m=>m.memberType==="founding").length],["Invited",allArr.filter(m=>m.refCode).length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
