@@ -10,9 +10,12 @@ const EMAILJS_TEMPLATE = "template_prggu9e";
 const EMAILJS_PUBLIC   = "Jc6XKqOSgzxuJEs1G";
 const ADMIN_PASSWORD   = "CoFundBills2026@RoyalTech";
 const MONTHLY_CONTRIB  = 10000;
-const CONTRIB_PART     = 2000;   // 1/5th of monthly contribution
-const LOAN_INTEREST    = 0.03;   // 3% per month for regular members
-const INVESTOR_SLOTS   = 10;
+const YEARLY_CONTRIB   = 100000;
+const CONTRIB_PART     = 0.2;    // 1/5th = 20% of any contribution
+const LOAN_INTEREST    = 0.03;   // 3% regular, 2% premium, 1% partner
+const PARTNER_SLOTS    = 10;
+const ADMIN_SHARE      = 0.2;
+const POOL_SHARE       = 0.2;
 const COMPANY          = "CoFundBills Cooperative";
 const TAGLINE          = "Don't face bills alone. Let's co-fund them.";
 const ADDRESS          = "2B, Olawale Cole, Onitiri Avenue, Lekki Phase 1, Lagos, Nigeria.";
@@ -80,7 +83,7 @@ const TC_SECTIONS = [
     items:[
       "Members may apply for a Co-Fund Loan from the CoFundBills Loan Fund Pool.",
       "Loan eligibility and limit are assessed by admin based on the member's network performance — the projected 3-month contribution volume from the member's direct, indirect, and extended invite network.",
-      "Loans attract a flat interest rate of 3% per month for regular members and 2% per month for Investor/Founding members on the outstanding balance.",
+      "Loans attract a flat interest rate of 1% per month for Partner members, 2% per month for Premium members, and 3% per month for Regular members on the outstanding balance.",
       "Loan approval is at the sole discretion of CoFundBills admin. No loan is guaranteed.",
       "Loan repayments are automatically deducted from incoming network credits before those credits are applied to the member's Expendable and Reserve Accounts.",
       "Interest proceeds from loans are distributed monthly to Investor/Founding members in proportion to their share holdings.",
@@ -176,7 +179,7 @@ export default function App() {
   const [loginErr,setLoginErr]       = useState("");
   const [tcAccepted,setTcAccepted]   = useState(false);
   const [showTC,setShowTC]           = useState(false);
-  const [regForm,setRegForm]         = useState({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria"});
+  const [regForm,setRegForm]         = useState({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria",memberType:"regular"});
   const [regErrors,setRegErrors]     = useState({});
   const [cashoutForm,setCashoutForm] = useState({amount:"",type:"expendable",purpose:""});
   const [cashoutErr,setCashoutErr]   = useState("");
@@ -190,7 +193,7 @@ export default function App() {
   // ── Live countdown timer ─────────────────────────────────────
   const [countdown,setCountdown] = useState("");
   useEffect(()=>{
-    if(!currentMember||currentMember.memberType==="founding"||!currentMember.expiresAt) return;
+    if(!currentMember||currentMember.memberType==="partner"||!currentMember.expiresAt) return;
     const tick = ()=>{
       const diff = new Date(currentMember.expiresAt) - new Date();
       if(diff<=0){ setCountdown("EXPIRED"); return; }
@@ -258,7 +261,7 @@ export default function App() {
       email:regForm.email.trim().toLowerCase(), phone:regForm.phone.trim(),
       occupation:regForm.occupation.trim(), state:regForm.state.trim(),
       country:regForm.country, ref_code:urlRef||null,
-      status:"pending", member_type:"regular", link_active:false,
+      status:"pending", member_type:regForm.memberType||"regular", link_active:false,
       expendable:0, reserve:0, total_credited:0, loan_balance:0,
     });
     if(error){ showNote("Registration failed. Please try again.","error"); return; }
@@ -288,43 +291,69 @@ export default function App() {
   };
 
   // ── DISTRIBUTE CREDITS ────────────────────────────────────────
-  const distributeCredits = async (sourceCode, refCode, triggerType="contribution") => {
+  const distributeCredits = async (sourceCode, refCode, contribution, triggerType="contribution") => {
     if(!refCode) return;
     const m = await DB.getMembers();
-    const levels = ["direct","indirect","extended"];
-    let cur = refCode;
-    for(let i=0;i<3;i++){
-      const b = m[cur];
-      if(!b) break;
-      if(!b.linkActive){
-        // Inactive — credit goes to loan pool
-        await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(async()=>{
-          await supabase.from("cfb_pool").update({balance:loanPool+CONTRIB_PART}).eq("id",1);
-        });
-        cur = b.refCode;
-        continue;
+
+    // Helper: credit a member (auto-repay loan first)
+    const creditMember = async (member, amt, level) => {
+      if(!member||!member.linkActive){
+        // Inactive — goes to pool
+        await supabase.rpc("cfb_add_to_pool",{p_amount:amt}).catch(()=>{});
+        return;
       }
-      // Auto-apply to loan repayment first
-      let creditAmt = CONTRIB_PART;
-      if(b.loanBalance > 0){
-        const repay = Math.min(creditAmt, b.loanBalance);
-        await supabase.from("cfb_members").update({loan_balance:b.loanBalance-repay}).eq("link_code",cur);
-        await supabase.from("cfb_loan_payments").insert({link_code:cur,amount:repay,auto:true});
+      let creditAmt = amt;
+      if(member.loanBalance > 0){
+        const repay = Math.min(creditAmt, member.loanBalance);
+        await supabase.from("cfb_members").update({loan_balance:member.loanBalance-repay}).eq("link_code",member.linkCode);
+        await supabase.from("cfb_loan_payments").insert({link_code:member.linkCode,amount:repay,auto:true});
         creditAmt -= repay;
       }
       if(creditAmt > 0){
         const half = creditAmt/2;
-        await supabase.from("cfb_credits").insert({beneficiary_code:cur,source_code:sourceCode,level:levels[i],amount:creditAmt,trigger:triggerType});
-        await supabase.rpc("cfb_credit_member",{p_code:cur,p_amount:creditAmt}).catch(async()=>{
+        await supabase.from("cfb_credits").insert({beneficiary_code:member.linkCode,source_code:sourceCode,level,amount:creditAmt,trigger:triggerType});
+        await supabase.rpc("cfb_credit_member",{p_code:member.linkCode,p_amount:creditAmt}).catch(async()=>{
           await supabase.from("cfb_members").update({
-            expendable:b.expendable+half,
-            reserve:b.reserve+half,
-            total_credited:b.totalCredited+creditAmt,
-          }).eq("link_code",cur);
+            expendable:member.expendable+half,
+            reserve:member.reserve+half,
+            total_credited:member.totalCredited+creditAmt,
+          }).eq("link_code",member.linkCode);
         });
       }
-      cur = b.refCode;
+    };
+
+    const direct   = m[refCode];
+    const indirect = direct  ? m[direct.refCode]   : null;
+    const circuitous = indirect ? m[indirect.refCode] : null;
+
+    const isRoot = (mem) => mem && (mem.memberType==="partner"||mem.memberType==="admin");
+
+    if(isRoot(direct)){
+      // Root at direct: takes 3 parts, no indirect/circuitous
+      await creditMember(direct, contribution*0.6, "direct");
+      await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*POOL_SHARE}).catch(()=>{});
+    } else if(direct && isRoot(indirect)){
+      // Invited at direct, Root at indirect: direct gets 1 part, root gets 2 parts, no circuitous
+      await creditMember(direct,    contribution*0.2, "direct");
+      await creditMember(indirect,  contribution*0.4, "indirect");
+      await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*POOL_SHARE}).catch(()=>{});
+    } else if(direct && indirect && isRoot(circuitous)){
+      // Invited at direct, Invited at indirect, Root at circuitous: each gets 1 part
+      await creditMember(direct,     contribution*0.2, "direct");
+      await creditMember(indirect,   contribution*0.2, "indirect");
+      await creditMember(circuitous, contribution*0.2, "circuitous");
+      await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*POOL_SHARE}).catch(()=>{});
+    } else {
+      // All invited members in chain
+      if(direct)     await creditMember(direct,     contribution*0.2, "direct");
+      else await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*0.2}).catch(()=>{});
+      if(indirect)   await creditMember(indirect,   contribution*0.2, "indirect");
+      else await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*0.2}).catch(()=>{});
+      if(circuitous) await creditMember(circuitous, contribution*0.2, "circuitous");
+      else await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*0.2}).catch(()=>{});
     }
+    // Admin operations share always goes to pool (admin handles separately)
+    await supabase.rpc("cfb_add_to_pool",{p_amount:contribution*ADMIN_SHARE}).catch(()=>{});
   };
 
   // ── ADMIN: ACTIVATE MEMBER ────────────────────────────────────
@@ -334,12 +363,13 @@ export default function App() {
     const expires = addMonths(now,1);
     await supabase.from("cfb_members").update({status:"active",link_active:true,activated_at:now,expires_at:expires}).eq("link_code",code);
     // Credit chain for activation
-    await distributeCredits(code, m.refCode, "activation");
+    const contribAmt = m.memberType==="premium"?YEARLY_CONTRIB:MONTHLY_CONTRIB;
+    await distributeCredits(code, m.refCode, contribAmt, "activation");
     // Admin pool share + loan pool
     await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(()=>{});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Forward to: ${m.fullName} | ${m.email} — CoFundBills Activated`,
-      message:`Dear ${m.fullName},\n\nYour CoFundBills Cooperative link is now ACTIVE!\n\nYour Unique Link Code: ${code}\nYour Co-Fund Invite Link: https://cofundbills.vercel.app?ref=${code}\n\nShare your link with everyone. Every monthly contribution from your network earns you ₦2,000 per contributor — up to 3 generations deep.\n\nRemember: renew your ₦10,000 monthly contribution before the end of each month to stay active and keep earning.\n\n"${TAGLINE}"\n\n${COMPANY}\n${ADDRESS}\n${EMAIL_ADDR}`});
+      message:`Dear ${m.fullName},\n\nYour CoFundBills Cooperative link is now ACTIVE!\n\nYour Unique Link Code: ${code}\nYour Co-Fund Invite Link: https://cofundbills.vercel.app?ref=${code}\n\nShare your Co-Fund Invite Link with everyone. Every contribution from your network earns you credits — up to 3 levels deep (Direct, Indirect, and Circuitous).\n\nRemember: renew your ₦10,000 monthly contribution before the end of each month to stay active and keep earning.\n\n"${TAGLINE}"\n\n${COMPANY}\n${ADDRESS}\n${EMAIL_ADDR}`});
     await loadMembers();
     showNote(`${m.fullName} activated successfully.`);
   };
@@ -350,7 +380,8 @@ export default function App() {
     const now = new Date().toISOString();
     const expires = addMonths(now,1);
     await supabase.from("cfb_members").update({status:"active",link_active:true,expires_at:expires}).eq("link_code",code);
-    await distributeCredits(code, m.refCode, "renewal");
+    const contribAmtR = m.memberType==="premium"?YEARLY_CONTRIB:MONTHLY_CONTRIB;
+    await distributeCredits(code, m.refCode, contribAmtR, "renewal");
     await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(()=>{});
     await loadMembers();
     showNote(`${m.fullName} renewed for 1 month.`);
@@ -414,8 +445,10 @@ export default function App() {
 
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
-    const effectiveRate = m.memberType==="founding" ? 0.02 : LOAN_INTEREST;
-    await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimit});
+    const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="premium"?0.02:LOAN_INTEREST;
+    const monthsProjection = m.memberType==="partner"?12:m.memberType==="premium"?6:3;
+    const loanLimitFinal = (direct+indirect+extended)*MONTHLY_CONTRIB*monthsProjection*0.2*3; // 3 levels × 20%
+    await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimitFinal});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Co-Fund Loan Request — ${m.fullName}`,
       message:`Loan request:\nName: ${m.fullName}\nCode: ${m.linkCode}\nAmount: ${fmtNGN(amt)}\nBill Type: ${loanForm.billType}\nPurpose: ${loanForm.purpose}\nNetwork: Direct(${direct}), Indirect(${indirect}), Extended(${extended})\nProjected 3-month limit: ${fmtNGN(loanLimit)}`});
@@ -449,7 +482,8 @@ export default function App() {
     if(!m) return;
     const amt = Number(loan.amount);
     const approvedRate = Number(loan.interest_rate)||LOAN_INTEREST;
-    const totalRepay = amt + (amt*approvedRate*3);
+    const approvedMonths = members[loan.link_code]?.memberType==="partner"?12:members[loan.link_code]?.memberType==="premium"?6:3;
+    const totalRepay = amt + (amt*approvedRate*approvedMonths);
     await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString(),total_repayable:totalRepay}).eq("id",loan.id);
     await supabase.from("cfb_members").update({loan_balance:m.loanBalance+totalRepay}).eq("link_code",loan.link_code);
     await supabase.rpc("cfb_add_to_pool",{p_amount:-amt}).catch(()=>{});
@@ -686,7 +720,7 @@ export default function App() {
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 3%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["1%–3%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
@@ -856,7 +890,7 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
                   {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and circuitous invite chain. With a well developed network as with the illustration above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
-                  {icon:"💰",title:"Loan Rate",desc:"3% per month for regular members, 2% per month for Investors — fair, transparent, and fully disclosed upfront."},
+                  {icon:"💰",title:"Loan Rate",desc:"1% per month for Partners, 2% per month for Premium members, 3% per month for Regular members — fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
                   {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 2% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
                 ].map(c=>(
@@ -918,6 +952,13 @@ export default function App() {
               </div>
             ))}
             <div className="field">
+              <label>Membership Type</label>
+              <select value={regForm.memberType||"regular"} onChange={e=>setRegForm({...regForm,memberType:e.target.value})}>
+                <option value="regular">Regular Member — ₦10,000/month</option>
+                <option value="premium">Premium Member — ₦100,000/year</option>
+              </select>
+            </div>
+            <div className="field">
               <label>Country</label>
               <select value={regForm.country} onChange={e=>setRegForm({...regForm,country:e.target.value})}>
                 {["Nigeria","Ghana","Kenya","United Kingdom","United States","Canada","Other"].map(c=><option key={c}>{c}</option>)}
@@ -965,8 +1006,8 @@ export default function App() {
                   <span className={`status-pill ${currentMember.status==="active"?"pill-active":currentMember.status==="inactive"?"pill-inactive":"pill-pending"}`}>
                     {currentMember.status==="active"?"✅ Active":currentMember.status==="inactive"?"⛔ Inactive":"⏳ Pending"}
                   </span>
-                  {currentMember.memberType==="founding"&&<span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>🏅 Founding Member</span>}
-                  {currentMember.expiresAt&&currentMember.memberType!=="founding"&&(
+                  {currentMember.memberType==="partner"&&<span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>🏅 Founding Member</span>}
+                  {currentMember.expiresAt&&currentMember.memberType!=="partner"&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:countdown==="EXPIRED"?"rgba(159,18,57,0.25)":
                         countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
@@ -1011,7 +1052,7 @@ export default function App() {
 
           <div className="portal-tabs">
             {[["home","🏠"],["overview","Overview"],["link","My Invite Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
-              ...( currentMember.memberType!=="founding"?[["renew","Renew"]]:[] )
+              ...( currentMember.memberType!=="partner"?[["renew","Renew"]]:[] )
             ].map(([id,label])=>(
               <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>{
                 setPortalTab(id);
@@ -1036,8 +1077,8 @@ export default function App() {
           {portalTab==="overview" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
-              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="founding"?"Founding Member 🏅":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
-              ...(currentMember.memberType!=="founding"&&currentMember.expiresAt?[["Link Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="partner"?"Partner / Executive Member 🏅":currentMember.memberType==="premium"?"Premium Member ⭐":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
+              ...(currentMember.memberType!=="partner"&&currentMember.expiresAt?[["Link Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
               .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
                   <span style={{color:MUTED}}>{k}</span>
@@ -1173,19 +1214,21 @@ export default function App() {
                       </div>
                       {(()=>{
                         const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
-                        const rate=currentMember.memberType==="founding"?2:3;
-                        const interest=total3mo*rate/100*3;
+                        const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="premium"?2:3;
+                        const loanMonths=currentMember.memberType==="partner"?12:currentMember.memberType==="premium"?6:3;
+                        const loanLimitCalc=total3mo/3*loanMonths;
+                        const interest=loanLimitCalc*rate/100*loanMonths;
                         return total3mo>0?(
                           <div style={{background:WHITE,borderRadius:8,padding:14}}>
                             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,fontSize:13}}>
                               <div style={{color:MUTED}}>3-Month Network Projection:</div>
                               <div style={{fontWeight:700,color:NAVY,textAlign:"right"}}>{fmtNGN(total3mo)}</div>
-                              <div style={{color:MUTED}}>Estimated Loan Limit:</div>
-                              <div style={{fontWeight:900,color:BLUE,fontSize:16,textAlign:"right"}}>{fmtNGN(total3mo)}</div>
+                              <div style={{color:MUTED}}>Estimated Loan Limit ({loanMonths}-month):</div>
+                              <div style={{fontWeight:900,color:BLUE,fontSize:16,textAlign:"right"}}>{fmtNGN(loanLimitCalc)}</div>
                               <div style={{color:MUTED}}>Interest Rate:</div>
                               <div style={{fontWeight:700,color:NAVY,textAlign:"right"}}>{rate}% per month</div>
-                              <div style={{color:MUTED}}>Total Repayable (3 months):</div>
-                              <div style={{fontWeight:700,color:ERROR,textAlign:"right"}}>{fmtNGN(total3mo+interest)}</div>
+                              <div style={{color:MUTED}}>Total Repayable ({loanMonths} months):</div>
+                              <div style={{fontWeight:700,color:ERROR,textAlign:"right"}}>{fmtNGN(loanLimitCalc+interest)}</div>
                             </div>
                           </div>
                         ):null;
@@ -1194,7 +1237,7 @@ export default function App() {
 
                     <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
                       Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
-                      Interest: <strong>{currentMember.memberType==="founding"?"2% per month (Investor Rate)":"3% per month"}</strong> on outstanding balance.<br/>
+                      Interest: <strong>{currentMember.memberType==="partner"?"1% per month (Partner Rate)":currentMember.memberType==="premium"?"2% per month (Premium Rate)":"3% per month (Regular Rate)"}</strong> on outstanding balance.<br/>
                       Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
                     </div>
                     <div className="field">
@@ -1236,11 +1279,11 @@ export default function App() {
             </div>
           )}
 
-          {portalTab==="renew" && currentMember.memberType!=="founding" && (
+          {portalTab==="renew" && currentMember.memberType!=="partner" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Invite Link</div>
               <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
-                Monthly renewal: <strong style={{color:NAVY}}>₦10,000</strong><br/>
+                Renewal fee: <strong style={{color:NAVY}}>{currentMember.memberType==="premium"?"₦100,000 / year":"₦10,000 / month"}</strong><br/>
                 Renew before expiry to keep your link active and all credit channels earning.<br/>
                 <strong>Credits earned during inactive periods are permanently lost and channelled to the Loan Fund Pool.</strong>
               </div>
@@ -1261,7 +1304,7 @@ export default function App() {
               <div className="info-box">
                 <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Renewal Payment Details</div>
                 <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
-                  Amount: ₦10,000 | Reference: {currentMember.linkCode} — RENEWAL<br/>
+                  Amount: {currentMember.memberType==="premium"?"₦100,000":"₦10,000"} | Reference: {currentMember.linkCode} — RENEWAL<br/>
                   Royal Tech Partnership & Investment Limited<br/>
                   Zenith Bank — 1016621205<br/>
                   WhatsApp: +234 909 999 4816
@@ -1295,7 +1338,7 @@ export default function App() {
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginTop:20}}>
-              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Founding",allArr.filter(m=>m.memberType==="founding").length],["Invited",allArr.filter(m=>m.refCode).length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
+              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Founding",allArr.filter(m=>m.memberType==="partner").length],["Invited",allArr.filter(m=>m.refCode).length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
                 <div key={l} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:12}}>
                   <div style={{fontSize:18,fontWeight:900}}>{v}</div>
                   <div style={{fontSize:11,opacity:.7,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
@@ -1305,7 +1348,7 @@ export default function App() {
           </div>
 
           <div className="admin-tabs">
-            {[["members","All Members"],["pending","Pending Activation"],["renewals","Pending Renewal"],["cashouts","Cashout Queue"],["loans","Loan Queue"],["investors","Investors"]].map(([id,label])=>(
+            {[["members","All Members"],["pending","Pending Activation"],["renewals","Pending Renewal"],["cashouts","Cashout Queue"],["loans","Loan Queue"],["investors","Partners & Investors"]].map(([id,label])=>(
               <button key={id} className={`admin-tab${adminTab===id?" active":""}`}
                 onClick={async()=>{
                   setAdminTab(id);
@@ -1327,13 +1370,13 @@ export default function App() {
               {allArr.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No members yet.</div>:allArr.map(m=>(
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 1fr 80px",gap:12,alignItems:"center"}}>
                   <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
-                  <div><span style={{fontSize:11,background:m.memberType==="founding"?GOLD_LIGHT:BLUE_LIGHT,color:m.memberType==="founding"?GOLD:BLUE,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="founding"?"Founding":"Regular"}</span></div>
+                  <div><span style={{fontSize:11,background:m.memberType==="partner"?GOLD_LIGHT:BLUE_LIGHT,color:m.memberType==="partner"?GOLD:BLUE,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="partner"?"Partner":m.memberType==="premium"?"Premium":"Regular"}</span></div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.expendable)}</div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.reserve)}</div>
                   <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
                   <div>
                     <span className={`status-pill ${m.status==="active"?"pill-active":m.status==="inactive"?"pill-inactive":"pill-pending"}`}>{m.status}</span>
-                    {m.status==="active"&&m.memberType!=="founding"&&(
+                    {m.status==="active"&&m.memberType!=="partner"&&(
                       <button style={{display:"block",marginTop:4,fontSize:10,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer"}} onClick={()=>handleDeactivate(m.linkCode)}>Deactivate</button>
                     )}
                   </div>
@@ -1346,12 +1389,13 @@ export default function App() {
           {/* Pending Activation */}
           {adminTab==="pending" && (
             <div className="table-wrap">
-              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 160px",gap:12}}>
-                <span>Member</span><span>Occupation</span><span>State</span><span>Referred By</span><span>Action</span>
+              <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 160px",gap:12}}>
+                <span>Member</span><span>Type</span><span>Occupation</span><span>State</span><span>Referred By</span><span>Action</span>
               </div>
               {pendingArr.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No pending activations.</div>:pendingArr.map(m=>(
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 160px",gap:12,alignItems:"center"}}>
                   <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:MUTED}}>{m.phone}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
+                  <div><span style={{fontSize:11,background:m.memberType==="premium"?GOLD_LIGHT:BLUE_LIGHT,color:m.memberType==="premium"?GOLD:BLUE,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="premium"?"Premium":"Regular"}</span></div>
                   <div style={{fontSize:12}}>{m.occupation}</div>
                   <div style={{fontSize:12}}>{m.state}</div>
                   <div style={{fontSize:12,color:MUTED}}>{m.refCode||"Direct"}</div>
@@ -1447,16 +1491,16 @@ export default function App() {
               <div className="card" style={{marginBottom:16}}>
                 <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:8}}>Founding / Investor Members</div>
                 <div style={{fontSize:13,color:MUTED,lineHeight:1.8}}>
-                  Founding members hold perpetually active Co-Fund links with no monthly contribution. They share monthly loan interest proceeds equally across all investor slots. Each slot represents 1/{INVESTOR_SLOTS}th of total monthly interest collected.
+                  Founding members hold perpetually active Co-Fund links with no monthly contribution. They share monthly loan interest proceeds equally across all investor slots. Each slot represents 1/{PARTNER_SLOTS}th of total monthly interest collected.
                 </div>
               </div>
               <div className="table-wrap">
                 <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
                   <span>Name</span><span>Link Code</span><span>Expendable</span><span>Reserve</span><span>Total Credited</span>
                 </div>
-                {allArr.filter(m=>m.memberType==="founding").length===0?
-                  <div style={{padding:32,textAlign:"center",color:MUTED}}>No founding members. Insert them directly in Supabase with member_type = 'founding'.</div>:
-                  allArr.filter(m=>m.memberType==="founding").map(m=>(
+                {allArr.filter(m=>m.memberType==="partner").length===0?
+                  <div style={{padding:32,textAlign:"center",color:MUTED}}>No founding members. Insert them directly in Supabase with member_type = 'partner'.</div>:
+                  allArr.filter(m=>m.memberType==="partner").map(m=>(
                   <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
                     <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div></div>
                     <div style={{fontSize:12,color:BLUE,fontWeight:600}}>{m.linkCode}</div>
