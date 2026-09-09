@@ -202,7 +202,8 @@ export default function App() {
   // ── Live countdown timer ─────────────────────────────────────
   const [countdown,setCountdown] = useState("");
   useEffect(()=>{
-    if(!currentMember||currentMember.memberType==="partner"||!currentMember.expiresAt) return;
+    if(!currentMember||currentMember.memberType==="admin"||currentMember.memberType==="partner") return;
+    if(!currentMember.expiresAt) return;
     const tick = ()=>{
       const diff = new Date(currentMember.expiresAt) - new Date();
       if(diff<=0){ setCountdown("EXPIRED"); return; }
@@ -384,7 +385,7 @@ export default function App() {
   const handleActivate = async (code) => {
     const m = members[code];
     const now = new Date().toISOString();
-    const expires = addMonths(now,1);
+    const expires = m.memberType==="premium" ? addMonths(now,12) : m.memberType==="partner"||m.memberType==="admin" ? null : addMonths(now,1);
     await supabase.from("cfb_members").update({status:"active",link_active:true,activated_at:now,expires_at:expires}).eq("link_code",code);
     // Credit chain for activation
     const contribAmt = m.memberType==="premium"?YEARLY_CONTRIB:MONTHLY_CONTRIB;
@@ -402,7 +403,7 @@ export default function App() {
   const handleRenew = async (code) => {
     const m = members[code];
     const now = new Date().toISOString();
-    const expires = addMonths(now,1);
+    const expires = m.memberType==="premium" ? addMonths(now,12) : addMonths(now,1);
     await supabase.from("cfb_members").update({status:"active",link_active:true,expires_at:expires}).eq("link_code",code);
     const contribAmtR = m.memberType==="premium"?YEARLY_CONTRIB:MONTHLY_CONTRIB;
     await distributeCredits(code, m.refCode, contribAmtR, "renewal");
@@ -1075,13 +1076,28 @@ export default function App() {
                       {getTier(currentMember.memberType).badge} {currentMember.memberType==="admin"?"Admin":"Partner / Executive Member"}
                     </span>
                   )}
-                  {currentMember.expiresAt&&currentMember.memberType!=="partner"&&(
+                  {/* Timer — Regular (monthly) and Premium (yearly) only */}
+                  {currentMember.memberType==="admin"&&(
+                    <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
+                      background:"rgba(201,168,76,0.2)",borderRadius:8,padding:"6px 14px"}}>
+                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>🛡️ Permanent Admin Status</span>
+                    </div>
+                  )}
+                  {currentMember.memberType==="partner"&&(
+                    <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
+                      background:"rgba(201,168,76,0.2)",borderRadius:8,padding:"6px 14px"}}>
+                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>👑 Partner — Contract Period Active</span>
+                    </div>
+                  )}
+                  {(currentMember.memberType==="regular"||currentMember.memberType==="premium")&&currentMember.expiresAt&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:countdown==="EXPIRED"?"rgba(159,18,57,0.25)":
                         countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
                         "rgba(234,179,8,0.25)":"rgba(255,255,255,0.12)",
                       borderRadius:8,padding:"6px 14px"}}>
-                      <span style={{fontSize:11,opacity:.75}}>Link expires in:</span>
+                      <span style={{fontSize:11,opacity:.75}}>
+                        {currentMember.memberType==="premium"?"Yearly membership expires in:":"Monthly link expires in:"}
+                      </span>
                       <span style={{fontSize:13,fontWeight:900,letterSpacing:1,
                         color:countdown==="EXPIRED"?"#FCA5A5":
                           countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
@@ -1120,7 +1136,7 @@ export default function App() {
 
           <div className="portal-tabs">
             {[["home","🏠"],["overview","Overview"],["link","My Invite Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
-              ...( currentMember.memberType!=="partner"&&currentMember.memberType!=="admin"?[["renew","Renew"]]:[] )
+              ...( currentMember.memberType==="regular"||currentMember.memberType==="premium"?[["renew","Renew"]]:[] )
             ].map(([id,label])=>(
               <button key={id}
                 className={`portal-tab${portalTab===id?" active":""}`}
@@ -1149,7 +1165,7 @@ export default function App() {
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
               {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?"Admin / Root Participant":currentMember.memberType==="partner"?"Partner / Executive Member":currentMember.memberType==="premium"?"Premium Member":"Regular Member")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
-              ...(currentMember.memberType!=="partner"&&currentMember.expiresAt?[["Link Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
+              ...(currentMember.memberType==="admin"?[["Status","Permanent — No Expiry"]]:currentMember.memberType==="partner"?[["Status","Active Contract Period"],["Note","Enlistment/Dis-enlistment by Admin only"]]:currentMember.expiresAt?[["Membership Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
               .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
                   <span style={{color:MUTED}}>{k}</span>
@@ -1354,7 +1370,7 @@ export default function App() {
             <div className="card">
               <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Invite Link</div>
               <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
-                Renewal fee: <strong style={{color:NAVY}}>{currentMember.memberType==="premium"?"₦100,000 / year":"₦10,000 / month"}</strong><br/>
+                Renewal fee: <strong style={{color:getTier(currentMember.memberType).bg}}>{currentMember.memberType==="premium"?"₦100,000 / year":"₦10,000 / month"}</strong><br/>
                 Renew before expiry to keep your link active and all credit channels earning.<br/>
                 <strong>Credits earned during inactive periods are permanently lost and channelled to the Loan Fund Pool.</strong>
               </div>
@@ -1449,7 +1465,7 @@ export default function App() {
                   <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
                   <div>
                     <span className={`status-pill ${m.status==="active"?"pill-active":m.status==="inactive"?"pill-inactive":"pill-pending"}`}>{m.status}</span>
-                    {m.status==="active"&&m.memberType!=="partner"&&(
+                    {m.status==="active"&&m.memberType==="regular"&&(
                       <button style={{display:"block",marginTop:4,fontSize:10,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer"}} onClick={()=>handleDeactivate(m.linkCode)}>Deactivate</button>
                     )}
                   </div>
