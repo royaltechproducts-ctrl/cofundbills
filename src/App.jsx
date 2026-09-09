@@ -921,10 +921,13 @@ export default function App() {
               </select>
             </div>
             <div className="info-box">
-              <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>After Registration — Activate Your Co-Fund Link:</div>
-              <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
-                Pay <strong>₦10,000</strong> first monthly contribution to activate.<br/>
-                Account Name: <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund Link:</div>
+              <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
+                Pay <strong>₦10,000</strong> first monthly contribution to activate your membership status.
+              </div>
+              <div style={{background:WHITE,border:`1.5px solid ${GOLD}`,borderRadius:8,
+                padding:12,fontSize:13,color:NAVY,lineHeight:1.9}}>
+                <strong>Royal Tech Partnership & Investment Limited</strong><br/>
                 Account Number: <strong>1016621205</strong> | Bank: <strong>Zenith Bank</strong><br/>
                 Reference: Your name + CFB<br/>
                 Then WhatsApp: <strong>+234 909 999 4816</strong>
@@ -1514,10 +1517,13 @@ export default function App() {
             <div style={{fontSize:14,color:MUTED,margin:"12px 0 20px",lineHeight:1.7}}>Registration successful, <strong>{modal.name}</strong>!<br/>Your Co-Fund Link Code is:</div>
             <div style={{background:BLUE_LIGHT,border:`2px solid ${BLUE}`,borderRadius:10,padding:16,fontSize:18,fontWeight:900,color:NAVY,marginBottom:20,letterSpacing:2}}>{modal.linkCode}</div>
             <div className="info-box" style={{textAlign:"left"}}>
-              <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Next Step — Activate Your Co-Fund Link:</div>
-              <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
-                Pay <strong>₦10,000</strong> first monthly contribution to activate.<br/>
-                Royal Tech Partnership & Investment Limited<br/>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>Next Step — Activate Your Co-Fund Link:</div>
+              <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
+                Pay <strong>₦10,000</strong> first monthly contribution to activate your membership status.
+              </div>
+              <div style={{background:WHITE,border:`1.5px solid ${GOLD}`,borderRadius:8,
+                padding:12,fontSize:13,color:NAVY,lineHeight:1.9}}>
+                <strong>Royal Tech Partnership & Investment Limited</strong><br/>
                 Zenith Bank — 1016621205<br/>
                 Reference: <strong>{modal.linkCode}</strong><br/>
                 Then WhatsApp: <strong>+234 909 999 4816</strong>
