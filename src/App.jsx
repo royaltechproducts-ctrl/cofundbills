@@ -11,7 +11,7 @@ const EMAILJS_PUBLIC   = "Jc6XKqOSgzxuJEs1G";
 const ADMIN_PASSWORD   = "CoFundBills2026@RoyalTech";
 const MONTHLY_CONTRIB  = 10000;
 const CONTRIB_PART     = 2000;   // 1/5th of monthly contribution
-const LOAN_INTEREST    = 0.05;   // 5% per month
+const LOAN_INTEREST    = 0.03;   // 3% per month for regular members
 const INVESTOR_SLOTS   = 10;
 const COMPANY          = "CoFundBills Cooperative";
 const TAGLINE          = "Don't face bills alone. Let's co-fund them.";
@@ -80,7 +80,7 @@ const TC_SECTIONS = [
     items:[
       "Members may apply for a Co-Fund Loan from the CoFundBills Loan Fund Pool.",
       "Loan eligibility and limit are assessed by admin based on the member's network performance — the projected 3-month contribution volume from the member's direct, indirect, and extended invite network.",
-      "Loans attract a flat interest rate of 5% per month on the outstanding balance.",
+      "Loans attract a flat interest rate of 3% per month for regular members and 2% per month for Investor/Founding members on the outstanding balance.",
       "Loan approval is at the sole discretion of CoFundBills admin. No loan is guaranteed.",
       "Loan repayments are automatically deducted from incoming network credits before those credits are applied to the member's Expendable and Reserve Accounts.",
       "Interest proceeds from loans are distributed monthly to Investor/Founding members in proportion to their share holdings.",
@@ -414,7 +414,7 @@ export default function App() {
 
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
-    const effectiveRate = m.memberType==="founding" ? 0.03 : LOAN_INTEREST;
+    const effectiveRate = m.memberType==="founding" ? 0.02 : LOAN_INTEREST;
     await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimit});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Co-Fund Loan Request — ${m.fullName}`,
@@ -683,7 +683,7 @@ export default function App() {
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 5%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["Enjoy 3%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
@@ -853,9 +853,9 @@ export default function App() {
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
                   {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and extended invite chain. With a matured network as illustrated above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
-                  {icon:"💰",title:"Loan Rate",desc:"5% per month on outstanding balance — fair, transparent, and fully disclosed upfront."},
+                  {icon:"💰",title:"Loan Rate",desc:"3% per month for regular members, 2% per month for Investors — fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
-                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 3% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
+                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 2% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
                 ].map(c=>(
                   <div key={c.title} className="card" style={{padding:20}}>
                     <div style={{fontSize:28,marginBottom:8}}>{c.icon}</div>
@@ -1170,7 +1170,7 @@ export default function App() {
                       </div>
                       {(()=>{
                         const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
-                        const rate=currentMember.memberType==="founding"?3:5;
+                        const rate=currentMember.memberType==="founding"?2:3;
                         const interest=total3mo*rate/100*3;
                         return total3mo>0?(
                           <div style={{background:WHITE,borderRadius:8,padding:14}}>
@@ -1191,7 +1191,7 @@ export default function App() {
 
                     <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
                       Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
-                      Interest: <strong>{currentMember.memberType==="founding"?"3% per month (Investor Rate)":"5% per month"}</strong> on outstanding balance.<br/>
+                      Interest: <strong>{currentMember.memberType==="founding"?"2% per month (Investor Rate)":"3% per month"}</strong> on outstanding balance.<br/>
                       Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
                     </div>
                     <div className="field">
