@@ -855,7 +855,7 @@ export default function App() {
               <p className="section-sub">Face a big bill? Your network is your credit score.</p>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
-                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and extended invite chain. With a matured network as illustrated above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
+                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and circuitous invite chain. With a well developed network as with the illustration above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
                   {icon:"💰",title:"Loan Rate",desc:"3% per month for regular members, 2% per month for Investors — fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
                   {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 2% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
