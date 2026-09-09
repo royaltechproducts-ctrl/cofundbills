@@ -1096,7 +1096,7 @@ export default function App() {
                         "rgba(234,179,8,0.25)":"rgba(255,255,255,0.12)",
                       borderRadius:8,padding:"6px 14px"}}>
                       <span style={{fontSize:11,opacity:.75}}>
-                        {currentMember.memberType==="premium"?"Yearly membership expires in:":"Monthly link expires in:"}
+                        {currentMember.memberType==="premium"?"Yearly contribution expires in:":"Monthly contribution expires in:"}
                       </span>
                       <span style={{fontSize:13,fontWeight:900,letterSpacing:1,
                         color:countdown==="EXPIRED"?"#FCA5A5":
@@ -1136,7 +1136,7 @@ export default function App() {
 
           <div className="portal-tabs">
             {[["home","🏠"],["overview","Overview"],["link","My Invite Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
-              ...( currentMember.memberType==="regular"||currentMember.memberType==="premium"?[["renew","Renew"]]:[] )
+              ...( currentMember.memberType==="regular"?[["renew","Renew Monthly Contribution"]]:currentMember.memberType==="premium"?[["renew","Renew Yearly Contribution"]]:[] )
             ].map(([id,label])=>(
               <button key={id}
                 className={`portal-tab${portalTab===id?" active":""}`}
@@ -1368,21 +1368,23 @@ export default function App() {
 
           {portalTab==="renew" && currentMember.memberType!=="partner" && (
             <div className="card">
-              <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Invite Link</div>
+              <div style={{fontWeight:800,fontSize:15,color:getTier(currentMember.memberType).bg,marginBottom:12}}>
+                {currentMember.memberType==="premium"?"Renew Your Yearly Contribution":"Renew Your Monthly Contribution"}
+              </div>
               <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
                 Renewal fee: <strong style={{color:getTier(currentMember.memberType).bg}}>{currentMember.memberType==="premium"?"₦100,000 / year":"₦10,000 / month"}</strong><br/>
-                Renew before expiry to keep your link active and all credit channels earning.<br/>
-                <strong>Credits earned during inactive periods are permanently lost and channelled to the Loan Fund Pool.</strong>
+                Renew before your current contribution time-out to keep your membership status active and all credit channels earning secured.<br/>
+                <strong>Credits earned during inactive status periods are permanently lost and channelled to the Loan Fund Pool.</strong>
               </div>
               {currentMember.expiresAt&&(
                 <div style={{background:getTier(currentMember?.memberType||"regular").light,borderRadius:8,padding:12,fontSize:13,color:DARK,marginBottom:16}}>
-                  <div>Expiry date: <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
+                  <div>{currentMember.memberType==="premium"?"Yearly contribution expires:":"Monthly contribution expires:"} <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
                   <div style={{marginTop:6,display:"flex",alignItems:"center",gap:8}}>
                     <span>Time remaining:</span>
                     <span style={{fontWeight:900,fontSize:15,color:
                       countdown==="EXPIRED"?ERROR:
                       countdown.startsWith("0d")||countdown.startsWith("1d")||countdown.startsWith("2d")?
-                      "#92400E":NAVY}}>
+                      "#92400E":getTier(currentMember.memberType).bg}}>
                       ⏱ {countdown||"—"}
                     </span>
                   </div>
@@ -1391,7 +1393,7 @@ export default function App() {
               <div className="info-box">
                 <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Renewal Payment Details</div>
                 <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
-                  Amount: {currentMember.memberType==="premium"?"₦100,000":"₦10,000"} | Reference: {currentMember.linkCode} — RENEWAL<br/>
+                  Amount: {currentMember.memberType==="premium"?"₦100,000 (Yearly Contribution)":"₦10,000 (Monthly Contribution)"} | Reference: {currentMember.linkCode} — RENEWAL<br/>
                   Royal Tech Partnership & Investment Limited<br/>
                   Zenith Bank — 1016621205<br/>
                   WhatsApp: +234 909 999 4816
