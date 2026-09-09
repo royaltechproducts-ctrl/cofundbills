@@ -36,6 +36,15 @@ const DARK       = "#1A1A1A";
 const MUTED      = "#6B7280";
 const ERROR      = "#9F1239";
 
+// ── Tier Colours ─────────────────────────────────────────────
+const TIER = {
+  admin:   { bg:"#0B6E4F", bgDark:"#084F38", light:"#E6F4EF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Forest Green", badge:"🛡️" },
+  partner: { bg:"#4A0E8F", bgDark:"#360A6A", light:"#F0E8FF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Partner",      badge:"👑" },
+  premium: { bg:"#8B5E3C", bgDark:"#6B4729", light:"#F5EDE4", accent:"#D4A96A", accentLight:"#FDF3E7", text:"Premium",      badge:"⭐" },
+  regular: { bg:"#1A4F8A", bgDark:"#163F70", light:"#E8F0FA", accent:"#F97316", accentLight:"#FFF3E8", text:"Regular",      badge:"🤝" },
+};
+const getTier = (type) => TIER[type] || TIER.regular;
+
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── HELPERS ────────────────────────────────────────────────────
@@ -1050,7 +1059,9 @@ export default function App() {
       {/* PORTAL */}
       {view==="portal" && currentMember && (
         <div className="portal-wrap">
-          <div className="portal-header">
+          <div className="portal-header" style={{background:`linear-gradient(135deg,${getTier(currentMember.memberType).bgDark},${getTier(currentMember.memberType).bg})`}}>
+            {/* Tier colour streak at top */}
+            <div style={{height:4,background:getTier(currentMember.memberType).accent,borderRadius:"12px 12px 0 0",margin:"-28px -28px 20px -28px"}}/>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",flexWrap:"wrap",gap:12}}>
               <div>
                 <div style={{fontWeight:900,fontSize:22}}>{currentMember.fullName}</div>
@@ -1059,7 +1070,11 @@ export default function App() {
                   <span className={`status-pill ${currentMember.status==="active"?"pill-active":currentMember.status==="inactive"?"pill-inactive":"pill-pending"}`}>
                     {currentMember.status==="active"?"✅ Active":currentMember.status==="inactive"?"⛔ Inactive":"⏳ Pending"}
                   </span>
-                  {currentMember.memberType==="partner"&&<span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>🏅 Founding Member</span>}
+                  {(currentMember.memberType==="partner"||currentMember.memberType==="admin")&&(
+                    <span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>
+                      {getTier(currentMember.memberType).badge} {currentMember.memberType==="admin"?"Admin":"Partner / Executive Member"}
+                    </span>
+                  )}
                   {currentMember.expiresAt&&currentMember.memberType!=="partner"&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:countdown==="EXPIRED"?"rgba(159,18,57,0.25)":
@@ -1085,7 +1100,7 @@ export default function App() {
               <button className="btn btn-outline btn-sm" onClick={()=>{setCurrentMember(null);setView("landing");}}>Log Out</button>
             </div>
             <div className="balance-grid">
-              <div className="balance-card">
+              <div className="balance-card" style={{borderTop:`3px solid ${getTier(currentMember.memberType).accent}`}}>
                 <div className="balance-label">💸 Expendable</div>
                 <div className="balance-val">{fmtNGN(currentMember.expendable)}</div>
                 <div style={{fontSize:11,opacity:.65,marginTop:2}}>Available for cashout</div>
@@ -1105,9 +1120,12 @@ export default function App() {
 
           <div className="portal-tabs">
             {[["home","🏠"],["overview","Overview"],["link","My Invite Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
-              ...( currentMember.memberType!=="partner"?[["renew","Renew"]]:[] )
+              ...( currentMember.memberType!=="partner"&&currentMember.memberType!=="admin"?[["renew","Renew"]]:[] )
             ].map(([id,label])=>(
-              <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>{
+              <button key={id}
+                className={`portal-tab${portalTab===id?" active":""}`}
+                style={portalTab===id?{background:getTier(currentMember.memberType).bg,borderColor:getTier(currentMember.memberType).bg,color:WHITE}:{}}
+                onClick={()=>{
                 setPortalTab(id);
                 if(id==="loan"&&currentMember){
                   const {direct,indirect,extended}=getNetworkCounts(currentMember.linkCode);
@@ -1130,7 +1148,7 @@ export default function App() {
           {portalTab==="overview" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
-              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",currentMember.memberType==="partner"?"Partner / Executive Member 🏅":currentMember.memberType==="premium"?"Premium Member ⭐":"Regular Member"],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?"Admin / Root Participant":currentMember.memberType==="partner"?"Partner / Executive Member":currentMember.memberType==="premium"?"Premium Member":"Regular Member")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
               ...(currentMember.memberType!=="partner"&&currentMember.expiresAt?[["Link Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
               .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
@@ -1157,7 +1175,7 @@ export default function App() {
               ):(
                 <>
                   <div style={{fontSize:13,color:MUTED,marginBottom:10}}>Share your Co-Fund Invite Link with everyone on your contact list. Every monthly contribution from your network earns you ₦2,000 — up to 3 generations deep.</div>
-                  <div className="link-box">https://cofundbills.vercel.app?ref={currentMember.linkCode}</div>
+                  <div className="link-box" style={{background:getTier(currentMember.memberType).light,borderColor:getTier(currentMember.memberType).accent}}>https://cofundbills.vercel.app?ref={currentMember.linkCode}</div>
                   <button className="btn btn-blue btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${currentMember.linkCode}`);showNote("Link copied!");}}>Copy Link</button>
                 </>
               )}
@@ -1341,7 +1359,7 @@ export default function App() {
                 <strong>Credits earned during inactive periods are permanently lost and channelled to the Loan Fund Pool.</strong>
               </div>
               {currentMember.expiresAt&&(
-                <div style={{background:BLUE_LIGHT,borderRadius:8,padding:12,fontSize:13,color:NAVY,marginBottom:16}}>
+                <div style={{background:getTier(currentMember?.memberType||"regular").light,borderRadius:8,padding:12,fontSize:13,color:DARK,marginBottom:16}}>
                   <div>Expiry date: <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
                   <div style={{marginTop:6,display:"flex",alignItems:"center",gap:8}}>
                     <span>Time remaining:</span>
@@ -1423,7 +1441,9 @@ export default function App() {
               {allArr.length===0?<div style={{padding:32,textAlign:"center",color:MUTED}}>No members yet.</div>:allArr.map(m=>(
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 1fr 80px",gap:12,alignItems:"center"}}>
                   <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
-                  <div><span style={{fontSize:11,background:m.memberType==="partner"?GOLD_LIGHT:BLUE_LIGHT,color:m.memberType==="partner"?GOLD:BLUE,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="partner"?"Partner":m.memberType==="premium"?"Premium":"Regular"}</span></div>
+                  <div><span style={{fontSize:11,
+                    background:m.memberType==="admin"?TIER.admin.light:m.memberType==="partner"?TIER.partner.light:m.memberType==="premium"?TIER.premium.light:TIER.regular.light,
+                    color:m.memberType==="admin"?TIER.admin.bg:m.memberType==="partner"?TIER.partner.bg:m.memberType==="premium"?TIER.premium.bg:TIER.regular.bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="admin"?"Admin":m.memberType==="partner"?"Partner":m.memberType==="premium"?"Premium":"Regular"}</span></div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.expendable)}</div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.reserve)}</div>
                   <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
