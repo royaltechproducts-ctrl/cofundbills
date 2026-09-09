@@ -1016,7 +1016,7 @@ export default function App() {
               </div>
             ))}
             <div className="info-box">
-              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund Invite Link:</div>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund membership status and unlock your Personal Invite Link:</div>
               <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
                 Pay <strong>₦10,000</strong> first monthly contribution to activate your <strong>Regular Membership Status.</strong><br/>
                 <span style={{color:MUTED}}>— OR —</span><br/>
