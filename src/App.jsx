@@ -179,7 +179,7 @@ export default function App() {
   const [loginErr,setLoginErr]       = useState("");
   const [tcAccepted,setTcAccepted]   = useState(false);
   const [showTC,setShowTC]           = useState(false);
-  const [regForm,setRegForm]         = useState({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria",memberType:"regular"});
+  const [regForm,setRegForm]         = useState({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria",memberType:"regular",address:"",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:""});
   const [regErrors,setRegErrors]     = useState({});
   const [cashoutForm,setCashoutForm] = useState({amount:"",type:"expendable",purpose:""});
   const [cashoutErr,setCashoutErr]   = useState("");
@@ -244,7 +244,7 @@ export default function App() {
   const handleRegister = async () => {
     if(!tcAccepted){ setRegErrors({general:"Please accept the Terms & Conditions."}); return; }
     const errs={};
-    ["fullName","email","phone","occupation","state"].forEach(k=>{ if(!regForm[k].trim()) errs[k]="Required"; });
+    ["fullName","email","phone","occupation","state","address","nokName","nokPhone","nokRelationship","bankName","accountName","accountNumber"].forEach(k=>{ if(!regForm[k].trim()) errs[k]="Required"; });
     if(regForm.email && !validateEmail(regForm.email)) errs.email="Invalid email address.";
     if(regForm.phone && !validatePhone(regForm.phone)) errs.phone="Invalid Nigerian phone number.";
     if(regForm.fullName.trim().split(" ").length<2) errs.fullName="Please enter your full name.";
@@ -260,15 +260,30 @@ export default function App() {
       link_code:linkCode, full_name:regForm.fullName.trim(),
       email:regForm.email.trim().toLowerCase(), phone:regForm.phone.trim(),
       occupation:regForm.occupation.trim(), state:regForm.state.trim(),
-      country:regForm.country, ref_code:urlRef||null,
+      country:regForm.country, address:regForm.address.trim(),
+      nok_name:regForm.nokName.trim(), nok_phone:regForm.nokPhone.trim(),
+      nok_relationship:regForm.nokRelationship.trim(),
+      bank_name:regForm.bankName.trim(), account_name:regForm.accountName.trim(),
+      account_number:regForm.accountNumber.trim(), ref_code:urlRef||null,
       status:"pending", member_type:regForm.memberType||"regular", link_active:false,
       expendable:0, reserve:0, total_credited:0, loan_balance:0,
     });
     if(error){ showNote("Registration failed. Please try again.","error"); return; }
 
+    // Upload valid ID if provided
+    if(regForm.validId){
+      const ext = regForm.validId.name.split(".").pop();
+      const path = `${linkCode}/valid-id.${ext}`;
+      const {error:uploadErr} = await supabase.storage.from("cfb-valid-ids").upload(path, regForm.validId);
+      if(!uploadErr){
+        const {data:urlData} = supabase.storage.from("cfb-valid-ids").getPublicUrl(path);
+        await supabase.from("cfb_members").update({valid_id_url:urlData.publicUrl}).eq("link_code",linkCode);
+      }
+    }
+
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`New CoFundBills Registration — ${regForm.fullName}`,
-      message:`New member registered:\nName: ${regForm.fullName}\nEmail: ${regForm.email}\nPhone: ${regForm.phone}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation}\nState: ${regForm.state}\nReferred by: ${urlRef||"Direct"}\n\nMust pay ₦10,000 first monthly contribution to activate.`});
+      message:`New member registered:\nName: ${regForm.fullName}\nEmail: ${regForm.email}\nPhone: ${regForm.phone}\nMembership: ${regForm.memberType}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation}\nState: ${regForm.state}\nAddress: ${regForm.address}\nNOK: ${regForm.nokName} (${regForm.nokRelationship}) - ${regForm.nokPhone}\nBank: ${regForm.bankName} | ${regForm.accountName} | ${regForm.accountNumber}\nReferred by: ${urlRef||"Direct"}\n\nMust pay contribution to activate.`});
 
     setModal({type:"reg_success",linkCode,name:regForm.fullName});
     setRegForm({fullName:"",email:"",phone:"",occupation:"",state:"",country:"Nigeria"});
@@ -941,10 +956,22 @@ export default function App() {
               <button onClick={()=>setView("landing")} style={{background:BLUE_LIGHT,border:`1px solid ${BLUE}`,color:BLUE,cursor:"pointer",fontSize:12,fontWeight:700,padding:"5px 14px",borderRadius:8,fontFamily:"inherit"}}>🏠 Home</button>
             </div>
             <div className="modal-title">Join CoFundBills Cooperative</div>
-            <div className="modal-sub">Free registration. Activate your Co-Fund Link with ₦10,000 first monthly contribution.</div>
+            <div className="modal-sub">Free registration. Activate your Co-Fund Regular Membership Status with ₦10,000 first monthly contribution. Or Premium Membership Status with ₦100,000 first yearly contribution.</div>
             {urlRef && <div className="info-box" style={{fontSize:13,color:NAVY}}>🔗 Referred by: <strong>{urlRef}</strong></div>}
             {regErrors.general&&<div className="warn-box">{regErrors.general}</div>}
-            {[["fullName","Full Name","text","Your legal full name"],["email","Email Address","email",""],["phone","Phone Number","tel","e.g. 08012345678"],["occupation","Occupation / Employer","text",""],["state","State of Residence","text",""]].map(([key,label,type,ph])=>(
+
+            {/* Membership Type */}
+            <div className="field">
+              <label>Membership Type</label>
+              <select value={regForm.memberType||"regular"} onChange={e=>setRegForm({...regForm,memberType:e.target.value})}>
+                <option value="regular">Regular Member — ₦10,000 monthly contribution</option>
+                <option value="premium">Premium Member — ₦100,000 yearly contribution</option>
+              </select>
+            </div>
+
+            {/* Personal Details */}
+            <div style={{fontWeight:700,color:NAVY,fontSize:13,marginBottom:8,marginTop:8,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:6}}>Personal Details</div>
+            {[["fullName","Full Name","text","Your legal full name"],["email","Email Address","email",""],["phone","Phone Number","tel","e.g. 08012345678"],["occupation","Occupation / Employer","text",""],["address","Residential Address","text","Your full home address"],["state","State of Residence","text",""]].map(([key,label,type,ph])=>(
               <div className="field" key={key}>
                 <label>{label}</label>
                 <input type={type} placeholder={ph} className={regErrors[key]?"field-err":""} value={regForm[key]} onChange={e=>setRegForm({...regForm,[key]:e.target.value})}/>
@@ -952,22 +979,48 @@ export default function App() {
               </div>
             ))}
             <div className="field">
-              <label>Membership Type</label>
-              <select value={regForm.memberType||"regular"} onChange={e=>setRegForm({...regForm,memberType:e.target.value})}>
-                <option value="regular">Regular Member — ₦10,000/month</option>
-                <option value="premium">Premium Member — ₦100,000/year</option>
-              </select>
-            </div>
-            <div className="field">
               <label>Country</label>
               <select value={regForm.country} onChange={e=>setRegForm({...regForm,country:e.target.value})}>
                 {["Nigeria","Ghana","Kenya","United Kingdom","United States","Canada","Other"].map(c=><option key={c}>{c}</option>)}
               </select>
             </div>
+
+            {/* Valid ID Upload */}
+            <div style={{fontWeight:700,color:NAVY,fontSize:13,marginBottom:8,marginTop:16,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:6}}>Valid ID</div>
+            <div className="field">
+              <label>Upload Valid ID (NIN, Voter's Card, Driver's Licence, Int'l Passport)</label>
+              <input type="file" accept="image/*,application/pdf"
+                onChange={e=>setRegForm({...regForm,validId:e.target.files[0]})}
+                style={{padding:"8px 0",border:"none",fontSize:13}}/>
+              <div style={{fontSize:11,color:MUTED,marginTop:4}}>Accepted: JPG, PNG, PDF. Max 5MB.</div>
+              {regErrors.validId&&<div className="err-msg">{regErrors.validId}</div>}
+            </div>
+
+            {/* Next of Kin */}
+            <div style={{fontWeight:700,color:NAVY,fontSize:13,marginBottom:8,marginTop:16,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:6}}>Next of Kin</div>
+            {[["nokName","Full Name","text",""],["nokPhone","Phone Number","tel",""],["nokRelationship","Relationship","text","e.g. Spouse, Sibling, Parent"]].map(([key,label,type,ph])=>(
+              <div className="field" key={key}>
+                <label>{label}</label>
+                <input type={type} placeholder={ph} className={regErrors[key]?"field-err":""} value={regForm[key]} onChange={e=>setRegForm({...regForm,[key]:e.target.value})}/>
+                {regErrors[key]&&<div className="err-msg">{regErrors[key]}</div>}
+              </div>
+            ))}
+
+            {/* Bank Details */}
+            <div style={{fontWeight:700,color:NAVY,fontSize:13,marginBottom:8,marginTop:16,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:6}}>Cash-Out Bank Details</div>
+            {[["bankName","Bank Name","text","e.g. Zenith Bank, GTBank"],["accountName","Account Name","text","As registered with your bank"],["accountNumber","Account Number","text","10-digit account number"]].map(([key,label,type,ph])=>(
+              <div className="field" key={key}>
+                <label>{label}</label>
+                <input type={type} placeholder={ph} className={regErrors[key]?"field-err":""} value={regForm[key]} onChange={e=>setRegForm({...regForm,[key]:e.target.value})}/>
+                {regErrors[key]&&<div className="err-msg">{regErrors[key]}</div>}
+              </div>
+            ))}
             <div className="info-box">
               <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund Invite Link:</div>
               <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
-                Pay <strong>₦10,000</strong> first monthly contribution to activate your membership status.
+                Pay <strong>₦10,000</strong> first monthly contribution to activate your <strong>Regular Membership Status.</strong><br/>
+                <span style={{color:MUTED}}>— OR —</span><br/>
+                Pay <strong>₦100,000</strong> first yearly contribution to activate your <strong>Premium Membership Status.</strong>
               </div>
               <div style={{background:WHITE,border:`1.5px solid ${GOLD}`,borderRadius:8,
                 padding:12,fontSize:13,color:NAVY,lineHeight:1.9}}>
