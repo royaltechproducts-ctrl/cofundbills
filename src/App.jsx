@@ -339,7 +339,7 @@ export default function App() {
     await supabase.rpc("cfb_add_to_pool",{p_amount:CONTRIB_PART}).catch(()=>{});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Forward to: ${m.fullName} | ${m.email} — CoFundBills Activated`,
-      message:`Dear ${m.fullName},\n\nYour CoFundBills Cooperative link is now ACTIVE!\n\nYour Unique Link Code: ${code}\nYour Co-Fund Link: https://cofundbills.vercel.app?ref=${code}\n\nShare your link with everyone. Every monthly contribution from your network earns you ₦2,000 per contributor — up to 3 generations deep.\n\nRemember: renew your ₦10,000 monthly contribution before the end of each month to stay active and keep earning.\n\n"${TAGLINE}"\n\n${COMPANY}\n${ADDRESS}\n${EMAIL_ADDR}`});
+      message:`Dear ${m.fullName},\n\nYour CoFundBills Cooperative link is now ACTIVE!\n\nYour Unique Link Code: ${code}\nYour Co-Fund Invite Link: https://cofundbills.vercel.app?ref=${code}\n\nShare your link with everyone. Every monthly contribution from your network earns you ₦2,000 per contributor — up to 3 generations deep.\n\nRemember: renew your ₦10,000 monthly contribution before the end of each month to stay active and keep earning.\n\n"${TAGLINE}"\n\n${COMPANY}\n${ADDRESS}\n${EMAIL_ADDR}`});
     await loadMembers();
     showNote(`${m.fullName} activated successfully.`);
   };
@@ -921,7 +921,7 @@ export default function App() {
               </select>
             </div>
             <div className="info-box">
-              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund Link:</div>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>After Registration — Activate Your Co-Fund Invite Link:</div>
               <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
                 Pay <strong>₦10,000</strong> first monthly contribution to activate your membership status.
               </div>
@@ -1007,7 +1007,7 @@ export default function App() {
           </div>
 
           <div className="portal-tabs">
-            {[["home","🏠"],["overview","Overview"],["link","My Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
+            {[["home","🏠"],["overview","Overview"],["link","My Invite Link"],["credits","Credits"],["cashout","Cash Out"],["loan","Co-Fund Loan"],
               ...( currentMember.memberType!=="founding"?[["renew","Renew"]]:[] )
             ].map(([id,label])=>(
               <button key={id} className={`portal-tab${portalTab===id?" active":""}`} onClick={()=>{
@@ -1046,7 +1046,7 @@ export default function App() {
 
           {portalTab==="link" && (
             <div className="card">
-              <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:12}}>Your Co-Fund Link</div>
+              <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:12}}>Your Co-Fund Invite Link</div>
               {!currentMember.linkActive ? (
                 <div className="info-box">
                   <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>🔒 Link Not Active</div>
@@ -1059,7 +1059,7 @@ export default function App() {
                 </div>
               ):(
                 <>
-                  <div style={{fontSize:13,color:MUTED,marginBottom:10}}>Share this link with everyone on your contact list. Every monthly contribution from your network earns you ₦2,000 — up to 3 generations deep.</div>
+                  <div style={{fontSize:13,color:MUTED,marginBottom:10}}>Share your Co-Fund Invite Link with everyone on your contact list. Every monthly contribution from your network earns you ₦2,000 — up to 3 generations deep.</div>
                   <div className="link-box">https://cofundbills.vercel.app?ref={currentMember.linkCode}</div>
                   <button className="btn btn-blue btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${currentMember.linkCode}`);showNote("Link copied!");}}>Copy Link</button>
                 </>
@@ -1235,7 +1235,7 @@ export default function App() {
 
           {portalTab==="renew" && currentMember.memberType!=="founding" && (
             <div className="card">
-              <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Link</div>
+              <div style={{fontWeight:800,fontSize:15,color:NAVY,marginBottom:12}}>Renew Your Co-Fund Invite Link</div>
               <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
                 Monthly renewal: <strong style={{color:NAVY}}>₦10,000</strong><br/>
                 Renew before expiry to keep your link active and all credit channels earning.<br/>
@@ -1514,10 +1514,10 @@ export default function App() {
           <div className="modal" style={{maxWidth:460,textAlign:"center"}}>
             <div style={{fontSize:48,marginBottom:12}}>🎉</div>
             <div className="modal-title" style={{textAlign:"center"}}>Welcome to CoFundBills!</div>
-            <div style={{fontSize:14,color:MUTED,margin:"12px 0 20px",lineHeight:1.7}}>Registration successful, <strong>{modal.name}</strong>!<br/>Your Co-Fund Link Code is:</div>
+            <div style={{fontSize:14,color:MUTED,margin:"12px 0 20px",lineHeight:1.7}}>Registration successful, <strong>{modal.name}</strong>!<br/>Your Co-Fund Invite Link Code is:</div>
             <div style={{background:BLUE_LIGHT,border:`2px solid ${BLUE}`,borderRadius:10,padding:16,fontSize:18,fontWeight:900,color:NAVY,marginBottom:20,letterSpacing:2}}>{modal.linkCode}</div>
             <div className="info-box" style={{textAlign:"left"}}>
-              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>Next Step — Activate Your Co-Fund Link:</div>
+              <div style={{fontWeight:700,color:NAVY,marginBottom:8}}>Next Step — Activate Your Co-Fund Invite Link:</div>
               <div style={{fontSize:13,color:NAVY,lineHeight:1.8,marginBottom:12}}>
                 Pay <strong>₦10,000</strong> first monthly contribution to activate your membership status.
               </div>
