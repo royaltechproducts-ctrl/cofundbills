@@ -664,10 +664,13 @@ export default function App() {
       {view==="landing" && !showTC && (
         <>
           <div className="hero">
-            <div className="hero-badge">🤝 {COMPANY}</div>
+            <div style={{display:"inline-block",background:GOLD,color:NAVY,
+              fontSize:16,fontWeight:900,padding:"10px 28px",borderRadius:30,
+              marginBottom:20,letterSpacing:1,boxShadow:"0 4px 16px rgba(201,168,76,0.4)"}}>
+              🤝 {COMPANY}
+            </div>
             <h1 className="hero-title">Don't Face Bills Alone.<br/><span>Let's Co-Fund Them.</span></h1>
-            <p className="hero-sub">CoFundBills Cooperative - Your One-stop Solution to Excruciating Bills</p>
-            <p className="hero-tagline">"{TAGLINE}"</p>
+            <p className="hero-sub">CoFundBills Cooperative — Your One-stop Solution to Excruciating Bills</p>
             <div className="hero-steps">
               {["JOIN","→","CONTRIBUTE","→","BUILD NETWORK","→","REQUEST","→","CASH-OUT"].map((s,i)=>(
                 s==="→"
