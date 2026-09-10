@@ -1225,7 +1225,12 @@ CoFundBills Cooperative`});
                 </div>
               ):(
                 <>
-                  <div style={{fontSize:13,color:MUTED,marginBottom:10}}>Share your Co-Fund Invite Link with everyone on your contact list. Every monthly contribution from your network earns you ₦2,000 — up to 3 generations deep.</div>
+                  <div style={{fontSize:13,color:MUTED,marginBottom:10}}>
+                    Share your Co-Fund Invite Link with everyone on your contact list.{" "}
+                    {currentMember.memberType==="partner"||currentMember.memberType==="admin"
+                      ? "As a root participant, you earn 60% from direct invite contributions, 40% from indirect, and 20% from circuitous invite contributions."
+                      : "Every monthly contribution from your network earns you 20% of each contribution — up to 3 generations deep (Direct, Indirect and Circuitous invites)."}
+                  </div>
                   <div className="link-box" style={{background:getTier(currentMember.memberType).light,borderColor:getTier(currentMember.memberType).accent}}>https://cofundbills.vercel.app?ref={currentMember.linkCode}</div>
                   <button className="btn btn-blue btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${currentMember.linkCode}`);showNote("Link copied!");}}>Copy Link</button>
                 </>
