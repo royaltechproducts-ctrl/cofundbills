@@ -14,6 +14,9 @@ const YEARLY_CONTRIB   = 100000;
 const CONTRIB_PART     = 0.2;    // 1/5th = 20% of any contribution
 const LOAN_INTEREST    = 0.03;   // 3% regular, 2% premium, 1% partner
 const PARTNER_SLOTS    = 10;
+const FOUNDING_SLOTS   = 25;
+const FOUNDING_TERM_MONTHS = 4;
+const FOUNDING_RENEWAL = 50000;
 const ADMIN_SHARE      = 0.2;
 const POOL_SHARE       = 0.2;
 const COMPANY          = "CoFundBills Cooperative";
@@ -41,7 +44,8 @@ const TIER = {
   admin:   { bg:"#0B6E4F", bgDark:"#084F38", light:"#E6F4EF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Forest Green", badge:"🛡️" },
   partner: { bg:"#4A0E8F", bgDark:"#360A6A", light:"#F0E8FF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Partner",      badge:"👑" },
   premium: { bg:"#8B5E3C", bgDark:"#6B4729", light:"#F5EDE4", accent:"#D4A96A", accentLight:"#FDF3E7", text:"Premium",      badge:"⭐" },
-  regular: { bg:"#1A4F8A", bgDark:"#163F70", light:"#E8F0FA", accent:"#F97316", accentLight:"#FFF3E8", text:"Regular",      badge:"🤝" },
+  regular:  { bg:"#1A4F8A", bgDark:"#163F70", light:"#E8F0FA", accent:"#F97316", accentLight:"#FFF3E8", text:"Regular",       badge:"🤝" },
+  founding: { bg:"#7B1D1D", bgDark:"#5A1414", light:"#FDF2F2", accent:"#94A3B8", accentLight:"#F1F5F9", text:"Founding Member", badge:"🎖️" }, // permanently active
 };
 const getTier = (type) => TIER[type] || TIER.regular;
 
@@ -202,7 +206,8 @@ export default function App() {
   // ── Live countdown timer ─────────────────────────────────────
   const [countdown,setCountdown] = useState("");
   useEffect(()=>{
-    if(!currentMember||currentMember.memberType==="admin"||currentMember.memberType==="partner") return;
+    if(!currentMember) return;
+    if(currentMember.memberType==="admin"||currentMember.memberType==="partner"||currentMember.memberType==="founding") return;
     if(!currentMember.expiresAt) return;
     const tick = ()=>{
       const diff = new Date(currentMember.expiresAt) - new Date();
@@ -385,7 +390,7 @@ export default function App() {
   const handleActivate = async (code) => {
     const m = members[code];
     const now = new Date().toISOString();
-    const expires = m.memberType==="premium" ? addMonths(now,12) : m.memberType==="partner"||m.memberType==="admin" ? null : addMonths(now,1);
+    const expires = m.memberType==="premium" ? addMonths(now,12) : (m.memberType==="partner"||m.memberType==="admin"||m.memberType==="founding") ? null : addMonths(now,1);
     await supabase.from("cfb_members").update({status:"active",link_active:true,activated_at:now,expires_at:expires}).eq("link_code",code);
     // Credit chain for activation
     const contribAmt = m.memberType==="premium"?YEARLY_CONTRIB:MONTHLY_CONTRIB;
@@ -415,6 +420,25 @@ export default function App() {
   // ── ADMIN: DEACTIVATE EXPIRED ─────────────────────────────────
   const handleDeactivate = async (code) => {
     const m = members[code];
+    // Partners downgrade to founding on contract lapse — never go inactive
+    if(m.memberType==="partner"){
+      await supabase.from("cfb_members").update({member_type:"founding",status:"active",link_active:true,expires_at:null}).eq("link_code",code);
+      await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
+        subject:`Forward to: ${m.fullName} | ${m.email} — Partner Status Downgraded to Founding Member`,
+        message:`Dear ${m.fullName},
+
+Your Partner/Investor contract term has lapsed. Your membership has been automatically downgraded to Founding Member status.
+
+As a Founding Member, your Co-Fund Invite Link remains permanently active and your credit earnings and accounts are fully preserved.
+
+You may re-upgrade to Partner/Investor status when a slot becomes available.
+
+"Don't face bills alone. Let's co-fund them."
+CoFundBills Cooperative`});
+      await loadMembers();
+      showNote(`${m.fullName} downgraded from Partner to Founding Member.`);
+      return;
+    }
     await supabase.from("cfb_members").update({link_active:false,status:"inactive"}).eq("link_code",code);
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
       subject:`Forward to: ${m.fullName} | ${m.email} — Link Deactivated`,
@@ -470,8 +494,8 @@ export default function App() {
 
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
-    const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="premium"?0.02:LOAN_INTEREST;
-    const monthsProjection = m.memberType==="partner"?12:m.memberType==="premium"?6:3;
+    const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="premium"?0.02:LOAN_INTEREST; // founding & regular = 3%
+    const monthsProjection = m.memberType==="partner"?12:m.memberType==="premium"?6:3; // founding & regular = 3 months
     const loanLimitFinal = (direct+indirect+extended)*MONTHLY_CONTRIB*monthsProjection*0.2*3; // 3 levels × 20%
     await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimitFinal});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
@@ -1073,20 +1097,31 @@ export default function App() {
                   </span>
                   {(currentMember.memberType==="partner"||currentMember.memberType==="admin")&&(
                     <span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>
-                      {getTier(currentMember.memberType).badge} {currentMember.memberType==="admin"?"Admin":"Partner / Executive Member"}
+                      {getTier(currentMember.memberType).badge} {currentMember.memberType==="admin"?"President / Admin":"Partner / Invested Member"}
+                    </span>
+                  )}
+                  {currentMember.memberType==="founding"&&(
+                    <span style={{fontSize:11,background:TIER.founding.light,color:TIER.founding.bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>
+                      🎖️ Founding Member — Permanently Active
                     </span>
                   )}
                   {/* Timer — Regular (monthly) and Premium (yearly) only */}
                   {currentMember.memberType==="admin"&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:"rgba(201,168,76,0.2)",borderRadius:8,padding:"6px 14px"}}>
-                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>🛡️ Permanent Admin Status</span>
+                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>🛡️ Permanent President/Admin Status</span>
                     </div>
                   )}
                   {currentMember.memberType==="partner"&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:"rgba(201,168,76,0.2)",borderRadius:8,padding:"6px 14px"}}>
-                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>👑 Partner — Contract Period Active</span>
+                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>👑 Partner/Invested Member — Contract Period Active</span>
+                    </div>
+                  )}
+                  {currentMember.memberType==="founding"&&(
+                    <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
+                      background:TIER.founding.light,borderRadius:8,padding:"6px 14px"}}>
+                      <span style={{fontSize:12,fontWeight:700,color:TIER.founding.bg}}>🎖️ Founding Member — Permanently Active | Eligible to upgrade to Partner when slot available</span>
                     </div>
                   )}
                   {(currentMember.memberType==="regular"||currentMember.memberType==="premium")&&currentMember.expiresAt&&(
@@ -1096,7 +1131,7 @@ export default function App() {
                         "rgba(234,179,8,0.25)":"rgba(255,255,255,0.12)",
                       borderRadius:8,padding:"6px 14px"}}>
                       <span style={{fontSize:11,opacity:.75}}>
-                        {currentMember.memberType==="premium"?"Yearly contribution expires in:":"Monthly contribution expires in:"}
+                        {currentMember.memberType==="premium"?"Yearly contribution expires in:":currentMember.memberType==="founding"?"Term contribution expires in:":"Monthly contribution expires in:"}
                       </span>
                       <span style={{fontSize:13,fontWeight:900,letterSpacing:1,
                         color:countdown==="EXPIRED"?"#FCA5A5":
@@ -1164,8 +1199,8 @@ export default function App() {
           {portalTab==="overview" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
-              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?"Admin / Root Participant":currentMember.memberType==="partner"?"Partner / Executive Member":currentMember.memberType==="premium"?"Premium Member":"Regular Member")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
-              ...(currentMember.memberType==="admin"?[["Status","Permanent — No Expiry"]]:currentMember.memberType==="partner"?[["Status","Active Contract Period"],["Note","Enlistment/Dis-enlistment by Admin only"]]:currentMember.expiresAt?[["Membership Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?"President / Admin":currentMember.memberType==="partner"?"Partner / Invested Member":currentMember.memberType==="founding"?"Founding Member":currentMember.memberType==="premium"?"Invited Member (Premium)":"Invited Member (Regular)")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
+              ...(currentMember.memberType==="admin"?[["Status","Permanent — No Expiry"]]:currentMember.memberType==="partner"?[["Status","Active Contract Period"],["Note","Enlistment/Dis-enlistment by Admin only"]]:currentMember.memberType==="founding"?[["Membership Type","🎖️ Founding Member (25-slot limited)"],["Status","Permanently Active — No Contribution Required"],["Upgrade Path","Eligible to upgrade to Partner/Investor when slot is available"],["Note","Founding Member status is preserved even if Partner contract lapses"]]:currentMember.expiresAt?[["Membership Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
               .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
                   <span style={{color:MUTED}}>{k}</span>
@@ -1301,7 +1336,7 @@ export default function App() {
                       </div>
                       {(()=>{
                         const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
-                        const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="premium"?2:3;
+                        const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="premium"?2:3; // founding=3
                         const loanMonths=currentMember.memberType==="partner"?12:currentMember.memberType==="premium"?6:3;
                         const loanLimitCalc=total3mo/3*loanMonths;
                         const interest=loanLimitCalc*rate/100*loanMonths;
@@ -1324,7 +1359,7 @@ export default function App() {
 
                     <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
                       Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
-                      Interest: <strong>{currentMember.memberType==="partner"?"1% per month (Partner Rate)":currentMember.memberType==="premium"?"2% per month (Premium Rate)":"3% per month (Regular Rate)"}</strong> on outstanding balance.<br/>
+                      Interest: <strong>{currentMember.memberType==="partner"?"1% per month (Partner Rate)":currentMember.memberType==="premium"?"2% per month (Premium Rate)":"3% per month"}</strong> on outstanding balance.<br/>
                       Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
                     </div>
                     <div className="field">
@@ -1369,16 +1404,16 @@ export default function App() {
           {portalTab==="renew" && currentMember.memberType!=="partner" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:15,color:getTier(currentMember.memberType).bg,marginBottom:12}}>
-                {currentMember.memberType==="premium"?"Renew Your Yearly Contribution":"Renew Your Monthly Contribution"}
+                {currentMember.memberType==="premium"?"Renew Your Yearly Contribution":currentMember.memberType==="founding"?"Renew Your Term Contribution (Every 4 Months)":"Renew Your Monthly Contribution"}
               </div>
               <div style={{fontSize:13,color:MUTED,lineHeight:1.8,marginBottom:16}}>
-                Renewal fee: <strong style={{color:getTier(currentMember.memberType).bg}}>{currentMember.memberType==="premium"?"₦100,000 / year":"₦10,000 / month"}</strong><br/>
+                Renewal fee: <strong style={{color:getTier(currentMember.memberType).bg}}>{currentMember.memberType==="premium"?"₦100,000 / year":currentMember.memberType==="founding"?"₦50,000 / term (every 4 months)":"₦10,000 / month"}</strong><br/>
                 Renew before your current contribution time-out to keep your membership status active and all credit channels earning secured.<br/>
                 <strong>Credits earned during inactive status periods are permanently lost and channelled to the Loan Fund Pool.</strong>
               </div>
               {currentMember.expiresAt&&(
                 <div style={{background:getTier(currentMember?.memberType||"regular").light,borderRadius:8,padding:12,fontSize:13,color:DARK,marginBottom:16}}>
-                  <div>{currentMember.memberType==="premium"?"Yearly contribution expires:":"Monthly contribution expires:"} <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
+                  <div>{currentMember.memberType==="premium"?"Yearly contribution expires:":currentMember.memberType==="founding"?"Term contribution expires:":"Monthly contribution expires:"} <strong>{new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})}</strong></div>
                   <div style={{marginTop:6,display:"flex",alignItems:"center",gap:8}}>
                     <span>Time remaining:</span>
                     <span style={{fontWeight:900,fontSize:15,color:
@@ -1393,7 +1428,7 @@ export default function App() {
               <div className="info-box">
                 <div style={{fontWeight:700,color:NAVY,marginBottom:6}}>Renewal Payment Details</div>
                 <div style={{fontSize:13,color:NAVY,lineHeight:1.8}}>
-                  Amount: {currentMember.memberType==="premium"?"₦100,000 (Yearly Contribution)":"₦10,000 (Monthly Contribution)"} | Reference: {currentMember.linkCode} — RENEWAL<br/>
+                  Amount: {currentMember.memberType==="premium"?"₦100,000 (Yearly Contribution)":currentMember.memberType==="founding"?"₦50,000 (Term Contribution)":"₦10,000 (Monthly Contribution)"} | Reference: {currentMember.linkCode} — RENEWAL<br/>
                   Royal Tech Partnership & Investment Limited<br/>
                   Zenith Bank — 1016621205<br/>
                   WhatsApp: +234 909 999 4816
@@ -1427,7 +1462,7 @@ export default function App() {
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginTop:20}}>
-              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Founding",allArr.filter(m=>m.memberType==="partner").length],["Invited",allArr.filter(m=>m.refCode).length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
+              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Partners",allArr.filter(m=>m.memberType==="partner").length+"/10"],["Founding",allArr.filter(m=>m.memberType==="founding").length+"/25"],["Invited",allArr.filter(m=>m.refCode&&m.memberType!=="founding"&&m.memberType!=="partner"&&m.memberType!=="admin").length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
                 <div key={l} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:12}}>
                   <div style={{fontSize:18,fontWeight:900}}>{v}</div>
                   <div style={{fontSize:11,opacity:.7,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
@@ -1460,8 +1495,8 @@ export default function App() {
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr 1fr 80px",gap:12,alignItems:"center"}}>
                   <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
                   <div><span style={{fontSize:11,
-                    background:m.memberType==="admin"?TIER.admin.light:m.memberType==="partner"?TIER.partner.light:m.memberType==="premium"?TIER.premium.light:TIER.regular.light,
-                    color:m.memberType==="admin"?TIER.admin.bg:m.memberType==="partner"?TIER.partner.bg:m.memberType==="premium"?TIER.premium.bg:TIER.regular.bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="admin"?"Admin":m.memberType==="partner"?"Partner":m.memberType==="premium"?"Premium":"Regular"}</span></div>
+                    background:getTier(m.memberType).light,
+                    color:getTier(m.memberType).bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="admin"?"President/Admin":m.memberType==="partner"?"Partner/Investor":m.memberType==="founding"?"Founding Member":m.memberType==="premium"?"Invited (Premium)":"Invited (Regular)"}</span></div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.expendable)}</div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.reserve)}</div>
                   <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
@@ -1469,6 +1504,9 @@ export default function App() {
                     <span className={`status-pill ${m.status==="active"?"pill-active":m.status==="inactive"?"pill-inactive":"pill-pending"}`}>{m.status}</span>
                     {m.status==="active"&&m.memberType==="regular"&&(
                       <button style={{display:"block",marginTop:4,fontSize:10,background:"#FEE2E2",color:ERROR,border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer"}} onClick={()=>handleDeactivate(m.linkCode)}>Deactivate</button>
+                    )}
+                  {m.status==="active"&&m.memberType==="partner"&&(
+                      <button style={{display:"block",marginTop:4,fontSize:10,background:"#FEF3C7",color:"#92400E",border:"none",borderRadius:6,padding:"3px 8px",cursor:"pointer"}} onClick={()=>handleDeactivate(m.linkCode)}>Contract Lapsed</button>
                     )}
                   </div>
                   <div><button onClick={()=>handleDelete(m.linkCode,m.fullName)} style={{background:"#FEE2E2",border:"none",borderRadius:6,color:ERROR,fontSize:11,fontWeight:700,padding:"6px 8px",cursor:"pointer"}}>🗑</button></div>
@@ -1589,9 +1627,9 @@ export default function App() {
                 <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
                   <span>Name</span><span>Link Code</span><span>Expendable</span><span>Reserve</span><span>Total Credited</span>
                 </div>
-                {allArr.filter(m=>m.memberType==="partner").length===0?
-                  <div style={{padding:32,textAlign:"center",color:MUTED}}>No founding members. Insert them directly in Supabase with member_type = 'partner'.</div>:
-                  allArr.filter(m=>m.memberType==="partner").map(m=>(
+                {allArr.filter(m=>m.memberType==="partner"||m.memberType==="admin").length===0?
+                  <div style={{padding:32,textAlign:"center",color:MUTED}}>No partners or admin yet.</div>:
+                  allArr.filter(m=>m.memberType==="partner"||m.memberType==="admin").map(m=>(
                   <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
                     <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div></div>
                     <div style={{fontSize:12,color:BLUE,fontWeight:600}}>{m.linkCode}</div>
