@@ -12,7 +12,7 @@ const ADMIN_PASSWORD   = "CoFundBills2026@RoyalTech";
 const MONTHLY_CONTRIB  = 10000;
 const YEARLY_CONTRIB   = 100000;
 const CONTRIB_PART     = 0.2;    // 1/5th = 20% of any contribution
-const LOAN_INTEREST    = 0.03;   // 3% regular, 2% premium, 1% partner
+const LOAN_INTEREST    = 0.04;   // 4% regular, 3% premium, 2% founding, 1% partner
 const PARTNER_SLOTS    = 10;
 const FOUNDING_SLOTS   = 25;
 const FOUNDING_TERM_MONTHS = 4;
@@ -96,7 +96,7 @@ const TC_SECTIONS = [
     items:[
       "Members may apply for a Co-Fund Loan from the CoFundBills Loan Fund Pool.",
       "Loan eligibility and limit are assessed by admin based on the member's network performance — the projected 3-month contribution volume from the member's direct, indirect, and extended invite network.",
-      "Loans attract a flat interest rate of 1% per month for Partner members, 2% per month for Premium members, and 3% per month for Regular members on the outstanding balance.",
+      "Loans attract a flat interest rate of 1% per month for Partner members, 2% per month for Founding members, 3% per month for Premium members, and 4% per month for Regular members on the outstanding balance.",
       "Loan approval is at the sole discretion of CoFundBills admin. No loan is guaranteed.",
       "Loan repayments are automatically deducted from incoming network credits before those credits are applied to the member's Expendable and Reserve Accounts.",
       "Interest proceeds from loans are distributed monthly to Investor/Founding members in proportion to their share holdings.",
@@ -494,7 +494,7 @@ CoFundBills Cooperative`});
 
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
-    const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="premium"?0.02:LOAN_INTEREST; // founding & regular = 3%
+    const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="founding"?0.02:m.memberType==="premium"?0.03:0.04;
     const monthsProjection = m.memberType==="partner"?6:m.memberType==="founding"?5:m.memberType==="premium"?4:3;
     const loanLimitFinal = (direct+indirect+extended)*MONTHLY_CONTRIB*monthsProjection*0.2*3; // 3 levels × 20%
     await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimitFinal});
@@ -769,7 +769,7 @@ CoFundBills Cooperative`});
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["1%–3%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["1%–4%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
@@ -939,9 +939,9 @@ CoFundBills Cooperative`});
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
                   {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected contributions — Partners: 6 months, Founding Members: 5 months, Premium: 4 months, Regular: 3 months. With a well developed network as illustrated above, a Regular member can borrow up to ₦2,220,000 × 3 months = ₦6,660,000, while a Partner can borrow up to ₦2,220,000 × 6 months = ₦13,320,000."},
-                  {icon:"💰",title:"Loan Rate",desc:"1% per month for Partners, 2% per month for Premium members, 3% per month for Regular members — fair, transparent, and fully disclosed upfront."},
+                  {icon:"💰",title:"Loan Rate",desc:"1% for Partners, 2% for Founding Members, 3% for Premium Members, 4% for Regular Members — per month, fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
-                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 2% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
+                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 1% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
                 ].map(c=>(
                   <div key={c.title} className="card" style={{padding:20}}>
                     <div style={{fontSize:28,marginBottom:8}}>{c.icon}</div>
@@ -1341,7 +1341,7 @@ CoFundBills Cooperative`});
                       </div>
                       {(()=>{
                         const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
-                        const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="premium"?2:3; // founding=3
+                        const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="founding"?2:currentMember.memberType==="premium"?3:4;
                         const loanMonths=currentMember.memberType==="partner"?6:currentMember.memberType==="founding"?5:currentMember.memberType==="premium"?4:3;
                         const loanLimitCalc=total3mo/3*loanMonths;
                         const interest=loanLimitCalc*rate/100*loanMonths;
@@ -1364,7 +1364,7 @@ CoFundBills Cooperative`});
 
                     <div style={{fontSize:13,color:MUTED,marginBottom:16,lineHeight:1.8,background:BLUE_LIGHT,borderRadius:8,padding:12}}>
                       Your loan limit is calculated from your network's projected 3-month contributions across your direct, indirect, and extended invite chain.<br/>
-                      Interest: <strong>{currentMember.memberType==="partner"?"1% per month (Partner Rate)":currentMember.memberType==="premium"?"2% per month (Premium Rate)":"3% per month"}</strong> on outstanding balance.<br/>
+                      Interest: <strong>{currentMember.memberType==="partner"?"1% per month (Partner Rate)":currentMember.memberType==="founding"?"2% per month (Founding Rate)":currentMember.memberType==="premium"?"3% per month (Premium Rate)":"4% per month (Regular Rate)"}</strong> on outstanding balance.<br/>
                       Repayment: <strong>Automatic</strong> — deducted from incoming network credits.
                     </div>
                     <div className="field">
