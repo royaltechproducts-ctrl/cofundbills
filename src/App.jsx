@@ -14,6 +14,7 @@ const YEARLY_CONTRIB   = 100000;
 const CONTRIB_PART     = 0.2;    // 1/5th = 20% of any contribution
 const LOAN_INTEREST    = 0.04;   // 4% regular, 3% premium, 2% founding, 1% partner
 const PARTNER_SLOTS    = 10;
+const ADMIN_SLOTS      = 2;
 const FOUNDING_SLOTS   = 25;
 const FOUNDING_TERM_MONTHS = 4;
 const FOUNDING_RENEWAL = 50000;
@@ -41,7 +42,7 @@ const ERROR      = "#9F1239";
 
 // ── Tier Colours ─────────────────────────────────────────────
 const TIER = {
-  admin:   { bg:"#0B6E4F", bgDark:"#084F38", light:"#E6F4EF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Forest Green", badge:"🛡️" },
+  admin:   { bg:"#0B6E4F", bgDark:"#084F38", light:"#E6F4EF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Admin",        badge:"🛡️" },
   partner: { bg:"#4A0E8F", bgDark:"#360A6A", light:"#F0E8FF", accent:"#C9A84C", accentLight:"#FFF9EC", text:"Partner",      badge:"👑" },
   premium: { bg:"#8B5E3C", bgDark:"#6B4729", light:"#F5EDE4", accent:"#D4A96A", accentLight:"#FDF3E7", text:"Premium",      badge:"⭐" },
   regular:  { bg:"#1A4F8A", bgDark:"#163F70", light:"#E8F0FA", accent:"#F97316", accentLight:"#FFF3E8", text:"Regular",       badge:"🤝" },
@@ -1097,7 +1098,10 @@ CoFundBills Cooperative`});
                   </span>
                   {(currentMember.memberType==="partner"||currentMember.memberType==="admin")&&(
                     <span style={{fontSize:11,background:"rgba(201,168,76,0.3)",color:GOLD,padding:"2px 8px",borderRadius:10,fontWeight:700}}>
-                      {getTier(currentMember.memberType).badge} {currentMember.memberType==="admin"?"President / Admin":"Partner / Invested Member"}
+                      {getTier(currentMember.memberType).badge}{" "}
+                      {currentMember.memberType==="admin"
+                        ? (currentMember.investorSlot===2?"Co-Admin":"President / Admin")
+                        : "Partner / Invested Member"}
                     </span>
                   )}
                   {currentMember.memberType==="founding"&&(
@@ -1109,7 +1113,7 @@ CoFundBills Cooperative`});
                   {currentMember.memberType==="admin"&&(
                     <div style={{marginTop:8,display:"inline-flex",alignItems:"center",gap:8,
                       background:"rgba(201,168,76,0.2)",borderRadius:8,padding:"6px 14px"}}>
-                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>🛡️ Permanent President/Admin Status</span>
+                      <span style={{fontSize:12,fontWeight:700,color:GOLD}}>🛡️ {currentMember.investorSlot===2?"Co-Admin":"President / Admin"} — Permanent Status</span>
                     </div>
                   )}
                   {currentMember.memberType==="partner"&&(
@@ -1199,7 +1203,7 @@ CoFundBills Cooperative`});
           {portalTab==="overview" && (
             <div className="card">
               <div style={{fontWeight:800,fontSize:16,color:NAVY,marginBottom:16}}>Account Summary</div>
-              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?"President / Admin":currentMember.memberType==="partner"?"Partner / Invested Member":currentMember.memberType==="founding"?"Founding Member":currentMember.memberType==="premium"?"Invited Member (Premium)":"Invited Member (Regular)")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
+              {[["Total Credited",fmtNGN(currentMember.totalCredited)],["Expendable Balance",fmtNGN(currentMember.expendable)],["Reserve Balance",fmtNGN(currentMember.reserve)],["Outstanding Loan",fmtNGN(currentMember.loanBalance)],["Member Type",getTier(currentMember.memberType).badge+" "+( currentMember.memberType==="admin"?(currentMember.investorSlot===2?"Co-Admin":"President / Admin"):currentMember.memberType==="partner"?"Partner / Invested Member":currentMember.memberType==="founding"?"Founding Member":currentMember.memberType==="premium"?"Invited Member (Premium)":"Invited Member (Regular)")],["Status",currentMember.status],["Member Since",currentMember.createdAt?new Date(currentMember.createdAt).toLocaleDateString("en-NG"):"—"],
               ...(currentMember.memberType==="admin"?[["Status","Permanent — No Expiry"]]:currentMember.memberType==="partner"?[["Status","Active Contract Period"],["Note","Enlistment/Dis-enlistment by Admin only"]]:currentMember.memberType==="founding"?[["Membership Type","🎖️ Founding Member (25-slot limited)"],["Status","Permanently Active — No Contribution Required"],["Upgrade Path","Eligible to upgrade to Partner/Investor when slot is available"],["Note","Founding Member status is preserved even if Partner contract lapses"]]:currentMember.expiresAt?[["Membership Expires",new Date(currentMember.expiresAt).toLocaleDateString("en-NG",{day:"numeric",month:"long",year:"numeric"})],["Time Remaining",countdown||"—"]]:[])]
               .map(([k,v])=>(
                 <div key={k} style={{display:"flex",justifyContent:"space-between",padding:"10px 0",borderBottom:"1px solid #EBF0F8",fontSize:14}}>
@@ -1467,7 +1471,7 @@ CoFundBills Cooperative`});
               </div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:12,marginTop:20}}>
-              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Partners",allArr.filter(m=>m.memberType==="partner").length+"/10"],["Founding",allArr.filter(m=>m.memberType==="founding").length+"/25"],["Invited",allArr.filter(m=>m.refCode&&m.memberType!=="founding"&&m.memberType!=="partner"&&m.memberType!=="admin").length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
+              {[["Total Members",allArr.length],["Active",activeArr.length],["Pending",pendingArr.length],["Admin",allArr.filter(m=>m.memberType==="admin").length+"/2"],["Partners",allArr.filter(m=>m.memberType==="partner").length+"/10"],["Founding",allArr.filter(m=>m.memberType==="founding").length+"/25"],["Invited",allArr.filter(m=>m.refCode&&m.memberType!=="founding"&&m.memberType!=="partner"&&m.memberType!=="admin").length],["Loan Pool",fmtNGN(loanPool)],["Total Credits",fmtNGN(allArr.reduce((s,m)=>s+m.totalCredited,0))]].map(([l,v])=>(
                 <div key={l} style={{background:"rgba(255,255,255,0.12)",borderRadius:10,padding:12}}>
                   <div style={{fontSize:18,fontWeight:900}}>{v}</div>
                   <div style={{fontSize:11,opacity:.7,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
@@ -1501,7 +1505,7 @@ CoFundBills Cooperative`});
                   <div><div style={{fontWeight:700}}>{m.fullName}</div><div style={{fontSize:11,color:MUTED}}>{m.email}</div><div style={{fontSize:11,color:BLUE}}>{m.linkCode}</div></div>
                   <div><span style={{fontSize:11,
                     background:getTier(m.memberType).light,
-                    color:getTier(m.memberType).bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="admin"?"President/Admin":m.memberType==="partner"?"Partner/Investor":m.memberType==="founding"?"Founding Member":m.memberType==="premium"?"Invited (Premium)":"Invited (Regular)"}</span></div>
+                    color:getTier(m.memberType).bg,padding:"2px 8px",borderRadius:10,fontWeight:700}}>{m.memberType==="admin"?(m.investorSlot===2?"Co-Admin":"President/Admin"):m.memberType==="partner"?"Partner/Investor":m.memberType==="founding"?"Founding Member":m.memberType==="premium"?"Invited (Premium)":"Invited (Regular)"}</span></div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.expendable)}</div>
                   <div style={{fontWeight:700,color:NAVY,fontSize:13}}>{fmtNGN(m.reserve)}</div>
                   <div style={{fontWeight:700,color:m.loanBalance>0?ERROR:MUTED,fontSize:13}}>{fmtNGN(m.loanBalance)}</div>
