@@ -166,6 +166,18 @@ const DB = {
   },
 };
 
+const trackVisit = async (page, refCode) => {
+  try {
+    await supabase.from("cfb_visitors").insert({
+      page, ref_code:refCode||null,
+      user_agent:navigator.userAgent,
+      screen:`${window.screen.width}x${window.screen.height}`,
+      language:navigator.language,
+      referrer:document.referrer||null,
+    });
+  } catch(e) {}
+};
+
 const sendEmail = async ({to_email,to_name,subject,message}) => {
   try { await emailjs.send(EMAILJS_SERVICE,EMAILJS_TEMPLATE,{to_email,to_name,subject,message},EMAILJS_PUBLIC); }
   catch(e) { console.error("EmailJS:",e); }
@@ -199,6 +211,8 @@ export default function App() {
   const [cashoutErr,setCashoutErr]   = useState("");
   const [loanForm,setLoanForm]       = useState({amount:"",purpose:"",billType:""});
   const [loanErr,setLoanErr]         = useState("");
+  const [analytics,setAnalytics]     = useState([]);
+  const [analyticsLoading,setAnalyticsLoading] = useState(false);
   const [loanCalc,setLoanCalc]       = useState({directInput:0,indirectInput:0,extendedInput:0});
 
   const showNote = (msg,type="success") => { setNote({msg,type}); setTimeout(()=>setNote(null),4500); };
@@ -225,6 +239,8 @@ export default function App() {
   },[currentMember]);
 
   const loadMembers = useCallback(async()=>{ setMembers(await DB.getMembers()); },[]);
+
+  useEffect(()=>{ trackVisit(view, urlRef); },[view]);
   useEffect(()=>{ loadMembers(); DB.getLoanPool().then(setLoanPool); },[loadMembers]);
   useEffect(()=>{
     if(!currentMember) return;
@@ -237,6 +253,13 @@ export default function App() {
     const m = await DB.getMembers();
     setMembers(m);
     if(currentMember) setCurrentMember(m[currentMember.linkCode]||null);
+  };
+
+  const loadAnalytics = async () => {
+    setAnalyticsLoading(true);
+    const {data} = await supabase.from("cfb_visitors").select("*").order("visited_at",{ascending:false}).limit(500);
+    setAnalytics(data||[]);
+    setAnalyticsLoading(false);
   };
 
   // ── Compute member's network counts ─────────────────────────
@@ -1481,13 +1504,14 @@ CoFundBills Cooperative`});
           </div>
 
           <div className="admin-tabs">
-            {[["members","All Members"],["pending","Pending Activation"],["renewals","Pending Renewal"],["cashouts","Cashout Queue"],["loans","Loan Queue"],["investors","Partners & Investors"]].map(([id,label])=>(
+            {[["members","All Members"],["pending","Pending Activation"],["renewals","Pending Renewal"],["cashouts","Cashout Queue"],["loans","Loan Queue"],["investors","Partners & Investors"],["analytics","Analytics"]].map(([id,label])=>(
               <button key={id} className={`admin-tab${adminTab===id?" active":""}`}
                 onClick={async()=>{
                   setAdminTab(id);
                   if(id==="cashouts"){setAllCashouts(await DB.getAllCashouts());}
                   if(id==="loans"){setAllLoans(await DB.getAllLoans());}
                   if(id==="loans"||id==="investors"){setLoanPool(await DB.getLoanPool());}
+                  if(id==="analytics"){await loadAnalytics();}
                 }}>
                 {label}
               </button>
@@ -1648,6 +1672,85 @@ CoFundBills Cooperative`});
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {adminTab==="analytics" && (
+            <div>
+              {analyticsLoading ? (
+                <div style={{padding:40,textAlign:"center",color:MUTED}}>Loading analytics...</div>
+              ) : (
+                <>
+                  <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
+                    {[
+                      ["Total Visits",analytics.length],
+                      ["Today",analytics.filter(v=>new Date(v.visited_at).toDateString()===new Date().toDateString()).length],
+                      ["Via Invite Link",analytics.filter(v=>v.ref_code).length],
+                      ["Landing Page",analytics.filter(v=>v.page==="landing").length],
+                      ["Registrations",analytics.filter(v=>v.page==="register").length],
+                      ["Portal Visits",analytics.filter(v=>v.page==="portal").length],
+                      ["Mobile",analytics.filter(v=>v.screen&&Number(v.screen.split("x")[0])<768).length],
+                      ["Desktop",analytics.filter(v=>v.screen&&Number(v.screen.split("x")[0])>=768).length],
+                    ].map(([l,v])=>(
+                      <div key={l} style={{background:WHITE,borderRadius:10,padding:14,
+                        boxShadow:"0 2px 8px rgba(13,33,55,0.06)",border:"1px solid #D0DAED",textAlign:"center"}}>
+                        <div style={{fontSize:24,fontWeight:900,color:NAVY}}>{v}</div>
+                        <div style={{fontSize:11,color:MUTED,marginTop:2,textTransform:"uppercase",letterSpacing:.5}}>{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                  {analytics.filter(v=>v.ref_code).length>0&&(
+                    <div className="card" style={{marginBottom:16}}>
+                      <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:12}}>Top Invite Links Driving Traffic</div>
+                      {Object.entries(analytics.filter(v=>v.ref_code).reduce((acc,v)=>{acc[v.ref_code]=(acc[v.ref_code]||0)+1;return acc;},{}))
+                        .sort((a,b)=>b[1]-a[1]).slice(0,10).map(([ref,count])=>(
+                        <div key={ref} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                          padding:"8px 0",borderBottom:"1px solid #EBF0F8",fontSize:13}}>
+                          <div>
+                            <span style={{fontWeight:700,color:BLUE}}>{ref}</span>
+                            <span style={{fontSize:11,color:MUTED,marginLeft:8}}>{members[ref]?.fullName||"Unknown"}</span>
+                          </div>
+                          <div style={{background:BLUE_LIGHT,borderRadius:12,padding:"2px 10px",fontSize:12,fontWeight:700,color:NAVY}}>{count} visits</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="card" style={{marginBottom:16}}>
+                    <div style={{fontWeight:800,color:NAVY,fontSize:14,marginBottom:12}}>Pages Visited</div>
+                    {[["landing","Home / Landing"],["register","Registration"],["portal","Member Portal"],["admin","Admin Dashboard"]].map(([page,label])=>{
+                      const cnt=analytics.filter(v=>v.page===page).length;
+                      const pct=analytics.length>0?Math.round(cnt/analytics.length*100):0;
+                      return(
+                        <div key={page} style={{marginBottom:10}}>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:4}}>
+                            <span style={{fontWeight:600,color:NAVY}}>{label}</span>
+                            <span style={{color:MUTED}}>{cnt} visits ({pct}%)</span>
+                          </div>
+                          <div style={{background:BLUE_LIGHT,borderRadius:6,height:8,overflow:"hidden"}}>
+                            <div style={{background:BLUE,height:"100%",width:pct+"%",borderRadius:6}}/>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="table-wrap">
+                    <div className="table-head" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12}}>
+                      <span>Date & Time</span><span>Page</span><span>Via Link</span><span>Device</span><span>Language</span>
+                    </div>
+                    {analytics.length===0?(
+                      <div style={{padding:32,textAlign:"center",color:MUTED}}>No visitor data yet.</div>
+                    ):analytics.slice(0,100).map((v,i)=>(
+                      <div key={i} className="table-row" style={{display:"grid",gridTemplateColumns:"1.5fr 1fr 1fr 1fr 1fr",gap:12,fontSize:12}}>
+                        <div style={{color:MUTED}}>{new Date(v.visited_at).toLocaleString("en-NG",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}</div>
+                        <div><span style={{background:BLUE_LIGHT,color:BLUE,padding:"2px 8px",borderRadius:8,fontWeight:600,textTransform:"capitalize",fontSize:11}}>{v.page}</span></div>
+                        <div style={{color:BLUE,fontWeight:600}}>{v.ref_code||"—"}</div>
+                        <div style={{color:MUTED}}>{v.screen&&Number(v.screen.split("x")[0])<768?"Mobile":"Desktop"}</div>
+                        <div style={{color:MUTED}}>{v.language||"—"}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
