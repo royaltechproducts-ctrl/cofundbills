@@ -881,7 +881,7 @@ CoFundBills Cooperative`});
                   </div>
                 </div>
                 <div style={{fontSize:12,color:MUTED,marginTop:12,textAlign:"center",fontStyle:"italic"}}>
-                  * These are illustrative figures. But very realistic and achievable – because everyone is obliged to make their monthly contributions and at the same time, self-motivated to develop their network of monthly contributors to boost their earnings and credit score. However, actual earnings depend entirely on your network members' responsiveness to monthly contributions.
+                  * These are illustrative figures, but very realistic and achievable – because everyone is obliged to make their monthly contributions and at the same time, self-motivated to develop their network of monthly contributors to boost their earnings and credit score. However, actual earnings depend entirely on your network members' responsiveness to monthly contributions.
                 </div>
               </div>
             </div>
