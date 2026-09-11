@@ -495,7 +495,7 @@ CoFundBills Cooperative`});
     if(amt>loanLimit&&loanLimit>0){ setLoanErr(`Loan limit based on your 3-month network projection is ${fmtNGN(loanLimit)}.`); return; }
 
     const effectiveRate = m.memberType==="partner"?0.01:m.memberType==="premium"?0.02:LOAN_INTEREST; // founding & regular = 3%
-    const monthsProjection = m.memberType==="partner"?12:m.memberType==="premium"?6:3; // founding & regular = 3 months
+    const monthsProjection = m.memberType==="partner"?6:m.memberType==="founding"?5:m.memberType==="premium"?4:3;
     const loanLimitFinal = (direct+indirect+extended)*MONTHLY_CONTRIB*monthsProjection*0.2*3; // 3 levels × 20%
     await supabase.from("cfb_loans").insert({link_code:m.linkCode,full_name:m.fullName,email:m.email,amount:amt,interest_rate:effectiveRate,purpose:loanForm.purpose,bill_type:loanForm.billType,status:"pending",network_direct:direct,network_indirect:indirect,network_extended:extended,loan_limit:loanLimitFinal});
     await sendEmail({to_email:EMAIL_ADDR,to_name:"CoFundBills Admin",
@@ -531,7 +531,7 @@ CoFundBills Cooperative`});
     if(!m) return;
     const amt = Number(loan.amount);
     const approvedRate = Number(loan.interest_rate)||LOAN_INTEREST;
-    const approvedMonths = members[loan.link_code]?.memberType==="partner"?12:members[loan.link_code]?.memberType==="premium"?6:3;
+    const approvedMonths = members[loan.link_code]?.memberType==="partner"?6:members[loan.link_code]?.memberType==="founding"?5:members[loan.link_code]?.memberType==="premium"?4:3;
     const totalRepay = amt + (amt*approvedRate*approvedMonths);
     await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString(),total_repayable:totalRepay}).eq("id",loan.id);
     await supabase.from("cfb_members").update({loan_balance:m.loanBalance+totalRepay}).eq("link_code",loan.link_code);
@@ -938,7 +938,7 @@ CoFundBills Cooperative`});
               <p className="section-sub">Face a big bill? Your network is your credit score.</p>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
                 {[
-                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected 3-month contributions — from your direct, indirect, and circuitous invite chain. With a well developed network as with the illustration above, you can already borrow up to ₦2,220,000 × 3 months projection = ₦6,660,000 on your approved limit."},
+                  {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected contributions — Partners: 6 months, Founding Members: 5 months, Premium: 4 months, Regular: 3 months. With a well developed network as illustrated above, a Regular member can borrow up to ₦2,220,000 × 3 months = ₦6,660,000, while a Partner can borrow up to ₦2,220,000 × 6 months = ₦13,320,000."},
                   {icon:"💰",title:"Loan Rate",desc:"1% per month for Partners, 2% per month for Premium members, 3% per month for Regular members — fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
                   {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 2% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Founding/Investor members by share holdings."},
@@ -1342,7 +1342,7 @@ CoFundBills Cooperative`});
                       {(()=>{
                         const total3mo=(loanCalc.directInput+loanCalc.indirectInput+loanCalc.extendedInput)*2000*3;
                         const rate=currentMember.memberType==="partner"?1:currentMember.memberType==="premium"?2:3; // founding=3
-                        const loanMonths=currentMember.memberType==="partner"?12:currentMember.memberType==="premium"?6:3;
+                        const loanMonths=currentMember.memberType==="partner"?6:currentMember.memberType==="founding"?5:currentMember.memberType==="premium"?4:3;
                         const loanLimitCalc=total3mo/3*loanMonths;
                         const interest=loanLimitCalc*rate/100*loanMonths;
                         return total3mo>0?(
