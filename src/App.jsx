@@ -941,12 +941,12 @@ CoFundBills Cooperative`});
                   {icon:"📊",title:"Loan Limit",desc:"Based on your network's projected contributions — Partners: 6 months, Founding Members: 5 months, Premium: 4 months, Regular: 3 months. With a well developed network as illustrated above, a Regular member can borrow up to ₦2,220,000 × 3 months = ₦6,660,000, while a Partner can borrow up to ₦2,220,000 × 6 months = ₦13,320,000."},
                   {icon:"💰",title:"Loan Rate",desc:"1% for Partners, 2% for Founding Members, 3% for Premium Members, 4% for Regular Members — per month, fair, transparent, and fully disclosed upfront."},
                   {icon:"🔄",title:"Auto Repayment",desc:"Repayments are automatically deducted from incoming network credits. No manual transfers, no stress."},
-                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 1% per month. 2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions. 3. Loan interest proceeds are distributed monthly to Partners/Invested members equally across the 10 slots."},
+                  {icon:"📈",title:"Investor Package",desc:"1. Take loans at a diminished interest rate of 1% per month.\n2. Investors are root participants with no predecessors — they receive ₦6,000 from direct invite contributions, ₦4,000 from indirect invite contributions, and ₦2,000 from circuitously invited members contributions.\n3. Loan interest proceeds are distributed monthly to Partners/Invested members equally across the 10 slots."},
                 ].map(c=>(
                   <div key={c.title} className="card" style={{padding:20}}>
                     <div style={{fontSize:28,marginBottom:8}}>{c.icon}</div>
                     <div style={{fontWeight:700,color:NAVY,marginBottom:6,fontSize:14}}>{c.title}</div>
-                    <div style={{fontSize:13,color:MUTED,lineHeight:1.7}}>{c.desc}</div>
+                    <div style={{fontSize:13,color:MUTED,lineHeight:1.7,whiteSpace:"pre-line"}}>{c.desc}</div>
                   </div>
                 ))}
               </div>
