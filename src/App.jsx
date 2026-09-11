@@ -881,7 +881,7 @@ CoFundBills Cooperative`});
                   </div>
                 </div>
                 <div style={{fontSize:12,color:MUTED,marginTop:12,textAlign:"center",fontStyle:"italic"}}>
-                  * Illustrative figures only. Actual earnings depend on your network activity and member renewals.
+                  * These are illustrative figures. But very realistic and achievable – because, everyone is obliged to contribute monthly to stay active and open to contributions from their network, and everyone is self motivated to develop their individual network to boost their earnings and credit score. However, actual earnings depend entirely on your network members responsiveness to monthly contributions.
                 </div>
               </div>
             </div>
