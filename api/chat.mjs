@@ -1,4 +1,4 @@
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -16,11 +16,11 @@ module.exports = async function handler(req, res) {
     body: JSON.stringify({
       model: 'claude-haiku-4-5-20251001',
       max_tokens: 1000,
-      system: req.body.system || '',
-      messages: req.body.messages || [],
+      system: req.body?.system || '',
+      messages: req.body?.messages || [],
     }),
   });
 
   const data = await response.json();
   return res.status(200).json(data);
-};
+}
