@@ -232,6 +232,7 @@ const handleChat = async () => {
   setChatMessages(newMessages);
   setChatLoading(true);
   try {
+    console.log("Sending chat request...", newMessages.slice(-10));
     const res = await fetch("/api/chat.mjs",{
       method:"POST",
       headers:{"Content-Type":"application/json"},
@@ -241,10 +242,12 @@ const handleChat = async () => {
       }),
     });
     const data = await res.json();
+    console.log("Chat response:", data);
     const reply = data.content?.[0]?.text||"Sorry, I could not process that. Please WhatsApp us at +234 909 999 4816.";
     setChatMessages([...newMessages,{role:"assistant",content:reply}]);
   } catch(e) {
-    setChatMessages([...newMessages,{role:"assistant",content:"Sorry, I am having trouble connecting. Please WhatsApp us at +234 909 999 4816 for immediate help."}]);
+    console.error("Chat error:",e);
+    setChatMessages([...newMessages,{role:"assistant",content:"Error: "+e.message+". Please WhatsApp +234 909 999 4816."}]);
   }
   setChatLoading(false);
 };
