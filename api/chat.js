@@ -6,24 +6,23 @@ module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method === 'GET') return res.status(200).json({ status: 'CoFundBills Chat API is running.' });
 
-  try {
-    const messages = req.body?.messages || [];
-    const system   = req.body?.system   || '';
+  if (req.method === 'GET') {
+    return res.status(200).json({ status: 'ok' });
+  }
 
-    if (!messages.length) return res.status(400).json({ error: 'No messages provided' });
+  const messages = (req.body && req.body.messages) ? req.body.messages : [];
+  const system = (req.body && req.body.system) ? req.body.system : '';
+  const apiKey = process.env.VITE_ANTHROPIC_KEY;
 
-    const apiKey = process.env.VITE_ANTHROPIC_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'API key not configured' });
+  const body = JSON.stringify({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 1000,
+    system: system,
+    messages: messages,
+  });
 
-    const body = JSON.stringify({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1000,
-      system,
-      messages,
-    });
-
+  return new Promise(function(resolve) {
     const options = {
       hostname: 'api.anthropic.com',
       path: '/v1/messages',
@@ -36,23 +35,26 @@ module.exports = async function handler(req, res) {
       },
     };
 
-    const data = await new Promise((resolve, reject) => {
-      const request = https.request(options, (response) => {
-        let raw = '';
-        response.on('data', chunk => raw += chunk);
-        response.on('end', () => {
-          try { resolve(JSON.parse(raw)); }
-          catch(e) { reject(new Error('Failed to parse: ' + raw)); }
-        });
+    const request = https.request(options, function(response) {
+      let raw = '';
+      response.on('data', function(chunk) { raw += chunk; });
+      response.on('end', function() {
+        try {
+          const data = JSON.parse(raw);
+          res.status(200).json(data);
+        } catch(e) {
+          res.status(500).json({ error: 'Parse error' });
+        }
+        resolve();
       });
-      request.on('error', reject);
-      request.write(body);
-      request.end();
     });
 
-    return res.status(200).json(data);
-  } catch (error) {
-    console.error('Chat API error:', error.message);
-    return res.status(500).json({ error: error.message });
-  }
+    request.on('error', function(e) {
+      res.status(500).json({ error: e.message });
+      resolve();
+    });
+
+    request.write(body);
+    request.end();
+  });
 };
