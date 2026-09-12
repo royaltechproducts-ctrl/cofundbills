@@ -793,7 +793,7 @@ CoFundBills Cooperative`});
 
           {/* Stats bar */}
           <div className="stats-bar">
-            {[["Pay ₦10,000","Monthly Contribution"],["Receive ₦2,000 Monthly","per directly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per indirectly invited contributor when they make their monthly contribution"],["Receive ₦2,000 Monthly","per Circuitously invited contributor when they make their monthly contribution"],["1%–4%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
+            {[["Pay ₦10,000","Monthly Contribution"],["Receive 20% of all Monthly Contributions - Every Month","per directly invited contributor when they make their monthly contribution"],["Receive 20% of all Monthly Contributions - Every Month","per indirectly invited contributor when they make their monthly contribution"],["Receive 20% of all Monthly Contributions - Every Month","per Circuitously invited contributor when they make their monthly contribution"],["1%–4%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
               <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
             ))}
           </div>
