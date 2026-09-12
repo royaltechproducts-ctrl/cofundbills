@@ -792,9 +792,15 @@ CoFundBills Cooperative`});
           </div>
 
           {/* Stats bar */}
-          <div className="stats-bar">
+          <div style={{background:NAVY,padding:"20px 24px",display:"flex",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
             {[["Pay ₦10,000","Monthly Contribution"],["Receive 20% of all Monthly Contributions - Every Month","per directly invited contributor when they make their monthly contribution"],["Receive 20% of all Monthly Contributions - Every Month","per indirectly invited contributor when they make their monthly contribution"],["Receive 20% of all Monthly Contributions - Every Month","per Circuitously invited contributor when they make their monthly contribution"],["1%–4%","Co-Fund Loan Rate/Month"],["50/50","Expendable / Reserve Split"]].map(([v,l])=>(
-              <div key={l} className="stat-item"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
+              <div key={l} style={{background:GOLD,borderRadius:30,padding:"10px 20px",
+                textAlign:"center",boxShadow:"0 4px 16px rgba(201,168,76,0.35)",
+                minWidth:140,maxWidth:200}}>
+                <div style={{fontSize:13,fontWeight:900,color:NAVY,lineHeight:1.3}}>{v}</div>
+                <div style={{fontSize:10,fontWeight:700,color:NAVY,opacity:.75,marginTop:3,
+                  textTransform:"uppercase",letterSpacing:.4,lineHeight:1.4}}>{l}</div>
+              </div>
             ))}
           </div>
 
