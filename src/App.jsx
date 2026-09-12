@@ -232,12 +232,10 @@ const handleChat = async () => {
   setChatMessages(newMessages);
   setChatLoading(true);
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages",{
+    const res = await fetch("/api/chat",{
       method:"POST",
-      headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_KEY||"","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      headers:{"Content-Type":"application/json"},
       body:JSON.stringify({
-        model:"claude-haiku-4-5-20251001",
-        max_tokens:1000,
         system:COFUNDBILLS_SYSTEM,
         messages:newMessages.slice(-10).map(m=>({role:m.role,content:m.content})),
       }),
