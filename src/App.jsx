@@ -1918,7 +1918,7 @@ CoFundBills Cooperative`});
       )}
 
       {/* ── FLOATING CHAT WIDGET ─────────────────────────── */}
-      <div style={{position:"fixed",bottom:24,right:24,zIndex:9998}}>
+      <div style={{position:"fixed",bottom:90,right:24,zIndex:9998}}>
         {/* Chat bubble button */}
         {!chatOpen&&(
           <button onClick={()=>setChatOpen(true)}
