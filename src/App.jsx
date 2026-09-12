@@ -166,6 +166,91 @@ const DB = {
   },
 };
 
+// ── CoFundBills AI Chat ──────────────────────────────────────
+const COFUNDBILLS_SYSTEM = `You are the CoFundBills Cooperative Assistant — a helpful, friendly and knowledgeable AI assistant built specifically for the CoFundBills Cooperative platform.
+
+ABOUT COFUNDBILLS:
+CoFundBills Cooperative is a member-powered digital cooperative that helps members collectively prepare for and finance essential bills — house rent, school fees, medical bills, and other critical expenses.
+
+MEMBERSHIP TIERS:
+1. President/Admin — 2 slots. Permanent. Free. Root participants earning 60% from direct, 40% indirect, 20% circuitous contributions.
+2. Partners/Invested Members — 10 slots. 2-year contract. Investment required. Root participants. Loan interest: 1%/month. Loan limit: 6-month projection.
+3. Founding Members — 25 slots. FREE forever. Permanently active. Invited by admin only. Loan interest: 2%/month. Loan limit: 5-month projection. Earn 20% per level same as regular members.
+4. Invited Member (Premium) — Unlimited. ₦100,000/year. Loan interest: 3%/month. Loan limit: 4-month projection.
+5. Invited Member (Regular) — Unlimited. ₦10,000/month. Loan interest: 4%/month. Loan limit: 3-month projection.
+
+CREDIT/EARNINGS STRUCTURE:
+Every contribution splits into 5 equal parts (20% each):
+- 20% to direct invite chain member
+- 20% to indirect invite chain member  
+- 20% to circuitous invite chain member
+- 20% to admin operations
+- 20% to Loan Fund Pool
+Partners/Admin at direct position take 60% (3 parts), no indirect or circuitous above them.
+Partners/Admin at indirect position take 40% (2 parts), no circuitous above them.
+All credits split 50/50 into Expendable Account and Fixed Savings Account.
+
+EARNINGS ILLUSTRATION (Regular member, 10 invites per level):
+- 10 direct × ₦2,000 = ₦20,000/month
+- 100 indirect × ₦2,000 = ₦200,000/month
+- 1,000 circuitous × ₦2,000 = ₦2,000,000/month
+Total: ₦2,220,000/month (illustrative)
+
+CO-FUND LOANS:
+- Regular: 4%/month, 3-month network projection limit
+- Premium: 3%/month, 4-month limit
+- Founding: 2%/month, 5-month limit
+- Partner: 1%/month, 6-month limit
+- Auto-repaid from incoming network credits
+- Loan pool funded by 20% of every contribution + forfeited credits from inactive links
+
+ACCOUNTS:
+- Expendable Account: 50% of credits — cashable anytime, any purpose
+- Fixed Savings Account: 50% of credits — essential bills only (rent, school fees, medical)
+
+REGISTRATION:
+1. Visit cofundbills.vercel.app and register free
+2. Pay contribution to activate (₦10,000 for Regular, ₦100,000 for Premium)
+3. Pay to: Royal Tech Partnership & Investment Limited, Zenith Bank, 1016621205
+4. WhatsApp +234 909 999 4816 after payment
+
+CONTACT:
+Email: cofundbills@gmail.com | Phone: +234 806 163 1222 | WhatsApp: +234 909 999 4816
+
+RULES:
+- Answer only CoFundBills-related questions
+- Be warm, friendly, and encouraging
+- Keep answers concise and clear
+- Always encourage visitors to register or WhatsApp for more help
+- Never make up information not in this brief`;
+
+const handleChat = async () => {
+  if(!chatInput.trim()||chatLoading) return;
+  const userMsg = chatInput.trim();
+  setChatInput("");
+  const newMessages = [...chatMessages,{role:"user",content:userMsg}];
+  setChatMessages(newMessages);
+  setChatLoading(true);
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages",{
+      method:"POST",
+      headers:{"Content-Type":"application/json","x-api-key":import.meta.env.VITE_ANTHROPIC_KEY||"","anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+      body:JSON.stringify({
+        model:"claude-haiku-4-5-20251001",
+        max_tokens:1000,
+        system:COFUNDBILLS_SYSTEM,
+        messages:newMessages.slice(-10).map(m=>({role:m.role,content:m.content})),
+      }),
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text||"Sorry, I could not process that. Please WhatsApp us at +234 909 999 4816.";
+    setChatMessages([...newMessages,{role:"assistant",content:reply}]);
+  } catch(e) {
+    setChatMessages([...newMessages,{role:"assistant",content:"Sorry, I am having trouble connecting. Please WhatsApp us at +234 909 999 4816 for immediate help."}]);
+  }
+  setChatLoading(false);
+};
+
 const trackVisit = async (page, refCode) => {
   try {
     await supabase.from("cfb_visitors").insert({
@@ -213,6 +298,10 @@ export default function App() {
   const [loanErr,setLoanErr]         = useState("");
   const [analytics,setAnalytics]     = useState([]);
   const [analyticsLoading,setAnalyticsLoading] = useState(false);
+  const [chatOpen,setChatOpen]       = useState(false);
+  const [chatMessages,setChatMessages] = useState([{role:"assistant",content:"👋 Hi! I am the CoFundBills Assistant. Ask me anything about how CoFundBills works, membership types, earnings, loans, or how to get started!"}]);
+  const [chatInput,setChatInput]     = useState("");
+  const [chatLoading,setChatLoading] = useState(false);
   const [loanCalc,setLoanCalc]       = useState({directInput:0,indirectInput:0,extendedInput:0});
 
   const showNote = (msg,type="success") => { setNote({msg,type}); setTimeout(()=>setNote(null),4500); };
@@ -1827,6 +1916,90 @@ CoFundBills Cooperative`});
           </div>
         </div>
       )}
+
+      {/* ── FLOATING CHAT WIDGET ─────────────────────────── */}
+      <div style={{position:"fixed",bottom:24,right:24,zIndex:9998}}>
+        {/* Chat bubble button */}
+        {!chatOpen&&(
+          <button onClick={()=>setChatOpen(true)}
+            style={{width:60,height:60,borderRadius:"50%",background:`linear-gradient(135deg,${NAVY},${BLUE})`,
+              border:"none",cursor:"pointer",boxShadow:"0 4px 20px rgba(13,33,55,0.4)",
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,
+              transition:"transform .2s"}}
+            title="Chat with CoFundBills Assistant">
+            💬
+          </button>
+        )}
+        {/* Chat window */}
+        {chatOpen&&(
+          <div style={{width:340,height:480,background:WHITE,borderRadius:16,
+            boxShadow:"0 8px 40px rgba(13,33,55,0.25)",display:"flex",flexDirection:"column",
+            overflow:"hidden",border:`2px solid ${BLUE}`}}>
+            {/* Header */}
+            <div style={{background:`linear-gradient(135deg,${NAVY},${BLUE})`,padding:"14px 16px",
+              display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <div style={{width:36,height:36,background:GOLD,borderRadius:"50%",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🤝</div>
+                <div>
+                  <div style={{color:WHITE,fontWeight:800,fontSize:14}}>CoFundBills Assistant</div>
+                  <div style={{color:"rgba(255,255,255,0.65)",fontSize:11}}>Powered by Claude AI</div>
+                </div>
+              </div>
+              <button onClick={()=>setChatOpen(false)}
+                style={{background:"rgba(255,255,255,0.15)",border:"none",color:WHITE,
+                  width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:14,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+            </div>
+            {/* Messages */}
+            <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}
+              ref={el=>{if(el) el.scrollTop=el.scrollHeight;}}>
+              {chatMessages.map((msg,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
+                  <div style={{maxWidth:"82%",padding:"10px 14px",borderRadius:12,fontSize:13,lineHeight:1.6,
+                    background:msg.role==="user"?BLUE:BLUE_LIGHT,
+                    color:msg.role==="user"?WHITE:DARK,
+                    borderBottomRightRadius:msg.role==="user"?2:12,
+                    borderBottomLeftRadius:msg.role==="user"?12:2}}>
+                    {msg.content}
+                  </div>
+                </div>
+              ))}
+              {chatLoading&&(
+                <div style={{display:"flex",justifyContent:"flex-start"}}>
+                  <div style={{background:BLUE_LIGHT,padding:"10px 14px",borderRadius:12,fontSize:13,color:MUTED}}>
+                    Thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+            {/* Input */}
+            <div style={{padding:"10px 12px",borderTop:`1px solid ${BLUE_LIGHT}`,
+              display:"flex",gap:8,alignItems:"center"}}>
+              <input
+                type="text"
+                placeholder="Ask about CoFundBills..."
+                value={chatInput}
+                onChange={e=>setChatInput(e.target.value)}
+                onKeyDown={e=>e.key==="Enter"&&handleChat()}
+                style={{flex:1,padding:"9px 12px",border:`1.5px solid ${BLUE_LIGHT}`,
+                  borderRadius:20,fontSize:13,fontFamily:"inherit",outline:"none",
+                  color:DARK,background:WHITE}}
+              />
+              <button onClick={handleChat} disabled={chatLoading||!chatInput.trim()}
+                style={{width:36,height:36,borderRadius:"50%",background:chatLoading||!chatInput.trim()?BLUE_LIGHT:BLUE,
+                  border:"none",cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,
+                  color:chatLoading||!chatInput.trim()?MUTED:WHITE,flexShrink:0}}>
+                ➤
+              </button>
+            </div>
+            <div style={{textAlign:"center",fontSize:10,color:MUTED,paddingBottom:8}}>
+              Powered by Claude AI · WhatsApp +234 909 999 4816
+            </div>
+          </div>
+        )}
+      </div>
     </>
   );
 }
