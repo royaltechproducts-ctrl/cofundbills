@@ -810,6 +810,8 @@ CoFundBills Cooperative`});
             </>
           ) : (
             <>
+              <button className="nav-btn" style={{fontSize:12}} onClick={()=>setFaqOpen(true)}>FAQs</button>
+              <button className="nav-btn" style={{fontSize:12}} onClick={()=>setView("terms")}>T&C</button>
               <button className="nav-btn" onClick={()=>setModal({type:"login"})}>Log In</button>
               <button className="nav-btn nav-btn-gold" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join Free</button>
             </>
@@ -2234,6 +2236,163 @@ CoFundBills Cooperative`});
                 <button className="btn btn-gold" style={{fontSize:12,padding:"6px 14px"}}
                   onClick={()=>{setFaqOpen(false);setView("register");}}>Join Free Today</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {faqOpen&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(13,33,55,0.75)",zIndex:10000,
+          display:"flex",alignItems:"flex-start",justifyContent:"center",
+          overflowY:"auto",padding:"32px 16px"}} onClick={e=>{if(e.target===e.currentTarget)setFaqOpen(false);}}>
+          <div style={{background:WHITE,borderRadius:16,width:"100%",maxWidth:720,
+            boxShadow:"0 8px 40px rgba(13,33,55,0.3)"}}>
+            <div style={{background:`linear-gradient(135deg,${NAVY},${BLUE})`,padding:"20px 28px",
+              borderRadius:"16px 16px 0 0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <div>
+                <div style={{color:GOLD,fontWeight:900,fontSize:11,textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>CoFundBills Cooperative</div>
+                <div style={{color:WHITE,fontWeight:900,fontSize:20}}>Frequently Asked Questions</div>
+              </div>
+              <button onClick={()=>setFaqOpen(false)}
+                style={{background:"rgba(255,255,255,0.15)",border:"none",color:WHITE,
+                  width:36,height:36,borderRadius:"50%",cursor:"pointer",fontSize:18,
+                  display:"flex",alignItems:"center",justifyContent:"center"}}>x</button>
+            </div>
+            <div style={{padding:"24px 28px",maxHeight:"65vh",overflowY:"auto"}}>
+                            <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What is CoFundBills Cooperative?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  CoFundBills Cooperative is a technology-driven, member-powered multi-purpose cooperative society designed to help members collectively prepare for and finance essential bills — house rent, school fees, medical expenses, and other critical life costs — through a structured network of monthly contributors.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>How is CoFundBills different from a traditional thrift (Ajo/Esusu)?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  In a traditional thrift, a fixed group contributes together and each person receives the total pool in turns — one at a time — until the cycle ends. CoFundBills is different: every member contributes monthly in their primary circle and simultaneously receives 20% of every contribution made by every member in their secondary and tertiary circles — every month, all at once, indefinitely. There is no waiting for your turn.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What are Primary, Secondary and Tertiary Contribution Circles?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Your Primary Circle is where you contribute monthly — your fundamental obligation. Your Secondary Circles are formed by everyone you personally invite — their contributions credit your account every month. Your Tertiary Circles are formed by everyone your invites go on to invite — their contributions also credit your account every month. You receive from all three levels simultaneously, every month.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>How much do I earn from my network?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  You earn 20% of every monthly contribution made by every member across your three circles. For a Regular member paying N10,000/month, that is N2,000 per contributor per month. With 10 direct, 100 secondary, and 1,000 tertiary contributors, that is N2,220,000 credited to your account every month — illustratively.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What happens if I miss my monthly contribution?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Failure to pay your monthly contribution in your primary circle immediately suspends your right to receive from your secondary and tertiary circles. All credits that would have come to you are diverted to the CoFundBills Loan Pool until your contribution is paid and your membership is reactivated.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What membership types are available?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Five tiers: President/Admin (2 slots, permanent), Partners/Invested Members (10 slots, 2-year contract), Founding Members (25 slots, free forever), Invited Member Premium (N100,000/year), and Invited Member Regular (N10,000/month). Each tier has different loan rates and loan limits.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>Is Founding Membership really free forever?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Yes — completely free for life. No activation fee, no monthly contribution, no expiry. Your Co-Fund Invite Link remains permanently active. The only requirement is to share your link and grow your network.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What is the Co-Fund Loan?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Members can borrow against their network's projected contributions. Loan limits: 3 months (Regular), 4 months (Premium), 5 months (Founding), 6 months (Partners). Interest rates: 4% Regular, 3% Premium, 2% Founding, 1% Partners — per month. Repayments are automatically deducted from incoming network credits.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What is the Expendable Account and Fixed Savings Account?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Every credit is split 50/50. Your Expendable Account (50%) can be cashed out anytime for any purpose. Your Fixed Savings Account (50%) is reserved specifically for essential bills — rent, school fees, medical expenses.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>How do I activate my membership after registering?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Pay your first contribution (N10,000 for Regular or N100,000 for Premium) to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. Then WhatsApp +234 909 999 4816. Admin will activate your account immediately.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>Can I upgrade my membership tier?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Yes. Founding Members are eligible to upgrade to Partner/Investor status when a slot is available. If a Partner's contract lapses, their status automatically downgrades to Founding Member — never to inactive. Founding Member status is your permanent floor.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>How are loan interest proceeds distributed?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Loan interest proceeds are distributed monthly equally across all active Partner/Investor slots — shared among up to 10 Partner members, in addition to their regular network credit earnings.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>What happens to credits from inactive members?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Credits that would have gone to inactive or lapsed members are permanently forfeited and redirected to the CoFundBills Loan Pool, which funds Co-Fund Loans for active members.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:NAVY,fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>How do I cash out my earnings?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  Submit a cashout request through your member portal under the Cash Out tab. Only your Expendable Account (50% of credits) is available for general cashout. Fixed Savings is reserved for essential bills. Processed by admin within 24 hours to your registered bank account.
+                </div>
+              </details>
+
+            </div>
+            <div style={{padding:"14px 28px",borderTop:`1px solid ${BLUE_LIGHT}`,
+              display:"flex",justifyContent:"space-between",alignItems:"center",
+              background:BLUE_LIGHT,borderRadius:"0 0 16px 16px"}}>
+              <div style={{fontSize:12,color:MUTED}}>Still have questions? WhatsApp +234 909 999 4816</div>
+              <button className="btn btn-gold" style={{fontSize:12,padding:"6px 16px"}}
+                onClick={()=>{setFaqOpen(false);setShowTC(true);}}>Read T&amp;C</button>
             </div>
           </div>
         </div>
