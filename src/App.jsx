@@ -272,23 +272,35 @@ export default function App() {
 
   CREDIT/EARNINGS STRUCTURE:
   Every contribution splits into 5 equal parts (20% each):
-  - 20% to direct invite chain member
-  - 20% to indirect invite chain member  
-  - 20% to circuitous invite chain member
-  - 20% to admin operations
-  - 20% to Loan Fund Pool
-  Partners/Admin at direct position take 60% (3 parts), no indirect or circuitous above them.
-  Partners/Admin at indirect position take 40% (2 parts), no circuitous above them.
+  - 20% (NGN2,000 from a NGN10,000 contribution) to direct invite chain member
+  - 20% (NGN2,000) to indirect invite chain member
+  - 20% (NGN2,000) to circuitous invite chain member
+  - 20% (NGN2,000) to admin operations
+  - 20% (NGN2,000) to Loan Fund Pool
+  Partners/Admin at direct position take 60% (NGN6,000), no indirect or circuitous above them.
+  Partners/Admin at indirect position take 40% (NGN4,000), no circuitous above them.
   All credits split 50/50 into Expendable Account and Fixed Savings Account.
 
-  EARNINGS ILLUSTRATION (Regular member, 10 invites per level):
-  - 10 direct × ₦2,000 = ₦20,000/month
-  - 100 indirect × ₦2,000 = ₦200,000/month
-  - 1,000 circuitous × ₦2,000 = ₦2,000,000/month
-  Total: ₦2,220,000/month (illustrative)
+  EARNINGS CALCULATION — CRITICAL RULE:
+  A member earns 20% of each contributor's monthly contribution — NOT the full contribution amount.
+  Formula: Number of active network members × NGN2,000 = monthly earnings
+  Examples:
+  - 5 direct invites only: 5 × NGN2,000 = NGN10,000/month
+  - 10 direct invites: 10 × NGN2,000 = NGN20,000/month
+  - 10 direct + 100 indirect + 1,000 circuitous: NGN2,220,000/month
+
+  LOAN LIMIT CALCULATION — CRITICAL RULE:
+  Loan limit = Monthly earnings (20% of network contributions) × projection months
+  The loan limit is based on PROJECTED MONTHLY EARNINGS not total contributions.
+  Examples for Regular member (3-month projection):
+  - 5 direct invites only: 5 × NGN2,000 = NGN10,000/month × 3 = NGN30,000 loan limit
+  - 10 direct + 100 indirect + 1,000 circuitous: NGN2,220,000 × 3 = NGN6,660,000 loan limit
+  If a Premium member's network consists of Regular members (NGN10,000/month contributors):
+  - Premium member earns 20% = NGN2,000 per Regular contributor per month
+  - Loan limit = NGN2,000 × number of active network members × 4 months
 
   CO-FUND LOANS:
-  - Regular: 4%/month, 3-month network projection limit
+  - Regular: 4%/month, 3-month network earnings projection limit
   - Premium: 3%/month, 4-month limit
   - Founding: 2%/month, 5-month limit
   - Partner: 1%/month, 6-month limit
