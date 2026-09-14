@@ -1922,83 +1922,71 @@ CoFundBills Cooperative`});
 
       {/* ── FLOATING CHAT WIDGET ─────────────────────────── */}
       <div style={{position:"fixed",bottom:90,right:24,zIndex:9998}}>
-        {/* Chat bubble button */}
         {!chatOpen&&(
           <button onClick={()=>setChatOpen(true)}
             style={{width:60,height:60,borderRadius:"50%",background:`linear-gradient(135deg,${NAVY},${BLUE})`,
               border:"none",cursor:"pointer",boxShadow:"0 4px 20px rgba(13,33,55,0.4)",
-              display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,
-              transition:"transform .2s"}}
-            title="Chat with CoFundBills Assistant">
+              display:"flex",alignItems:"center",justifyContent:"center",fontSize:26}}>
             💬
           </button>
         )}
-        {/* Chat window */}
         {chatOpen&&(
-          <div style={{width:340,height:480,background:WHITE,borderRadius:16,
+          <div style={{width:320,height:460,background:WHITE,borderRadius:16,
             boxShadow:"0 8px 40px rgba(13,33,55,0.25)",display:"flex",flexDirection:"column",
             overflow:"hidden",border:`2px solid ${BLUE}`}}>
-            {/* Header */}
-            <div style={{background:`linear-gradient(135deg,${NAVY},${BLUE})`,padding:"14px 16px",
-              display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <div style={{display:"flex",alignItems:"center",gap:10}}>
-                <div style={{width:36,height:36,background:GOLD,borderRadius:"50%",
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🤝</div>
+            <div style={{background:`linear-gradient(135deg,${NAVY},${BLUE})`,padding:"12px 16px",
+              display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:8}}>
+                <div style={{width:32,height:32,background:GOLD,borderRadius:"50%",
+                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>🤝</div>
                 <div>
-                  <div style={{color:WHITE,fontWeight:800,fontSize:14}}>CoFundBills Assistant</div>
-                  <div style={{color:"rgba(255,255,255,0.65)",fontSize:11}}>Powered by Claude AI</div>
+                  <div style={{color:WHITE,fontWeight:800,fontSize:13}}>CoFundBills Assistant</div>
+                  <div style={{color:"rgba(255,255,255,0.65)",fontSize:10}}>Powered by Claude AI</div>
                 </div>
               </div>
               <button onClick={()=>setChatOpen(false)}
-                style={{background:"rgba(255,255,255,0.15)",border:"none",color:WHITE,
-                  width:28,height:28,borderRadius:"50%",cursor:"pointer",fontSize:14,
-                  display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
+                style={{background:"none",border:"none",color:WHITE,cursor:"pointer",fontSize:18,lineHeight:1}}>✕</button>
             </div>
-            {/* Messages */}
-            <div style={{flex:1,overflowY:"auto",padding:14,display:"flex",flexDirection:"column",gap:10}}
-              ref={el=>{if(el) el.scrollTop=el.scrollHeight;}}>
+            <div id="cfb-chat-messages" style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:8}}>
               {chatMessages.map((msg,i)=>(
                 <div key={i} style={{display:"flex",justifyContent:msg.role==="user"?"flex-end":"flex-start"}}>
-                  <div style={{maxWidth:"82%",padding:"10px 14px",borderRadius:12,fontSize:13,lineHeight:1.6,
+                  <div style={{maxWidth:"85%",padding:"8px 12px",borderRadius:10,fontSize:12,lineHeight:1.6,
                     background:msg.role==="user"?BLUE:BLUE_LIGHT,
-                    color:msg.role==="user"?WHITE:DARK,
-                    borderBottomRightRadius:msg.role==="user"?2:12,
-                    borderBottomLeftRadius:msg.role==="user"?12:2}}>
+                    color:msg.role==="user"?WHITE:DARK}}>
                     {msg.content}
                   </div>
                 </div>
               ))}
               {chatLoading&&(
                 <div style={{display:"flex",justifyContent:"flex-start"}}>
-                  <div style={{background:BLUE_LIGHT,padding:"10px 14px",borderRadius:12,fontSize:13,color:MUTED}}>
-                    Thinking...
+                  <div style={{background:BLUE_LIGHT,padding:"8px 12px",borderRadius:10,fontSize:12,color:MUTED}}>
+                    Typing...
                   </div>
                 </div>
               )}
             </div>
-            {/* Input */}
-            <div style={{padding:"10px 12px",borderTop:`1px solid ${BLUE_LIGHT}`,
-              display:"flex",gap:8,alignItems:"center"}}>
-              <input
-                type="text"
-                placeholder="Ask about CoFundBills..."
+            <div style={{padding:"8px 10px",borderTop:`1px solid ${BLUE_LIGHT}`,flexShrink:0}}>
+              <textarea
+                rows={2}
+                placeholder="Type your question here..."
                 value={chatInput}
                 onChange={e=>setChatInput(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&handleChat()}
-                style={{flex:1,padding:"9px 12px",border:`1.5px solid ${BLUE_LIGHT}`,
-                  borderRadius:20,fontSize:13,fontFamily:"inherit",outline:"none",
-                  color:DARK,background:WHITE}}
+                style={{width:"100%",padding:"8px",border:`1.5px solid ${BLUE_LIGHT}`,
+                  borderRadius:8,fontSize:12,fontFamily:"inherit",outline:"none",
+                  color:DARK,background:WHITE,resize:"none",boxSizing:"border-box",display:"block"}}
               />
-              <button onClick={handleChat} disabled={chatLoading||!chatInput.trim()}
-                style={{width:36,height:36,borderRadius:"50%",background:chatLoading||!chatInput.trim()?BLUE_LIGHT:BLUE,
-                  border:"none",cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer",
-                  display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,
-                  color:chatLoading||!chatInput.trim()?MUTED:WHITE,flexShrink:0}}>
-                ➤
+              <button
+                onClick={()=>{
+                  if(!chatInput.trim()||chatLoading) return;
+                  handleChat();
+                }}
+                style={{marginTop:6,width:"100%",padding:"8px",background:BLUE,color:WHITE,
+                  border:"none",borderRadius:8,fontSize:13,fontWeight:700,cursor:"pointer"}}>
+                {chatLoading?"Thinking...":"Send Message"}
               </button>
             </div>
-            <div style={{textAlign:"center",fontSize:10,color:MUTED,paddingBottom:8}}>
-              Powered by Claude AI · WhatsApp +234 909 999 4816
+            <div style={{textAlign:"center",fontSize:10,color:MUTED,padding:"4px 0 6px"}}>
+              Powered by Claude AI
             </div>
           </div>
         )}
