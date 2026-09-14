@@ -2424,7 +2424,7 @@ CoFundBills Cooperative`});
                 </div>
               </details>
               <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
-                <summary style={{fontWeight:700,color:BURG||"#7B1D1D",fontSize:14,cursor:"pointer",padding:"6px 0",
+                <summary style={{fontWeight:700,color:TIER.founding.bg,fontSize:14,cursor:"pointer",padding:"6px 0",
                   listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                   <span>⚠️ Is CoFundBills a Pyramid Scheme?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
                 </summary>
