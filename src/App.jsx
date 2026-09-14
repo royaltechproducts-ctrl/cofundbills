@@ -320,7 +320,19 @@ export default function App() {
   CONTACT:
   Email: cofundbills@gmail.com | Phone: +234 806 163 1222 | WhatsApp: +234 909 999 4816
 
-  RULES:
+  WHY COFUNDBILLS IS NOT A PYRAMID SCHEME:
+  When anyone asks if CoFundBills is a pyramid scheme, MLM, Ponzi or similar, answer confidently:
+  1. No recruitment fee — registration is free, monthly contribution is for staying active not recruiting
+  2. Real product — genuine cooperative bill financing with loan facility and two dedicated accounts
+  3. Earnings from contributions not recruitment — you earn 20% of monthly contributions from your network whether new people join or not
+  4. Earnings capped at 3 levels — nobody earns beyond direct, indirect and circuitous levels
+  5. Legally structured as a Cooperative Society under Lagos State Cooperative Societies Law
+  6. Survives without new recruitment — existing active members keep generating credits for each other indefinitely
+  7. Fully transparent — every credit and distribution visible in member portal
+  8. Digital evolution of traditional Ajo/Esusu thrift — legally recognised cooperative model practised in Nigeria for centuries
+  9. Position does not determine earnings — a Regular member with a large active network earns more than a Partner with a small one
+
+RULES:
   - Answer only CoFundBills-related questions
   - Be warm, friendly, and encouraging
   - Keep answers concise and clear
@@ -2409,6 +2421,24 @@ CoFundBills Cooperative`});
                 </summary>
                 <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
                   Submit a cashout request through your member portal under the Cash Out tab. Only your Expendable Account (50% of credits) is available for general cashout. Fixed Savings is reserved for essential bills. Processed by admin within 24 hours to your registered bank account.
+                </div>
+              </details>
+              <details style={{marginBottom:12,borderBottom:`1px solid ${BLUE_LIGHT}`,paddingBottom:12}}>
+                <summary style={{fontWeight:700,color:BURG||"#7B1D1D",fontSize:14,cursor:"pointer",padding:"6px 0",
+                  listStyle:"none",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <span>⚠️ Is CoFundBills a Pyramid Scheme?</span><span style={{color:BLUE,fontSize:20,fontWeight:300,marginLeft:8}}>+</span>
+                </summary>
+                <div style={{fontSize:13,color:MUTED,lineHeight:1.8,paddingTop:8,paddingLeft:4}}>
+                  <strong style={{color:NAVY}}>No — CoFundBills is not a pyramid scheme, and here is why:</strong>
+                  <br/><br/>
+                  <strong>1. No recruitment fee.</strong> Registration is free. Members pay a monthly contribution to stay active — not to recruit anyone.<br/><br/>
+                  <strong>2. Real product and service.</strong> CoFundBills delivers genuine cooperative bill financing — house rent, school fees, medical bills — backed by a real loan facility and two dedicated member accounts. Pyramid schemes have no real product.<br/><br/>
+                  <strong>3. Earnings come from contributions, not recruitment.</strong> You earn 20% of every monthly contribution made by members in your network — regardless of whether new people are joining. A member who recruited 10 people a year ago still earns every month those 10 remain active contributors.<br/><br/>
+                  <strong>4. Earnings are capped at three levels.</strong> Even Admin and Partners only earn from three levels of their network — direct, indirect, and circuitous. Beyond three levels, nobody earns. Pyramid schemes have no such cap.<br/><br/>
+                  <strong>5. Legally structured as a Cooperative Society.</strong> CoFundBills is being registered under the Lagos State Cooperative Societies Law — a legally recognised and regulated framework. Pyramid schemes are illegal and unregistered.<br/><br/>
+                  <strong>6. Survives without new recruitment.</strong> CoFundBills earns from ongoing monthly contributions from existing active members — not from new joiners. A closed network of active members continues generating credits indefinitely. Pyramid schemes collapse when recruitment stops.<br/><br/>
+                  <strong>7. Fully transparent.</strong> Every credit, every distribution, and every cashout is tracked and visible in each member's portal. The 5-part contribution split is disclosed upfront and applied automatically.<br/><br/>
+                  <strong>8. It is a digital evolution of the traditional Ajo/Esusu thrift.</strong> The CoFundBills model is a multi-layer cooperative extension of the thrift contribution system practised across Nigeria and West Africa for centuries — legally recognised under cooperative law.
                 </div>
               </details>
 
