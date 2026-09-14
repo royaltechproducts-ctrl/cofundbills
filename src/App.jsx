@@ -118,7 +118,9 @@ const TC_SECTIONS = [
     ]},
   { title:"8. Limitation of Liability",
     body:"CoFundBills Cooperative and its administrators shall not be liable for any loss of credits due to link inactivity, loan deductions, or platform changes. All participation is voluntary and at the member's own risk and judgment." },
-  { title:"9. Governing Law",
+  { title:"9. Suspension of Receiving Rights",
+    body:"Failure to pay your monthly contribution in your primary circle of contribution denies you the right to receive contributions from your secondary and tertiary circles of contributions — all of which will be diverted to the CoFundBills Loan Pool funding until your primary contribution obligation is fulfilled and your membership status is reactivated." },
+  { title:"10. Governing Law",
     body:"These Terms are governed by the laws of the Federal Republic of Nigeria. All disputes shall first be referred to CoFundBills administration for resolution." },
   { title:"10. Contact",
     body:`${COMPANY} | ${ADDRESS} | Email: ${EMAIL_ADDR} | Phone: ${PHONE} | Website: ${WEBSITE}` },
@@ -894,6 +896,106 @@ CoFundBills Cooperative`});
                   textTransform:"uppercase",letterSpacing:.4,lineHeight:1.4}}>{l}</div>
               </div>
             ))}
+          </div>
+
+          {/* Thrift Comparison & Circles Section */}
+          <div style={{background:WHITE,padding:"48px 24px"}}>
+            <div style={{maxWidth:860,margin:"0 auto"}}>
+
+              {/* Intro comparison */}
+              <div style={{textAlign:"center",marginBottom:36}}>
+                <div style={{display:"inline-block",background:TIER.founding.light,color:TIER.founding.bg,
+                  fontWeight:800,fontSize:12,padding:"6px 18px",borderRadius:20,
+                  letterSpacing:1,marginBottom:12,textTransform:"uppercase"}}>
+                  How CoFundBills is Different
+                </div>
+                <h2 style={{fontSize:22,fontWeight:900,color:NAVY,marginBottom:16,lineHeight:1.4}}>
+                  Beyond the Traditional Thrift — A Multi-Layer Contribution System
+                </h2>
+                <div style={{background:BLUE_LIGHT,borderRadius:12,padding:20,fontSize:14,
+                  color:NAVY,lineHeight:1.9,textAlign:"left",borderLeft:`4px solid ${BLUE}`}}>
+                  Unlike the traditional thrift contribution and savings scheme where a few friends come together 
+                  to form a single circle of contributors — with one friend receiving all the contributions in turns 
+                  until everyone gets a turn to complete a cycle — the <strong>CoFundBills Multi-Purpose Cooperative</strong> operates 
+                  a more advanced and far more rewarding thrift contribution and credit system with <strong>multi-layers of 
+                  several circles of concurrently running contribution cells</strong>. Every member is part of a primary circle 
+                  where he or she is a monthly contributor, and the centre of several other circles (secondary and 
+                  tertiary) where he or she is a monthly receiver from all contributions — so long as they have 
+                  fulfilled their obligation as a monthly contributor in their primary circle.
+                </div>
+              </div>
+
+              {/* Three circles */}
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))",gap:20,marginTop:12}}>
+
+                {/* Primary */}
+                <div style={{borderRadius:14,overflow:"hidden",boxShadow:"0 4px 20px rgba(13,33,55,0.08)",
+                  border:`1px solid ${BLUE_LIGHT}`}}>
+                  <div style={{background:`linear-gradient(135deg,${NAVY},${BLUE})`,padding:"16px 20px"}}>
+                    <div style={{fontSize:28,marginBottom:6}}>🔵</div>
+                    <div style={{color:GOLD,fontWeight:900,fontSize:13,textTransform:"uppercase",
+                      letterSpacing:1}}>Your Primary Circle</div>
+                    <div style={{color:WHITE,fontWeight:800,fontSize:16,marginTop:4}}>
+                      Contribution Circle
+                    </div>
+                  </div>
+                  <div style={{padding:"16px 20px",background:WHITE,fontSize:13,color:NAVY,lineHeight:1.8}}>
+                    When invited to join the CoFundBills Cooperative, you are admitted into your <strong>primary circle 
+                    of contributors</strong> where you feature as a <strong>monthly contributor</strong>. This is your fundamental 
+                    obligation — and it is what unlocks all the circles below.
+                  </div>
+                </div>
+
+                {/* Secondary */}
+                <div style={{borderRadius:14,overflow:"hidden",boxShadow:"0 4px 20px rgba(13,33,55,0.08)",
+                  border:`1px solid ${BLUE_LIGHT}`}}>
+                  <div style={{background:`linear-gradient(135deg,#166534,#16a34a)`,padding:"16px 20px"}}>
+                    <div style={{fontSize:28,marginBottom:6}}>🟢</div>
+                    <div style={{color:GOLD,fontWeight:900,fontSize:13,textTransform:"uppercase",
+                      letterSpacing:1}}>Your Secondary Circles</div>
+                    <div style={{color:WHITE,fontWeight:800,fontSize:16,marginTop:4}}>
+                      Receiving Circles
+                    </div>
+                  </div>
+                  <div style={{padding:"16px 20px",background:WHITE,fontSize:13,color:NAVY,lineHeight:1.8}}>
+                    You then build your own network by inviting others to join. All those you invite are admitted 
+                    into their own primary circles — which collectively become your <strong>secondary circle of contributors</strong> 
+                    where you feature as a <strong>monthly receiver</strong> from every contribution made, every month.
+                  </div>
+                </div>
+
+                {/* Tertiary */}
+                <div style={{borderRadius:14,overflow:"hidden",boxShadow:"0 4px 20px rgba(13,33,55,0.08)",
+                  border:`1px solid ${BLUE_LIGHT}`}}>
+                  <div style={{background:`linear-gradient(135deg,${TIER.founding.bgDark},${TIER.founding.bg})`,padding:"16px 20px"}}>
+                    <div style={{fontSize:28,marginBottom:6}}>🔴</div>
+                    <div style={{color:TIER.founding.accent,fontWeight:900,fontSize:13,textTransform:"uppercase",
+                      letterSpacing:1}}>Your Tertiary Circles</div>
+                    <div style={{color:WHITE,fontWeight:800,fontSize:16,marginTop:4}}>
+                      Extended Receiving Circles
+                    </div>
+                  </div>
+                  <div style={{padding:"16px 20px",background:WHITE,fontSize:13,color:NAVY,lineHeight:1.8}}>
+                    When each contributor in your secondary circle builds their own network, their secondary circles 
+                    become your <strong>tertiary circle of contributors</strong> — where you again feature as a 
+                    <strong> monthly receiver</strong> from every contribution made, every month.
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Summary callout */}
+              <div style={{marginTop:24,background:GOLD_LIGHT,borderRadius:12,padding:20,
+                border:`1.5px solid ${GOLD}`,textAlign:"center"}}>
+                <div style={{fontSize:14,fontWeight:700,color:NAVY,lineHeight:1.9}}>
+                  In traditional thrift, you wait for your turn to receive once.<br/>
+                  <span style={{color:TIER.founding.bg,fontWeight:900}}>
+                    In CoFundBills, you receive every month — from every circle you have built — simultaneously.
+                  </span>
+                </div>
+              </div>
+
+            </div>
           </div>
 
           {/* How it works */}
