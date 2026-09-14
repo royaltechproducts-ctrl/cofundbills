@@ -897,6 +897,13 @@ CoFundBills Cooperative`});
             <div className="hero-btns">
               <button className="btn btn-gold btn-lg" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join Free Today</button>
               <button className="btn btn-outline btn-lg" onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
+              <a href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills%20Cooperative"
+                target="_blank" rel="noopener noreferrer"
+                style={{display:"inline-flex",alignItems:"center",gap:8,background:"#25D366",
+                  color:WHITE,borderRadius:30,padding:"12px 28px",fontWeight:700,fontSize:15,
+                  textDecoration:"none",boxShadow:"0 4px 16px rgba(37,211,102,0.4)"}}>
+                <span>💬</span> Chat with Admin on WhatsApp
+              </a>
             </div>
           </div>
 
@@ -1196,6 +1203,13 @@ CoFundBills Cooperative`});
               Join free today. Start contributing ₦10,000 monthly to build your network and your bill financing power — collectively.
             </p>
             <button className="btn btn-gold btn-lg" onClick={()=>{setTcAccepted(false);setShowTC(true);}}>Join CoFundBills Free</button>
+              <a href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills%20Cooperative"
+                target="_blank" rel="noopener noreferrer"
+                style={{display:"inline-flex",alignItems:"center",gap:8,background:"#25D366",
+                  color:WHITE,borderRadius:30,padding:"10px 24px",fontWeight:700,fontSize:14,
+                  textDecoration:"none",boxShadow:"0 4px 16px rgba(37,211,102,0.4)"}}>
+                <span>💬</span> Chat with Admin on WhatsApp
+              </a>
           </div>
 
           <div className="footer">
@@ -2475,8 +2489,17 @@ CoFundBills Cooperative`});
                 {chatLoading?"Thinking...":"Send Message"}
               </button>
             </div>
-            <div style={{textAlign:"center",fontSize:10,color:MUTED,padding:"4px 0 6px"}}>
-              Powered by Claude AI
+            <div style={{padding:"8px 10px",borderTop:`1px solid ${BLUE_LIGHT}`,
+              display:"flex",alignItems:"center",justifyContent:"space-between",
+              background:BLUE_LIGHT,flexShrink:0}}>
+              <div style={{fontSize:10,color:MUTED}}>Powered by Claude AI</div>
+              <a href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills%20Cooperative"
+                target="_blank" rel="noopener noreferrer"
+                style={{display:"flex",alignItems:"center",gap:5,background:"#25D366",
+                  color:WHITE,borderRadius:12,padding:"4px 10px",fontSize:11,fontWeight:700,
+                  textDecoration:"none"}}>
+                <span style={{fontSize:14}}>💬</span> Chat with Admin
+              </a>
             </div>
           </div>
         )}
