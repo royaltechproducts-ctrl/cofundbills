@@ -974,8 +974,7 @@ CoFundBills Cooperative`});
                     </div>
                   </div>
                   <div style={{padding:"16px 20px",background:WHITE,fontSize:13,color:NAVY,lineHeight:1.8}}>
-                    When each contributor in your secondary circle builds their own network, their secondary circles 
-                    become your <strong>tertiary circle of contributors</strong> — where you again feature as a 
+                    When each contributor in your secondary circle builds their own network, their primary circles become your <strong>tertiary circle of contributors</strong> — where you again feature as a 
                     <strong> monthly receiver</strong> from every contribution made, every month.
                   </div>
                 </div>
