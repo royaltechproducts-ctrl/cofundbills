@@ -958,9 +958,7 @@ CoFundBills Cooperative`});
                     </div>
                   </div>
                   <div style={{padding:"16px 20px",background:WHITE,fontSize:13,color:NAVY,lineHeight:1.8}}>
-                    You then build your own network by inviting others to join. All those you invite are admitted 
-                    into their own primary circles — which collectively become your <strong>secondary circle of contributors</strong> 
-                    where you feature as a <strong>monthly receiver</strong> from every contribution made, every month.
+                    You then build your own network by inviting others to join the CoFundBills Cooperative. All those you invite are admitted into their own primary circles — which collectively become your <strong>secondary circle of contributors</strong> where you feature as a <strong>monthly receiver</strong> from every contribution made, every month.
                   </div>
                 </div>
 
@@ -990,7 +988,7 @@ CoFundBills Cooperative`});
                 <div style={{fontSize:14,fontWeight:700,color:NAVY,lineHeight:1.9}}>
                   In traditional thrift, you wait for your turn to receive once.<br/>
                   <span style={{color:TIER.founding.bg,fontWeight:900}}>
-                    In CoFundBills, you receive every month — from every circle you have built — simultaneously.
+                    In CoFundBills, you receive every month — from every circle you have built directly and indirectly — simultaneously.
                   </span>
                 </div>
               </div>
