@@ -15,8 +15,8 @@ const CELL_TIMEOUT_DAYS= 30;
 
 const CREDIT_PTS = {
   contribution:   { contributing:10 },
-  cell_active:    { contributing:5, host:5, anchor:3, root:2, founding:1 },
-  cycle_complete: { contributing:100, host:50, anchor:30, root:20, founding:10 },
+  cell_active:    { contributing:5, host:5, anchor:5, founding:5, admin:5 },
+  cycle_complete: { contributing:100, host:50, anchor:30, founding:20, admin:10 },
   missed:         { contributing:-30 },
   loan_repaid:    { all:50 },
   loan_default:   { all:-100 },
@@ -30,11 +30,11 @@ const C = {
 };
 
 const SEAT = {
-  contributing: { bg:C.blue,   light:"#E8F0FA", label:"Contributing Member", icon:"💳" },
-  host:         { bg:C.green,  light:"#E6F4EF", label:"Host",                icon:"🔗" },
-  anchor:       { bg:C.purple, light:"#F0E8FF", label:"Anchor",              icon:"⚓" },
-  root:         { bg:C.amber,  light:"#FEF3C7", label:"Root",                icon:"🌱" },
-  founding:     { bg:C.burg,   light:"#FDF2F2", label:"Founding Member",     icon:"🎖️" },
+  contributing: { bg:C.blue,  light:"#E8F0FA", label:"Contributing Member",  icon:"💳" },
+  host:         { bg:C.green, light:"#E6F4EF", label:"Host",                 icon:"🔗" },
+  anchor:       { bg:C.purple,light:"#F0E8FF", label:"Anchor",               icon:"⚓" },
+  founding:     { bg:C.burg,  light:"#FDF2F2", label:"Root / Founding",      icon:"🎖️" },
+  admin:        { bg:C.gold,  light:"#FFF9EC", label:"Admin",                icon:"🛡️" },
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -44,10 +44,10 @@ const genCode = pfx => pfx + Math.random().toString(36).substr(2,6).toUpperCase(
 const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24)) : 0;
 
 const scoreCategory = score => {
-  if(score>=800) return {label:"Excellent",  rate:1, mult:6, color:C.green};
-  if(score>=600) return {label:"Strong",     rate:2, mult:4, color:C.blue};
-  if(score>=400) return {label:"Standard",   rate:3, mult:2, color:C.amber};
-  return               {label:"Higher-Risk", rate:4, mult:1, color:C.error};
+  if(score>=1000) return {label:"Excellent",   rate:1, limit:600000, color:C.green};
+  if(score>=700)  return {label:"Strong",      rate:2, limit:360000, color:C.blue};
+  if(score>=500)  return {label:"Standard",    rate:3, limit:180000, color:C.amber};
+  return                 {label:"Higher-Risk", rate:4, limit:60000,  color:C.error};
 };
 
 const mapMember = m => ({
@@ -242,31 +242,77 @@ export default function App() {
 
   // ── Determine network seats from ref chain ────────────────────
   const resolveChain = (firstMemberRefCode, allMembers) => {
-    // Returns [{linkCode, seatType}] for host, anchor, root, founding
+    // Chain: Host → Anchor → Root/Founding → Admin (always last)
+    // Founding Members occupy the Root/Founding seat
+    // Admin always closes the chain as the last leg
     const chain = [];
-    const seatTypes = ["host","anchor","root"];
+    const regularSeats = ["host","anchor"];
     let cur = firstMemberRefCode;
     let idx = 0;
-    while(cur && idx < 3) {
+
+    while(cur && idx < 2) {
       const m = allMembers[cur];
       if(!m || m.status!=="active") break;
-      if(m.memberType==="founding") {
-        chain.push({linkCode:cur, seatType: idx===0?"host": idx===1?"anchor":"root"});
-        break; // founding member found, chain ends
+      if(m.memberType==="admin") {
+        // Admin reached before filling host/anchor — Admin takes last leg
+        chain.push({linkCode:cur, seatType:"admin"});
+        return chain;
       }
-      chain.push({linkCode:cur, seatType:seatTypes[idx]});
+      if(m.memberType==="founding") {
+        // Founding Member fills next available seat (host or anchor)
+        // then Admin takes last leg
+        chain.push({linkCode:cur, seatType:idx===0?"host":"anchor"});
+        // Now find Admin for last leg
+        let adminCur = m.refCode;
+        while(adminCur) {
+          const parent = allMembers[adminCur];
+          if(!parent) break;
+          if(parent.memberType==="admin") {
+            chain.push({linkCode:adminCur, seatType:"admin"});
+            break;
+          }
+          adminCur = parent.refCode;
+        }
+        // If no admin found via chain, seat first active admin
+        if(!chain.some(c=>allMembers[c.linkCode]?.memberType==="admin")) {
+          const admin = Object.values(allMembers).find(m=>m.memberType==="admin"&&m.status==="active");
+          if(admin) chain.push({linkCode:admin.linkCode, seatType:"admin"});
+        }
+        return chain;
+      }
+      chain.push({linkCode:cur, seatType:regularSeats[idx]});
       cur = m.refCode;
       idx++;
     }
-    // If no founding member in chain, look for founding members traceable
-    const hasFounding = chain.some(c=>allMembers[c.linkCode]?.memberType==="founding");
-    if(!hasFounding) {
-      // Find a founding member whose ref chain connects to this network
-      const fms = Object.values(allMembers).filter(m=>m.memberType==="founding"&&m.status==="active");
-      if(fms.length>0 && chain.length<3) {
-        chain.push({linkCode:fms[0].linkCode, seatType:"founding"});
+
+    // After host/anchor — look for founding member then admin
+    if(cur) {
+      const m = allMembers[cur];
+      if(m && m.status==="active") {
+        if(m.memberType==="founding") {
+          chain.push({linkCode:cur, seatType:"founding"});
+          cur = m.refCode;
+        }
       }
     }
+
+    // Find admin for last leg — walk up remaining chain
+    let adminFound = false;
+    while(cur && !adminFound) {
+      const m = allMembers[cur];
+      if(!m) break;
+      if(m.memberType==="admin") {
+        chain.push({linkCode:cur, seatType:"admin"});
+        adminFound = true;
+      }
+      cur = m.refCode;
+    }
+    // Fallback — seat first active admin
+    if(!adminFound) {
+      const admin = Object.values(allMembers).find(m=>m.memberType==="admin"&&m.status==="active");
+      if(admin) chain.push({linkCode:admin.linkCode, seatType:"admin"});
+    }
+
     return chain;
   };
 
@@ -517,7 +563,7 @@ export default function App() {
     if(!loanForm.amount||!loanForm.billType){ showToast("Fill all required fields","error"); return; }
     const m = member;
     const cat = scoreCategory(m.creditScore);
-    const maxLoan = cat.mult * MONTHLY_CONTRIB;
+    const maxLoan = cat.limit;
     const amt = Number(loanForm.amount);
     if(amt>maxLoan){ showToast(`Max loan for your category: ${fmtNGN(maxLoan)}`,"error"); return; }
     if(amt>(funds.loan_fund||0)){ showToast("Insufficient loan fund liquidity","error"); return; }
@@ -580,10 +626,10 @@ CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Loan default: -100 pts all
 
 LOAN ACCESS (based on credit score):
-- Excellent 800+: 1%/month, max 6x monthly contribution (NGN60,000)
-- Strong 600-799: 2%/month, max 4x (NGN40,000)
-- Standard 400-599: 3%/month, max 2x (NGN20,000)
-- Higher-Risk below 400: 4%/month, max 1x (NGN10,000)
+- Excellent 800+: 1%/month, max loan NGN600,000
+- Strong 600-799: 2%/month, max loan NGN360,000
+- Standard 400-599: 3%/month, max loan NGN180,000
+- Higher-Risk below 400: 4%/month, max loan NGN60,000
 Loans subject to fund liquidity and admin approval. Credits improve eligibility — do not guarantee approval.
 
 IS IT A PYRAMID SCHEME? No — because:
@@ -683,7 +729,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["How much do I receive at cycle end?","Each contributing member receives ₦60,000 at cycle end — ₦6,000 per month accumulated over 10 months. You will have contributed ₦100,000 in total. The ₦40,000 difference funds the cooperative's bill support (10%), loan fund (10%), administration (10%) and contingency reserve (10%)."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +10 per monthly contribution, +5/3/2/1 per active cell month by seat type, +100 for a completed cycle, +50 for a loan repayment. Deductions for missed contributions (−30) and loan defaults (−100). A higher score gives better loan access."],
-    ["What loan can I access?","Based on your credit score: Excellent (800+): 1%/month, max ₦60,000. Strong (600–799): 2%/month, max ₦40,000. Standard (400–599): 3%/month, max ₦20,000. Higher-Risk (below 400): 4%/month, max ₦10,000. Approval is subject to fund liquidity and cooperative policy."],
+    ["What loan can I access?","Based on your CoFund Credit Score: Excellent (1,000+): 1%/month, max ₦600,000. Strong (700–999): 2%/month, max ₦360,000. Standard (500–699): 3%/month, max ₦180,000. Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
     ["What is the Bill Support Fund?","10% of every contribution funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
@@ -819,9 +865,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div className="card">
               <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>How You Earn Points</div>
               {[
-                ["Monthly contribution on time","+10 pts","Contributing Members"],
-                ["Each month your cell is active","+5/3/2/1 pts","By seat type"],
-                ["Cycle completed","+100/50/30/20/10 pts","By seat type"],
+                ["Monthly contribution on time","+10 pts","Contributing Members only"],
+                ["Each month your cell is active","+5 pts","All seat types equally"],
+                ["Cycle completed","+100/50/30/20/10 pts","Contributing/Host/Anchor/Root-Founding/Admin"],
                 ["Loan repaid on time","+50 pts","All members"],
                 ["Missed contribution","−30 pts","Contributing Members"],
                 ["Loan default","−100 pts","All members"],
@@ -835,10 +881,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div className="card">
               <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>Credit Score → Loan Access</div>
               {[
-                {l:"Excellent",r:"800–1000",rate:"1%/month",mult:"6×",c:C.green},
-                {l:"Strong",r:"600–799",rate:"2%/month",mult:"4×",c:C.blue},
-                {l:"Standard",r:"400–599",rate:"3%/month",mult:"2×",c:C.amber},
-                {l:"Higher-Risk",r:"Below 400",rate:"4%/month",mult:"1×",c:C.error},
+                {l:"Excellent",r:"1,000+",rate:"1%/month",limit:"₦600,000",c:C.green},
+                {l:"Strong",r:"700–999",rate:"2%/month",limit:"₦360,000",c:C.blue},
+                {l:"Standard",r:"500–699",rate:"3%/month",limit:"₦180,000",c:C.amber},
+                {l:"Higher-Risk",r:"Below 500",rate:"4%/month",limit:"₦60,000",c:C.error},
               ].map(c=>(
                 <div key={c.l} style={{borderRadius:10,border:`1.5px solid ${c.c}33`,padding:11,marginBottom:8,background:c.c+"11"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -1034,7 +1080,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 <div className="score-bar" style={{maxWidth:280,margin:"10px auto 0"}}>
                   <div className="score-fill" style={{width:Math.min(m.creditScore/10,100)+"%",background:cat.color}}/>
                 </div>
-                <div style={{fontSize:12,color:C.muted,marginTop:8}}>Loan rate: <strong>{cat.rate}%/month</strong> · Max loan: <strong>{fmtNGN(cat.mult*10000)}</strong></div>
+                <div style={{fontSize:12,color:C.muted,marginTop:8}}>Loan rate: <strong>{cat.rate}%/month</strong> · Max loan: <strong>{fmtNGN(cat.limit)}</strong></div>
               </div>
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:10,fontSize:13}}>How to Improve Your Score</div>
@@ -1061,7 +1107,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>Your Loan Eligibility</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore} pts ({cat.label})</div>
                 <div className="grid-3" style={{marginBottom:12}}>
-                  {[{l:"Category",v:cat.label,c:cat.color},{l:"Interest Rate",v:`${cat.rate}%/month`,c:C.navy},{l:"Maximum Loan",v:fmtNGN(cat.mult*10000),c:C.green}].map(s=>(
+                  {[{l:"Category",v:cat.label,c:cat.color},{l:"Interest Rate",v:`${cat.rate}%/month`,c:C.navy},{l:"Maximum Loan",v:fmtNGN(cat.limit),c:C.green}].map(s=>(
                     <div key={s.l} className="stat-card"><div style={{fontSize:15,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>{s.l}</div></div>
                   ))}
                 </div>
@@ -1079,7 +1125,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     </select>
                   </div>
                   {loanForm.billType==="Other"&&<div className="field"><label>Describe Purpose</label><input type="text" value={loanForm.purpose} onChange={e=>setLoanForm({...loanForm,purpose:e.target.value})}/></div>}
-                  <div className="field"><label>Loan Amount (Max: {fmtNGN(cat.mult*10000)})</label>
+                  <div className="field"><label>Loan Amount (Max: {fmtNGN(cat.limit)})</label>
                     <input type="number" placeholder="Enter amount" value={loanForm.amount} onChange={e=>setLoanForm({...loanForm,amount:e.target.value})}/>
                   </div>
                   {loanForm.amount&&<div style={{background:C.bg,borderRadius:8,padding:10,fontSize:12,color:C.muted,marginBottom:12}}>
