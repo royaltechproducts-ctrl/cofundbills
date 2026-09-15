@@ -771,7 +771,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
       {/* Stats belt */}
       <div style={{background:C.navy,padding:"18px 24px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
-        {[["₦10,000","Monthly Contribution"],["₦60,000","Cycle Payout/Member"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["60%","Benefit Pool Split"]].map(([v,l])=>(
+        {[["₦10,000","Monthly Contribution"],["₦60,000 + 100 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["60%","Benefit Pool Split"]].map(([v,l])=>(
           <div key={l} style={{background:C.gold,borderRadius:28,padding:"9px 18px",textAlign:"center",minWidth:120}}>
             <div style={{fontSize:13,fontWeight:900,color:C.navy}}>{v}</div>
             <div style={{fontSize:10,fontWeight:700,color:C.navy,opacity:.75,textTransform:"uppercase",letterSpacing:.4}}>{l}</div>
