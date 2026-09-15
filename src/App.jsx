@@ -1,10 +1,30 @@
 import { useState, useEffect, useCallback } from "react";
+import emailjs from "@emailjs/browser";
 import { createClient } from "@supabase/supabase-js";
 
 // ── Supabase ──────────────────────────────────────────────────
 const SB_URL = "https://rzivcbhjyxspfcuopjjb.supabase.co";
 const SB_KEY = "sb_publishable_hE_FRwUG_Z40IYclv6SFYA_DNfLWFQU";
 const supabase = createClient(SB_URL, SB_KEY);
+
+// ── EmailJS ───────────────────────────────────────────────────
+const EJS_SERVICE  = "service_f7cd7ma";
+const EJS_TEMPLATE = "template_prggu9e";
+const EJS_KEY      = "Jc6XKqOSgzxuJEs1G";
+const ADMIN_EMAIL  = "cofundbills@gmail.com";
+const ADMIN_NAME   = "CoFundBills Admin";
+
+const sendEmail = async ({to_email, to_name, subject, message}) => {
+  try {
+    await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+      to_email, to_name, subject, message,
+      from_name: "CoFundBills Cooperative",
+      reply_to: ADMIN_EMAIL,
+    }, EJS_KEY);
+  } catch(e) {
+    console.error("EmailJS error:", e);
+  }
+};
 
 // ── Constants ─────────────────────────────────────────────────
 const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
@@ -452,6 +472,18 @@ export default function App() {
     setLoading(false);
     if(error){ showToast(error.message||"Registration failed","error"); return; }
     const saved = {linkCode, name:regForm.fullName.trim()};
+    // Email to admin
+    await sendEmail({
+      to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
+      subject: `New CoFundBills Registration — ${regForm.fullName.trim()}`,
+      message: `New member registered:\nName: ${regForm.fullName.trim()}\nEmail: ${regForm.email.trim()}\nPhone: ${regForm.phone.trim()}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation.trim()}\nState: ${regForm.state.trim()}\nReferred by: ${urlRef||"Direct"}\n\nAction required: Verify payment and activate membership.`,
+    });
+    // Email to member
+    await sendEmail({
+      to_email: regForm.email.trim(), to_name: regForm.fullName.trim(),
+      subject: "Welcome to CoFundBills Cooperative — Registration Received",
+      message: `Dear ${regForm.fullName.trim()},\n\nThank you for registering with CoFundBills Cooperative.\n\nYour Link Code: ${linkCode}\n\nTo activate your membership, pay your first ₦10,000 monthly contribution to:\nAccount Name: Royal Tech Partnership & Investment Limited\nBank: Zenith Bank\nAccount Number: 1016621205\nReference: ${linkCode}\n\nAfter payment, WhatsApp +234 909 999 4816 with your proof of payment.\n\nWarm regards,\nCoFundBills Cooperative\ncofundbills@gmail.com | +234 806 163 1222`,
+    });
     setRegForm({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",
       nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:""});
     setRegErrors({});
@@ -483,6 +515,15 @@ export default function App() {
       status:"active", activated_at:new Date().toISOString()
     }).eq("link_code",code);
     await addCredit(code,"contribution","contributing",null,"Account activated");
+    // Email member on activation
+    const activatedM = allM[code];
+    if(activatedM?.email) {
+      await sendEmail({
+        to_email: activatedM.email, to_name: activatedM.fullName,
+        subject: "CoFundBills Cooperative — Your Membership is Now Active!",
+        message: `Dear ${activatedM.fullName},\n\nGreat news! Your CoFundBills Cooperative membership has been activated.\n\nYour Link Code: ${code}\nYour Invite Link: https://cofundbills.vercel.app?ref=${code}\n\nStart sharing your invite link to grow your network and build your CoFund Credit Score.\n\nLog in to your portal at: https://cofundbills.vercel.app\n\nWarm regards,\nCoFundBills Cooperative\n+234 806 163 1222 | +234 909 999 4816`,
+      });
+    }
     const allM = await loadMembers();
     const allC = await loadCells();
     await tryFormCell(allM, allC);
@@ -574,6 +615,11 @@ export default function App() {
       months_term:3, status:"pending",
     });
     setLoanForm({amount:"",billType:"",purpose:""});
+    await sendEmail({
+      to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
+      subject: `CoFundBills Loan Application — ${member.fullName}`,
+      message: `Loan application received:\nMember: ${member.fullName}\nLink Code: ${member.linkCode}\nAmount: ₦${Number(loanForm.amount).toLocaleString()}\nPurpose: ${loanForm.billType}\nCredit Category: ${cat.label}\nRate: ${cat.rate}%/month\nTotal Repayable: ₦${(Number(loanForm.amount)*(1+cat.rate/100*3)).toLocaleString()}\nCredit Score: ${member.creditScore} pts`,
+    });
     await loadLoans();
     showToast("Loan application submitted.");
     setPortalTab("dashboard");
@@ -587,6 +633,11 @@ export default function App() {
       amount_requested:Number(billForm.amount), description:billForm.description, status:"pending",
     });
     setBillForm({billType:"",amount:"",description:""});
+    await sendEmail({
+      to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
+      subject: `CoFundBills Bill Support Application — ${member.fullName}`,
+      message: `Bill support application received:\nMember: ${member.fullName}\nLink Code: ${member.linkCode}\nBill Type: ${billForm.billType}\nAmount Requested: ₦${Number(billForm.amount).toLocaleString()}\nDescription: ${billForm.description||"None provided"}`,
+    });
     await loadBillApps();
     showToast("Bill support application submitted.");
     setPortalTab("dashboard");
