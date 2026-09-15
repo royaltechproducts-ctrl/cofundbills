@@ -1214,7 +1214,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {allArr.map(m=>(
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 60px",gap:10,alignItems:"center"}}>
                   <div><div style={{fontWeight:700,fontSize:13}}>{m.fullName}</div><div style={{fontSize:11,color:C.muted}}>{m.email}</div><div style={{fontSize:10,color:C.blue,fontFamily:"monospace"}}>{m.linkCode}</div></div>
-                  <span className="pill" style={{background:m.memberType==="founding"?C.burg:C.blue,color:C.white,fontSize:10}}>{m.memberType==="founding"?"Founding":"Regular"}</span>
+                  <span className="pill" style={{background:m.memberType==="admin"?C.green:m.memberType==="founding"?C.burg:C.blue,color:C.white,fontSize:10}}>{m.memberType==="admin"?"Admin":m.memberType==="founding"?"Founding":"Regular"}</span>
                   <span style={{fontWeight:700,color:scoreCategory(m.creditScore).color,fontSize:12}}>{m.creditScore} pts</span>
                   <span style={{fontSize:12}}>{m.cyclesCompleted}</span>
                   <span className="pill" style={{background:m.status==="active"?"#BBF7D0":m.status==="pending"?"#FEF3C7":"#FEE2E2",color:m.status==="active"?"#166534":m.status==="pending"?"#92400E":C.error,fontSize:10}}>{m.status}</span>
