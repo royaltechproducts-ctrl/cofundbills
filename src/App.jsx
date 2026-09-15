@@ -476,14 +476,9 @@ export default function App() {
     await sendEmail({
       to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
       subject: `New CoFundBills Registration — ${regForm.fullName.trim()}`,
-      message: `New member registered:\nName: ${regForm.fullName.trim()}\nEmail: ${regForm.email.trim()}\nPhone: ${regForm.phone.trim()}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation.trim()}\nState: ${regForm.state.trim()}\nReferred by: ${urlRef||"Direct"}\n\nAction required: Verify payment and activate membership.`,
+      message: `New member registered:\n\nName: ${regForm.fullName.trim()}\nEmail: ${regForm.email.trim()}\nPhone: ${regForm.phone.trim()}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation.trim()}\nAddress: ${regForm.address.trim()}\nState: ${regForm.state.trim()}\nCountry: ${regForm.country}\nNOK: ${regForm.nokName.trim()} (${regForm.nokRelationship.trim()}) — ${regForm.nokPhone.trim()}\nBank: ${regForm.bankName.trim()} | ${regForm.accountName.trim()} | ${regForm.accountNumber.trim()}\nReferred by: ${urlRef||"Direct"}\n\nACTION REQUIRED: Verify payment of NGN10,000 then activate membership in admin dashboard.`,
     });
-    // Email to member
-    await sendEmail({
-      to_email: regForm.email.trim(), to_name: regForm.fullName.trim(),
-      subject: "Welcome to CoFundBills Cooperative — Registration Received",
-      message: `Dear ${regForm.fullName.trim()},\n\nThank you for registering with CoFundBills Cooperative.\n\nYour Link Code: ${linkCode}\n\nTo activate your membership, pay your first ₦10,000 monthly contribution to:\nAccount Name: Royal Tech Partnership & Investment Limited\nBank: Zenith Bank\nAccount Number: 1016621205\nReference: ${linkCode}\n\nAfter payment, WhatsApp +234 909 999 4816 with your proof of payment.\n\nWarm regards,\nCoFundBills Cooperative\ncofundbills@gmail.com | +234 806 163 1222`,
-    });
+    // Member email handled manually via cofundbills@gmail.com
     setRegForm({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",
       nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:""});
     setRegErrors({});
@@ -515,15 +510,7 @@ export default function App() {
       status:"active", activated_at:new Date().toISOString()
     }).eq("link_code",code);
     await addCredit(code,"contribution","contributing",null,"Account activated");
-    // Email member on activation
-    const activatedM = allM[code];
-    if(activatedM?.email) {
-      await sendEmail({
-        to_email: activatedM.email, to_name: activatedM.fullName,
-        subject: "CoFundBills Cooperative — Your Membership is Now Active!",
-        message: `Dear ${activatedM.fullName},\n\nGreat news! Your CoFundBills Cooperative membership has been activated.\n\nYour Link Code: ${code}\nYour Invite Link: https://cofundbills.vercel.app?ref=${code}\n\nStart sharing your invite link to grow your network and build your CoFund Credit Score.\n\nLog in to your portal at: https://cofundbills.vercel.app\n\nWarm regards,\nCoFundBills Cooperative\n+234 806 163 1222 | +234 909 999 4816`,
-      });
-    }
+    // Activation email sent manually from cofundbills@gmail.com
     const allM = await loadMembers();
     const allC = await loadCells();
     await tryFormCell(allM, allC);
