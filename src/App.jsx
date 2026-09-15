@@ -789,7 +789,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             {[
               {icon:"💳",title:"Contributing Members (10)",desc:`Each pays ₦10,000/month for 10 months. Receives ₦60,000 cash at cycle end plus credit points. Total contributed: ₦100,000.`,color:C.blue},
               {icon:"🔗",title:"Host · Anchor · Root",desc:"Three network positions for existing active members whose invite chain led to this cell. Earn credit points only — no cash from contributions.",color:C.green},
-              {icon:"🎖️",title:"Founding Member",desc:"Seats in the furthest traceable network position. Earns credit points only. Present only where traceable in the cell's invite chain.",color:C.burg},
+              {icon:"🎖️",title:"Founding Member",desc:"Seats in the Root/Founding position in cells traceable to their network. Contributes ₦10,000/month like all members. Earns credit points in every traceable cell simultaneously — boosting their credit score and loan access faster.",color:C.burg},
             ].map(c=>(
               <div key={c.title} className="card" style={{borderTop:`3px solid ${c.color}`,textAlign:"left"}}>
                 <div style={{fontSize:26,marginBottom:8}}>{c.icon}</div>
@@ -1041,7 +1041,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 </div>
                 <button className="btn btn-ghost btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${m.linkCode}`);showToast("Link copied!");}}>📋 Copy</button>
                 <div style={{fontSize:11,color:C.muted,marginTop:8,lineHeight:1.7}}>
-                  Share your invite link to help grow the cooperative. Members you introduce may seat you as Host, Anchor or Root in their contribution cell — earning you cooperative credit points.
+                  Share your invite link to help grow the cooperative. Members you introduce may seat you as Host, Anchor or Root/Founding in their contribution cell — earning you CoFund Credit Score points that improve your loan access.
                 </div>
               </div>
             </div>
