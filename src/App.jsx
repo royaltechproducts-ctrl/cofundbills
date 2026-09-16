@@ -677,7 +677,7 @@ CONTRIBUTION SPLIT per NGN10,000:
 - Administration: NGN1,000 (10%)
 - Contingency Reserve: NGN500 (5%)
 
-CYCLE PAYOUT: NGN60,000 per contributing member after 10 months. They contributed NGN100,000.
+CYCLE PAYOUT: NGN50,000 cash + 250 credit points per contributing member after 10 months. They contributed NGN100,000.
 
 CELL FORMATION: Cells form automatically when 10 active unplaced contributing members are available.
 MERGER RULE: Forming cells over 30 days old without 10 contributors merge — more populated absorbs less populated. Network positions of more populated cell are kept.
@@ -873,7 +873,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 {l:"Bill Support Fund",a:"₦2,500",p:"25%",c:C.green},
                 {l:"Loan Fund",a:"₦1,000",p:"10%",c:C.purple},
                 {l:"Administration",a:"₦1,000",p:"10%",c:C.amber},
-                {l:"Contingency Reserve",a:"₦1,000",p:"10%",c:C.burg},
+                {l:"Contingency Reserve",a:"₦500", p:"5%", c:C.burg},
               ].map(s=>(
                 <div key={s.l} style={{background:C.bg,borderRadius:10,padding:12,borderLeft:`3px solid ${s.c}`}}>
                   <div style={{fontSize:16,fontWeight:900,color:s.c}}>{s.a} <span style={{fontSize:11}}>{s.p}</span></div>
@@ -992,7 +992,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
           <h2 className="section-title">Collective Bill Financing</h2>
-          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members can apply for support for approved essential bills.</p>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative Bill Support Fund. Active members with a credit score of 1,000+ can apply for support for their self-selected essential bills — up to ₦500,000 per claim from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
           <div className="grid-3">
             {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
               <div key={l} className="card" style={{textAlign:"center",padding:14}}>
