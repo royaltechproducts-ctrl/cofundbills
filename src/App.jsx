@@ -29,6 +29,11 @@ const sendEmail = async ({to_email, to_name, subject, message}) => {
 // ── Constants ─────────────────────────────────────────────────
 const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
 const MONTHLY_CONTRIB  = 10000;
+const BENEFIT_POOL_AMT = 5000;   // 50% — member benefit pool
+const BILL_SUPPORT_AMT = 2500;   // 25% — bill support fund
+const LOAN_FUND_AMT    = 1000;   // 10% — loan fund
+const ADMIN_AMT        = 1000;   // 10% — administration
+const CONTINGENCY_AMT  = 500;    // 5%  — contingency reserve
 const BILL_SCORE_MIN   = 1000;   // minimum credit score to claim
 const BILL_SCORE_COST  = 500;    // credit points deducted per claim
 const BILL_COOLDOWN    = 10;     // months (one cycle) before next claim
@@ -45,7 +50,7 @@ const BENEFIT_POOL_PCT = 0.60;
 const CELL_TIMEOUT_DAYS= 30;
 
 const CREDIT_PTS = {
-  contribution:   { contributing:10 },
+  contribution:   { contributing:20 },
   cell_active:    { contributing:5, host:5, anchor:5, founding:5, admin:5 },
   cycle_complete: { contributing:100, host:50, anchor:30, founding:20, admin:10 },
   missed:         { contributing:-30 },
@@ -543,13 +548,19 @@ export default function App() {
     const monthNum = cell.month_number||1;
     await supabase.from("cfb_contributions").insert({
       cell_code:cellCode, link_code:linkCode, month_number:monthNum,
+      amount:MONTHLY_CONTRIB,
+      benefit_pool:BENEFIT_POOL_AMT,
+      bill_support:BILL_SUPPORT_AMT,
+      loan_fund:LOAN_FUND_AMT,
+      administration:ADMIN_AMT,
+      contingency:CONTINGENCY_AMT,
       status:"confirmed", confirmed_at:new Date().toISOString(),
     });
     // Update member's contribution balance and months
     const m = members[linkCode];
     await supabase.from("cfb_members").update({
       months_contributed:(m?.monthsContributed||0)+1,
-      contribution_balance:(m?.contributionBalance||0)+6000,
+      contribution_balance:(m?.contributionBalance||0)+BENEFIT_POOL_AMT,
     }).eq("link_code",linkCode);
     // Credit all seat holders
     const seats = cell.seats||[];
@@ -558,10 +569,10 @@ export default function App() {
     }
     await addCredit(linkCode,"contribution","contributing",cellCode,`Month ${monthNum} contribution`);
     // Update funds
-    await supabase.from("cfb_funds").update({balance:(funds.bill_support||0)+1000}).eq("fund_type","bill_support");
-    await supabase.from("cfb_funds").update({balance:(funds.loan_fund||0)+1000}).eq("fund_type","loan_fund");
-    await supabase.from("cfb_funds").update({balance:(funds.administration||0)+1000}).eq("fund_type","administration");
-    await supabase.from("cfb_funds").update({balance:(funds.contingency||0)+1000}).eq("fund_type","contingency");
+    await supabase.from("cfb_funds").update({balance:(funds.bill_support||0)+BILL_SUPPORT_AMT}).eq("fund_type","bill_support");
+    await supabase.from("cfb_funds").update({balance:(funds.loan_fund||0)+LOAN_FUND_AMT}).eq("fund_type","loan_fund");
+    await supabase.from("cfb_funds").update({balance:(funds.administration||0)+ADMIN_AMT}).eq("fund_type","administration");
+    await supabase.from("cfb_funds").update({balance:(funds.contingency||0)+CONTINGENCY_AMT}).eq("fund_type","contingency");
     // Check cycle completion
     const {data:contribs} = await supabase.from("cfb_contributions")
       .select("id").eq("cell_code",cellCode).eq("status","confirmed");
@@ -581,7 +592,7 @@ export default function App() {
     const contributors = seats.filter(s=>s.seat_type==="contributing");
     for(const c of contributors) {
       await supabase.from("cfb_payouts").insert({
-        cell_code:cellCode, link_code:c.link_code, amount:60000, status:"pending"
+        cell_code:cellCode, link_code:c.link_code, amount:50000, status:"pending"
       });
       await supabase.from("cfb_members").update({
         cycles_completed:(members[c.link_code]?.cyclesCompleted||0)+1
@@ -652,7 +663,7 @@ export default function App() {
 CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Host, Anchor, Root and Founding Member positions earn cooperative credit points only — never cash.
 
 CONTRIBUTION CELL STRUCTURE (dynamic, 10 to 14 members):
-- 10 Contributing Members — pay NGN10,000/month for 10 months, receive NGN60,000 cash at cycle end plus credit points
+- 10 Contributing Members — pay NGN10,000/month for 10 months, receive NGN50,000 cash at cycle end plus credit points
 - Host — the member whose invite link brought contributors to this cell. Credit points only.
 - Anchor — the member who introduced the Host. Credit points only.
 - Root — the member who introduced the Anchor. Credit points only.
@@ -660,11 +671,11 @@ CONTRIBUTION CELL STRUCTURE (dynamic, 10 to 14 members):
 Cell size depends on actual invite chain depth: 10 (admin-direct), 11, 12, 13 or 14 members.
 
 CONTRIBUTION SPLIT per NGN10,000:
-- Member Benefit Pool: NGN6,000 (60%) — paid equally to contributing members at cycle end
-- Bill Support Fund: NGN1,000 (10%)
+- Member Benefit Pool: NGN5,000 (50%) — paid equally to contributing members at cycle end
+- Bill Support Fund: NGN2,500 (25%)
 - Loan Fund: NGN1,000 (10%)
 - Administration: NGN1,000 (10%)
-- Contingency Reserve: NGN1,000 (10%)
+- Contingency Reserve: NGN500 (5%)
 
 CYCLE PAYOUT: NGN60,000 per contributing member after 10 months. They contributed NGN100,000.
 
@@ -672,7 +683,7 @@ CELL FORMATION: Cells form automatically when 10 active unplaced contributing me
 MERGER RULE: Forming cells over 30 days old without 10 contributors merge — more populated absorbs less populated. Network positions of more populated cell are kept.
 
 CREDIT SCORE (behaviour-based, NOT recruitment-based):
-- Monthly contribution on time: +10 pts (contributing members)
+- Monthly contribution on time: +20 pts (contributing members)
 - Each month cell is active: +5/5/3/2/1 pts (contributing/host/anchor/root/founding)
 - Cycle completed: +100/50/30/20/10 pts
 - Missed contribution: -30 pts
@@ -780,9 +791,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
   const FAQS = [
     ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦60,000 payout each at cycle end. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, plus up to 4 network position holders (Host, Anchor, Root/Founding Member, and Admin) whose invite chains led to the cell's formation. Root and Founding Member occupy the same seat — all Founding Members sit in the Root/Founding position. Admin always closes the chain as the last leg. Cell size ranges from 10 to 13 members depending on the depth of the invite chain above the contributing members."],
-    ["How much do I receive at cycle end?","Each contributing member receives ₦60,000 at cycle end — ₦6,000 per month accumulated over 10 months. You will have contributed ₦100,000 in total. The ₦40,000 difference funds the cooperative's bill support (10%), loan fund (10%), administration (10%) and contingency reserve (10%) for default payments, operational shocks and make-up funds."],
+    ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 at cycle end — ₦5,000 per month accumulated over 10 months. You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative's bill support (25%), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
-    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +10 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
+    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Excellent (1,000+): 1%/month, max ₦600,000. Strong (700–999): 2%/month, max ₦360,000. Standard (500–699): 3%/month, max ₦180,000. Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
     ["What is the Bill Support Fund?","10% of every contribution funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
@@ -795,8 +806,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["1. Membership","Membership is open to individuals who register through the platform and pay the first monthly contribution of ₦10,000. Membership is personal and non-transferable."],
     ["2. Contribution Obligation","Contributing members must pay ₦10,000 monthly for the full 10-month cycle. Failure to contribute suspends cycle payout eligibility and cooperative service access until arrears are cleared."],
     ["3. Contribution Cell","Members are automatically assigned to a contribution cell upon activation. Cell size ranges from 10 to 14 members. The cycle runs for 10 months."],
-    ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 60% (₦6,000), Bill Support Fund 10% (₦1,000), Loan Fund 10% (₦1,000), Administration 10% (₦1,000), Contingency Reserve 10% (₦1,000)."],
-    ["5. Cycle Payout","₦60,000 is paid to each contributing member at cycle completion. Payouts are processed within 7 business days of cycle completion."],
+    ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 10% (₦1,000), Administration 10% (₦1,000), Contingency Reserve 5% (₦500)."],
+    ["5. Cycle Payout","₦50,000 is paid to each contributing member at cycle completion. Payouts are processed within 7 business days of cycle completion."],
     ["6. Network Positions","Host, Anchor, Root and Founding Member earn cooperative credit points only. No member receives a commission or guaranteed financial return for introducing another member."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
@@ -825,7 +836,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
       {/* Stats belt */}
       <div style={{background:C.navy,padding:"18px 24px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
-        {[["₦10,000","Monthly Contribution"],["₦60,000 + 100 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["60%","Benefit Pool Split"]].map(([v,l])=>(
+        {[["₦10,000","Monthly Contribution"],["₦50,000 + 100 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["60%","Benefit Pool Split"]].map(([v,l])=>(
           <div key={l} style={{background:C.gold,borderRadius:28,padding:"9px 18px",textAlign:"center",minWidth:120}}>
             <div style={{fontSize:13,fontWeight:900,color:C.navy}}>{v}</div>
             <div style={{fontSize:10,fontWeight:700,color:C.navy,opacity:.75,textTransform:"uppercase",letterSpacing:.4}}>{l}</div>
@@ -876,11 +887,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:22,color:C.white,marginBottom:8}}>
             <div style={{fontWeight:900,fontSize:17,marginBottom:8}}>Cycle Payout — What Every Contributing Member Receives</div>
             <div style={{opacity:.85,fontSize:14,lineHeight:1.8,marginBottom:12}}>
-              ₦6,000 × 10 months × 10 members = <strong style={{color:C.gold}}>₦600,000 total benefit pool</strong><br/>
-              Divided equally → <strong style={{color:C.gold}}>₦60,000 per contributing member</strong> at cycle end
+              ₦5,000 × 10 months × 10 members = <strong style={{color:C.gold}}>₦500,000 total benefit pool</strong><br/>
+              Divided equally → <strong style={{color:C.gold}}>₦50,000 per contributing member</strong> at cycle end
             </div>
             <div style={{fontSize:11,opacity:.65,lineHeight:1.7}}>
-              * Each contributing member contributed ₦100,000 over 10 months. They receive ₦60,000 cash. The ₦40,000 difference funds cooperative services — bill support, loans, administration and reserves — available to all active members.
+              * Each contributing member contributed ₦100,000 over 10 months. They receive ₦50,000 cash. The ₦50,000 difference funds cooperative services — 25% to bill support, 10% to loans, 10% to administration and 5% to contingency reserve — all available to active members.
             </div>
           </div>
         </div>
@@ -919,7 +930,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div className="card">
               <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>How You Earn Points</div>
               {[
-                ["Monthly contribution on time","+10 pts","Contributing Members only"],
+                ["Monthly contribution on time","+20 pts","Contributing Members only"],
                 ["Each month your cell is active","+5 pts","All seat types equally"],
                 ["Cycle completed","+100/50/30/20/10 pts","Contributing/Host/Anchor/Root-Founding/Admin"],
                 ["Loan repaid on time","+50 pts","All members"],
@@ -1115,7 +1126,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div key={c.cell_code}>
                     <div style={{marginBottom:6,display:"flex",alignItems:"center",gap:8,fontSize:12}}>
                       <span style={{background:seatInfo.bg,color:C.white,borderRadius:20,padding:"3px 10px",fontWeight:700}}>{seatInfo.icon} {seatInfo.label}</span>
-                      {mySeat?.seat_type==="contributing"&&<span style={{color:C.muted}}>Payout at cycle end: <strong>{fmtNGN(60000)}</strong></span>}
+                      {mySeat?.seat_type==="contributing"&&<span style={{color:C.muted}}>Payout at cycle end: <strong>{fmtNGN(50000)}</strong></span>}
                       {mySeat?.seat_type!=="contributing"&&<span style={{color:C.muted}}>Earning credit points in this cell</span>}
                     </div>
                     <CellVisual cell={c}/>
