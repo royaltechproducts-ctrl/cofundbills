@@ -992,9 +992,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
       <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"52px 24px"}}>
         <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
           <div style={{color:C.gold,fontWeight:900,fontSize:11,textTransform:"uppercase",
-            letterSpacing:1,marginBottom:10}}>How Your Contribution Works Harder</div>
+            letterSpacing:1,marginBottom:10}}>How Your Contribution Works Smarter</div>
           <h2 style={{color:C.white,fontSize:22,fontWeight:900,marginBottom:16,lineHeight:1.4}}>
-            Every Contribution Cell Splits Into Two — And the Second Half Does Something Remarkable
+            Every Contributed Fund in a Cell Splits Into Two — And the Second Half Splits Into Four
           </h2>
           <div className="grid-2" style={{gap:20,marginBottom:28,textAlign:"left"}}>
             <div style={{background:"rgba(255,255,255,0.08)",borderRadius:14,padding:24}}>
@@ -1012,13 +1012,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div style={{background:"rgba(255,255,255,0.08)",borderRadius:14,padding:24}}>
               <div style={{fontSize:32,marginBottom:12}}>🌊</div>
               <div style={{color:C.gold,fontWeight:900,fontSize:14,marginBottom:8}}>
-                The Second Half — Something Bigger
+                The Second Half — Amounting to Something Bigger
               </div>
               <div style={{color:"rgba(255,255,255,.85)",fontSize:13,lineHeight:1.85}}>
-                The other 50% — drawn from every contribution, across every cell, 
-                across the entire cooperative — flows together into shared funds. 
-                Bill support. Loans. Operations. Reserve. 
-                <strong style={{color:C.gold}}> Many halves from many cells, merging into one massive cooperative pool.</strong>
+                The other 50% — merges with the 50% from all other cells, across the entire cooperative — into a massive cooperative pool of funds. Half of that pool funds <strong style={{color:C.gold}}>Approved Bill Support Requests</strong>, and the other half caters for <strong style={{color:C.gold}}>Loan Requests, Operations and Reserve.</strong>
               </div>
             </div>
           </div>
@@ -1030,19 +1027,19 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:22}}>👥</div>
                 <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell A</div>
-                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+                <div style={{fontSize:11,opacity:.7}}>50% contributions</div>
               </div>
               <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+</div>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:22}}>👥</div>
                 <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell B</div>
-                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+                <div style={{fontSize:11,opacity:.7}}>50% contributions</div>
               </div>
               <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+</div>
               <div style={{textAlign:"center"}}>
                 <div style={{fontSize:22}}>👥</div>
                 <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell C</div>
-                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+                <div style={{fontSize:11,opacity:.7}}>50% contributions</div>
               </div>
               <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+ ···</div>
               <div style={{color:C.gold,fontSize:28,fontWeight:300}}>→</div>
