@@ -29,6 +29,17 @@ const sendEmail = async ({to_email, to_name, subject, message}) => {
 // ── Constants ─────────────────────────────────────────────────
 const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
 const MONTHLY_CONTRIB  = 10000;
+const BILL_SCORE_MIN   = 1000;   // minimum credit score to claim
+const BILL_SCORE_COST  = 500;    // credit points deducted per claim
+const BILL_COOLDOWN    = 10;     // months (one cycle) before next claim
+
+// Tiered cap based on fund balance
+const getBillCap = (fundBalance) => {
+  if(fundBalance >= 10000000) return { cap:500000, label:"₦500,000", tier:"Platinum", color:"#0B6E4F" };
+  if(fundBalance >= 5000000)  return { cap:350000, label:"₦350,000", tier:"Gold",     color:"#C9A84C" };
+  if(fundBalance >= 2000000)  return { cap:250000, label:"₦250,000", tier:"Silver",   color:"#6B7280" };
+  return                             { cap:100000, label:"₦100,000", tier:"Bronze",   color:"#B45309" };
+};
 const CYCLE_MONTHS     = 10;
 const BENEFIT_POOL_PCT = 0.60;
 const CELL_TIMEOUT_DAYS= 30;
@@ -615,15 +626,20 @@ export default function App() {
   // ── Bill support ──────────────────────────────────────────────
   const handleBillApply = async () => {
     if(!billForm.billType||!billForm.amount){ showToast("Fill all required fields","error"); return; }
+    if(member.creditScore < BILL_SCORE_MIN){ showToast(`Credit score of ${BILL_SCORE_MIN} pts required to apply`,"error"); return; }
+    const tierCap = getBillCap(funds.bill_support||0);
+    const amt = Number(billForm.amount);
+    if(amt > tierCap.cap){ showToast(`Maximum claim is ${tierCap.label} at current fund level`,"error"); return; }
     await supabase.from("cfb_bill_support").insert({
       link_code:member.linkCode, bill_type:billForm.billType,
-      amount_requested:Number(billForm.amount), description:billForm.description, status:"pending",
+      amount_requested:amt, description:billForm.description, status:"pending",
     });
     setBillForm({billType:"",amount:"",description:""});
+    const tierCapEmail = getBillCap(funds.bill_support||0);
     await sendEmail({
       to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
       subject: `CoFundBills Bill Support Application — ${member.fullName}`,
-      message: `Bill support application received:\nMember: ${member.fullName}\nLink Code: ${member.linkCode}\nBill Type: ${billForm.billType}\nAmount Requested: ₦${Number(billForm.amount).toLocaleString()}\nDescription: ${billForm.description||"None provided"}`,
+      message: `Bill support application received:\n\nMember: ${member.fullName}\nLink Code: ${member.linkCode}\nCredit Score: ${member.creditScore} pts (${scoreCategory(member.creditScore).label})\nBill Type: ${billForm.billType}\nAmount Requested: ₦${Number(billForm.amount).toLocaleString()}\nCurrent Fund Tier: ${tierCapEmail.tier} (Max: ${tierCapEmail.label})\nFund Balance: ₦${(funds.bill_support||0).toLocaleString()}\nDescription: ${billForm.description||"None provided"}\n\nACTION: Approving will deduct 500 credit points from member and ₦${Number(billForm.amount).toLocaleString()} from the Bill Support Fund.`,
     });
     await loadBillApps();
     showToast("Bill support application submitted.");
@@ -766,7 +782,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, plus up to 4 network position holders (Host, Anchor, Root/Founding Member, and Admin) whose invite chains led to the cell's formation. Root and Founding Member occupy the same seat — all Founding Members sit in the Root/Founding position. Admin always closes the chain as the last leg. Cell size ranges from 10 to 13 members depending on the depth of the invite chain above the contributing members."],
     ["How much do I receive at cycle end?","Each contributing member receives ₦60,000 at cycle end — ₦6,000 per month accumulated over 10 months. You will have contributed ₦100,000 in total. The ₦40,000 difference funds the cooperative's bill support (10%), loan fund (10%), administration (10%) and contingency reserve (10%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
-    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +10 per monthly contribution (contributing members), +5 per active cell month equally across all seat types (Host, Anchor, Root/Founding and Admin), +100 for a completed cycle (contributing members), with lower bonuses for network seat holders at cycle end. Deductions for missed contributions (−30) and loan defaults (−100). A higher score gives better loan access and lower loan interest rates."],
+    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +10 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Excellent (1,000+): 1%/month, max ₦600,000. Strong (700–999): 2%/month, max ₦360,000. Standard (500–699): 3%/month, max ₦180,000. Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
     ["What is the Bill Support Fund?","10% of every contribution funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
@@ -1190,23 +1206,113 @@ Answer warmly, concisely and accurately. Never invent information.`;
           )}
 
           {/* Bill Support */}
-          {portalTab==="bills"&&(
+          {portalTab==="bills"&&(()=>{
+            const billFund = funds.bill_support||0;
+            const tierCap = getBillCap(billFund);
+            const isEligible = m.creditScore >= BILL_SCORE_MIN;
+            const fundPct = Math.min(Math.round(billFund/10000000*100),100);
+
+            return(
             <div>
-              <div className="info-box">Bill Support Fund Balance: <strong>{fmtNGN(funds.bill_support||0)}</strong><br/>Applications are reviewed by admin subject to fund balance and cooperative policy.</div>
-              <div className="card">
-                <div style={{fontWeight:800,color:C.navy,marginBottom:14,fontSize:13}}>Apply for Bill Support</div>
-                <div className="field"><label>Bill Type</label>
-                  <select value={billForm.billType} onChange={e=>setBillForm({...billForm,billType:e.target.value})}>
-                    <option value="">Select bill type</option>
-                    {["House Rent","School Fees","Medical Bills","Electricity","Water Bills","Household Essentials"].map(o=><option key={o}>{o}</option>)}
-                  </select>
+              {/* Fund indicator card */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>Bill Support Fund Status</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                  <div className="stat-card" style={{borderTop:`3px solid ${tierCap.color}`}}>
+                    <div style={{fontSize:16,fontWeight:900,color:tierCap.color}}>{fmtNGN(billFund)}</div>
+                    <div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>Current Fund Balance</div>
+                  </div>
+                  <div className="stat-card" style={{borderTop:`3px solid ${tierCap.color}`}}>
+                    <div style={{fontSize:16,fontWeight:900,color:tierCap.color}}>{tierCap.label}</div>
+                    <div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>Your Claim Limit</div>
+                  </div>
                 </div>
-                <div className="field"><label>Amount Requested</label><input type="number" value={billForm.amount} onChange={e=>setBillForm({...billForm,amount:e.target.value})}/></div>
-                <div className="field"><label>Description</label><textarea rows={3} style={{resize:"none"}} value={billForm.description} onChange={e=>setBillForm({...billForm,description:e.target.value})}/></div>
-                <button className="btn btn-green" onClick={handleBillApply}>Submit Application</button>
+
+                {/* Tier progress bar */}
+                <div style={{marginBottom:10}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,color:C.muted,marginBottom:4}}>
+                    <span>Fund tier: <strong style={{color:tierCap.color}}>{tierCap.tier}</strong></span>
+                    <span>{fmtNGN(billFund)} of {fmtNGN(10000000)} (Platinum)</span>
+                  </div>
+                  <div className="score-bar">
+                    <div className="score-fill" style={{width:fundPct+"%",background:tierCap.color}}/>
+                  </div>
+                </div>
+
+                {/* Tier ladder */}
+                <div style={{fontSize:11,color:C.muted,lineHeight:1.9}}>
+                  {[
+                    {min:"₦10,000,000+",cap:"₦500,000",tier:"Platinum",c:"#0B6E4F"},
+                    {min:"₦5,000,000+", cap:"₦350,000",tier:"Gold",    c:"#C9A84C"},
+                    {min:"₦2,000,000+", cap:"₦250,000",tier:"Silver",  c:"#6B7280"},
+                    {min:"Below ₦2M",   cap:"₦100,000",tier:"Bronze",  c:"#B45309"},
+                  ].map(t=>(
+                    <div key={t.tier} style={{display:"flex",justifyContent:"space-between",
+                      padding:"3px 8px",borderRadius:6,
+                      background:t.tier===tierCap.tier?t.c+"18":"transparent",
+                      border:t.tier===tierCap.tier?`1px solid ${t.c}44`:"1px solid transparent"}}>
+                      <span style={{color:t.tier===tierCap.tier?t.c:C.muted,fontWeight:t.tier===tierCap.tier?700:400}}>
+                        {t.tier===tierCap.tier?"▶ ":""}{t.tier} — Fund {t.min}
+                      </span>
+                      <span style={{color:t.tier===tierCap.tier?t.c:C.muted,fontWeight:t.tier===tierCap.tier?700:400}}>
+                        Max {t.cap}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
+
+              {/* Eligibility status */}
+              <div className={isEligible?"success-box":"warn-box"} style={{marginBottom:14}}>
+                {isEligible?(
+                  <>
+                    <strong>✅ You are eligible to apply for bill support.</strong><br/>
+                    Your credit score: <strong>{m.creditScore} pts</strong> — Excellent category.<br/>
+                    Note: A successful claim deducts <strong>500 credit points</strong> from your score. You will need to rebuild to 1,000+ before your next claim.
+                  </>
+                ):(
+                  <>
+                    <strong>🔒 Bill support is not yet accessible.</strong><br/>
+                    Required credit score: <strong>1,000 pts (Excellent)</strong><br/>
+                    Your current score: <strong>{m.creditScore} pts</strong> — {scoreCategory(m.creditScore).label}<br/>
+                    You need <strong>{Math.max(0,1000-m.creditScore)} more points</strong> to qualify.
+                    <div style={{marginTop:8,fontSize:11,color:C.muted}}>
+                      Build your score through consistent contributions, completing cycles and holding network seats (Host, Anchor, Root/Founding).
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Application form — only if eligible */}
+              {isEligible&&(
+                <div className="card">
+                  <div style={{fontWeight:800,color:C.navy,marginBottom:14,fontSize:13}}>Apply for Bill Support</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:14,lineHeight:1.7,background:C.bg,borderRadius:8,padding:10}}>
+                    Maximum claim: <strong style={{color:tierCap.color}}>{tierCap.label}</strong> ({tierCap.tier} tier)<br/>
+                    This limit reflects the current cooperative fund balance and will increase as the fund grows.
+                  </div>
+                  <div className="field"><label>Bill Type</label>
+                    <select value={billForm.billType} onChange={e=>setBillForm({...billForm,billType:e.target.value})}>
+                      <option value="">Select bill type</option>
+                      {["House Rent","School Fees","Medical Bills","Electricity","Water Bills","Household Essentials"].map(o=><option key={o}>{o}</option>)}
+                    </select>
+                  </div>
+                  <div className="field">
+                    <label>Amount Requested (Max: {tierCap.label})</label>
+                    <input type="number" placeholder={`Up to ${tierCap.label}`} value={billForm.amount}
+                      onChange={e=>setBillForm({...billForm,amount:e.target.value})}/>
+                  </div>
+                  <div className="field"><label>Description / Bill Details</label>
+                    <textarea rows={3} style={{resize:"none"}} value={billForm.description}
+                      onChange={e=>setBillForm({...billForm,description:e.target.value})}
+                      placeholder="e.g. Annual house rent for 2026, landlord details, school name and term etc."/>
+                  </div>
+                  <button className="btn btn-green" onClick={handleBillApply}>Submit Application</button>
+                </div>
+              )}
             </div>
-          )}
+            );
+          })()}
 
           {/* Statement */}
           {portalTab==="statement"&&(
@@ -1389,9 +1495,17 @@ Answer warmly, concisely and accurately. Never invent information.`;
                       <button className="btn btn-green btn-sm" style={{fontSize:11}} onClick={async()=>{
                         await supabase.from("cfb_bill_support").update({status:"approved",processed_at:new Date().toISOString()}).eq("id",b.id);
                         await supabase.from("cfb_funds").update({balance:Math.max(0,(funds.bill_support||0)-Number(b.amount_requested))}).eq("fund_type","bill_support");
-                        await supabase.from("cfb_members").update({bill_support_balance:(members[b.link_code]?.billSupportBalance||0)+Number(b.amount_requested)}).eq("link_code",b.link_code);
+                        await supabase.from("cfb_members").update({
+                          bill_support_balance:(members[b.link_code]?.billSupportBalance||0)+Number(b.amount_requested),
+                          credit_score:Math.max(0,(members[b.link_code]?.creditScore||0)-BILL_SCORE_COST),
+                        }).eq("link_code",b.link_code);
+                        // Log credit deduction
+                        await supabase.from("cfb_credit_events").insert({
+                          link_code:b.link_code, event_type:"bill_support_claim",
+                          points:-BILL_SCORE_COST, description:`Bill support approved: ${fmtNGN(b.amount_requested)} — ${b.bill_type}`,
+                        });
                         await loadBillApps(); await loadFunds(); await loadMembers();
-                        showToast("Bill support approved.");
+                        showToast("Bill support approved. 500 credit points deducted from member.");
                       }}>✅ Approve</button>
                       <button className="btn-danger" style={{fontSize:11}} onClick={async()=>{await supabase.from("cfb_bill_support").update({status:"rejected"}).eq("id",b.id);await loadBillApps();showToast("Rejected.");}}>❌</button>
                     </div>
