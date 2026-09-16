@@ -40,10 +40,10 @@ const BILL_COOLDOWN    = 10;     // months (one cycle) before next claim
 
 // Tiered cap based on fund balance
 const getBillCap = (fundBalance) => {
-  if(fundBalance >= 10000000) return { cap:500000, label:"₦500,000", tier:"Platinum", color:"#0B6E4F" };
-  if(fundBalance >= 5000000)  return { cap:350000, label:"₦350,000", tier:"Gold",     color:"#C9A84C" };
-  if(fundBalance >= 2000000)  return { cap:250000, label:"₦250,000", tier:"Silver",   color:"#6B7280" };
-  return                             { cap:100000, label:"₦100,000", tier:"Bronze",   color:"#B45309" };
+  if(fundBalance >= 10000000) return { cap:500000, label:"₦500,000", tier:"Platinum — Excellent Performance", color:"#0B6E4F" };
+  if(fundBalance >= 5000000)  return { cap:350000, label:"₦350,000", tier:"Gold — Strong Performance",       color:"#C9A84C" };
+  if(fundBalance >= 2000000)  return { cap:250000, label:"₦250,000", tier:"Silver — Standard Performance",   color:"#6B7280" };
+  return                             { cap:100000, label:"₦100,000", tier:"Bronze — Minimal Performance", color:"#B45309" };
 };
 const CYCLE_MONTHS     = 10;
 const BENEFIT_POOL_PCT = 0.60;
@@ -80,10 +80,10 @@ const genCode = pfx => pfx + Math.random().toString(36).substr(2,6).toUpperCase(
 const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24)) : 0;
 
 const scoreCategory = score => {
-  if(score>=1000) return {label:"Excellent",   rate:1, limit:600000, color:C.green};
-  if(score>=700)  return {label:"Strong",      rate:2, limit:360000, color:C.blue};
-  if(score>=500)  return {label:"Standard",    rate:3, limit:180000, color:C.amber};
-  return                 {label:"Higher-Risk", rate:4, limit:60000,  color:C.error};
+  if(score>=1000) return {label:"Excellent Performance (Lowest Risk)", rate:1, limit:600000, color:C.green};
+  if(score>=700)  return {label:"Strong Performance (Low Risk)",      rate:2, limit:360000, color:C.blue};
+  if(score>=500)  return {label:"Standard Performance (Medium Risk)", rate:3, limit:180000, color:C.amber};
+  return                 {label:"Minimal Performance (Higher-Risk)",  rate:4, limit:60000,  color:C.error};
 };
 
 const mapMember = m => ({
@@ -691,10 +691,10 @@ CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Loan default: -100 pts all
 
 LOAN ACCESS (based on credit score):
-- Excellent 800+: 1%/month, max loan NGN600,000
-- Strong 600-799: 2%/month, max loan NGN360,000
-- Standard 400-599: 3%/month, max loan NGN180,000
-- Higher-Risk below 400: 4%/month, max loan NGN60,000
+- Excellent Performance (Lowest Risk) 1000+: 1%/month, max loan NGN600,000
+- Strong Performance (Low Risk) 700-999: 2%/month, max loan NGN360,000
+- Standard Performance (Medium Risk) 500-699: 3%/month, max loan NGN180,000
+- Minimal Performance (Higher-Risk) below 500: 4%/month, max loan NGN60,000
 Loans subject to fund liquidity and admin approval. Credits improve eligibility — do not guarantee approval.
 
 IS IT A PYRAMID SCHEME? No — because:
@@ -794,7 +794,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
-    ["What loan can I access?","Based on your CoFund Credit Score: Excellent (1,000+): 1%/month, max ₦600,000. Strong (700–999): 2%/month, max ₦360,000. Standard (500–699): 3%/month, max ₦180,000. Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
+    ["What loan can I access?","Based on your CoFund Credit Score: Excellent Performance — Lowest Risk (1,000+): 1%/month, max ₦600,000. Strong Performance — Low Risk (700–999): 2%/month, max ₦360,000. Standard Performance — Medium Risk (500–699): 3%/month, max ₦180,000. Minimal Performance — Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
@@ -946,10 +946,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div className="card">
               <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>Credit Score → Loan Access</div>
               {[
-                {l:"Excellent",r:"1,000+",rate:"1%/month",limit:"₦600,000",c:C.green},
-                {l:"Strong",r:"700–999",rate:"2%/month",limit:"₦360,000",c:C.blue},
-                {l:"Standard",r:"500–699",rate:"3%/month",limit:"₦180,000",c:C.amber},
-                {l:"Higher-Risk",r:"Below 500",rate:"4%/month",limit:"₦60,000",c:C.error},
+                {l:"Excellent Performance (Lowest Risk)",r:"1,000+",rate:"1%/month",limit:"₦600,000",c:C.green},
+                {l:"Strong Performance (Low Risk)",r:"700–999",rate:"2%/month",limit:"₦360,000",c:C.blue},
+                {l:"Standard Performance (Medium Risk)",r:"500–699",rate:"3%/month",limit:"₦180,000",c:C.amber},
+                {l:"Minimal Performance (Higher-Risk)",r:"Below 500",rate:"4%/month",limit:"₦60,000",c:C.error},
               ].map(c=>(
                 <div key={c.l} style={{borderRadius:10,border:`1.5px solid ${c.c}33`,padding:11,marginBottom:8,background:c.c+"11"}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
