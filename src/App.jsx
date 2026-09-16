@@ -663,7 +663,7 @@ export default function App() {
 CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Host, Anchor, Root and Founding Member positions earn cooperative credit points only — never cash.
 
 CONTRIBUTION CELL STRUCTURE (dynamic, 10 to 14 members):
-- 10 Contributing Members — pay NGN10,000/month for 10 months, receive NGN50,000 cash at cycle end plus credit points
+- 10 Contributing Members — pay NGN10,000/month for 10 months, receive NGN50,000 cash + 250 credit points at cycle end
 - Host — the member whose invite link brought contributors to this cell. Credit points only.
 - Anchor — the member who introduced the Host. Credit points only.
 - Root — the member who introduced the Anchor. Credit points only.
@@ -789,13 +789,13 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
   // ── FAQ data ──────────────────────────────────────────────────
   const FAQS = [
-    ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦60,000 payout each at cycle end. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
+    ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦50,000 cash payout each at cycle end, plus 250 credit points. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, plus up to 4 network position holders (Host, Anchor, Root/Founding Member, and Admin) whose invite chains led to the cell's formation. Root and Founding Member occupy the same seat — all Founding Members sit in the Root/Founding position. Admin always closes the chain as the last leg. Cell size ranges from 10 to 13 members depending on the depth of the invite chain above the contributing members."],
-    ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 at cycle end — ₦5,000 per month accumulated over 10 months. You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative's bill support (25%), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
+    ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Excellent (1,000+): 1%/month, max ₦600,000. Strong (700–999): 2%/month, max ₦360,000. Standard (500–699): 3%/month, max ₦180,000. Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
-    ["What is the Bill Support Fund?","10% of every contribution funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
+    ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
@@ -807,7 +807,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["2. Contribution Obligation","Contributing members must pay ₦10,000 monthly for the full 10-month cycle. Failure to contribute suspends cycle payout eligibility and cooperative service access until arrears are cleared."],
     ["3. Contribution Cell","Members are automatically assigned to a contribution cell upon activation. Cell size ranges from 10 to 14 members. The cycle runs for 10 months."],
     ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 10% (₦1,000), Administration 10% (₦1,000), Contingency Reserve 5% (₦500)."],
-    ["5. Cycle Payout","₦50,000 is paid to each contributing member at cycle completion. Payouts are processed within 7 business days of cycle completion."],
+    ["5. Cycle Payout","₦50,000 cash is paid to each contributing member at cycle completion, plus 250 credit points earned during the cycle. Payouts are processed within 7 business days of cycle completion."],
     ["6. Network Positions","Host, Anchor, Root and Founding Member earn cooperative credit points only. No member receives a commission or guaranteed financial return for introducing another member."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
@@ -836,7 +836,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
       {/* Stats belt */}
       <div style={{background:C.navy,padding:"18px 24px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
-        {[["₦10,000","Monthly Contribution"],["₦50,000 + 100 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["60%","Benefit Pool Split"]].map(([v,l])=>(
+        {[["₦10,000","Monthly Contribution"],["₦50,000 + 250 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["50%","Benefit Pool Split"]].map(([v,l])=>(
           <div key={l} style={{background:C.gold,borderRadius:28,padding:"9px 18px",textAlign:"center",minWidth:120}}>
             <div style={{fontSize:13,fontWeight:900,color:C.navy}}>{v}</div>
             <div style={{fontSize:10,fontWeight:700,color:C.navy,opacity:.75,textTransform:"uppercase",letterSpacing:.4}}>{l}</div>
@@ -852,7 +852,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of 10 to 14 members. Ten contributing members pay monthly and share a payout at cycle end. Network position holders earn credit points that unlock better loan access.</p>
           <div className="grid-3" style={{marginBottom:24}}>
             {[
-              {icon:"💳",title:"Contributing Members (10)",desc:`Each pays ₦10,000/month for 10 months. Receives ₦60,000 cash at cycle end plus credit points. Total contributed: ₦100,000.`,color:C.blue},
+              {icon:"💳",title:"Contributing Members (10)",desc:`Each pays ₦10,000/month for 10 months. Receives ₦50,000 cash at cycle end plus credit points. Total contributed: ₦100,000.`,color:C.blue},
               {icon:"🔗",title:"Host · Anchor · Root",desc:"Three network positions for existing active members whose invite chain led to this cell. Earn credit points only — no cash from contributions.",color:C.green},
               {icon:"🎖️",title:"Founding Member",desc:"Seats in the Root/Founding position in cells traceable to their network. Contributes ₦10,000/month like all members. Earns credit points in every traceable cell simultaneously — boosting their credit score and loan access faster.",color:C.burg},
             ].map(c=>(
@@ -869,8 +869,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:14}}>Every ₦10,000 Contribution — Split 5 Ways</div>
             <div className="grid-4" style={{gap:10}}>
               {[
-                {l:"Member Benefit Pool",a:"₦6,000",p:"60%",c:C.blue},
-                {l:"Bill Support Fund",a:"₦1,000",p:"10%",c:C.green},
+                {l:"Member Benefit Pool",a:"₦5,000",p:"50%",c:C.blue},
+                {l:"Bill Support Fund",a:"₦2,500",p:"25%",c:C.green},
                 {l:"Loan Fund",a:"₦1,000",p:"10%",c:C.purple},
                 {l:"Administration",a:"₦1,000",p:"10%",c:C.amber},
                 {l:"Contingency Reserve",a:"₦1,000",p:"10%",c:C.burg},
@@ -932,7 +932,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {[
                 ["Monthly contribution on time","+20 pts","Contributing Members only"],
                 ["Each month your cell is active","+5 pts","All seat types equally"],
-                ["Cycle completed","+100/50/30/20/10 pts","Contributing/Host/Anchor/Root-Founding/Admin"],
+                ["Cycle completed","+100/50/30/20/10 pts","Contributing/Host/Anchor/Root-Founding/Admin (see portal for full breakdown)"],
                 ["Loan repaid on time","+50 pts","All members"],
                 ["Missed contribution","−30 pts","Contributing Members"],
                 ["Loan default","−100 pts","All members"],
@@ -975,7 +975,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               ["✅ Real cooperative services","Contribution cells, bill support fund, credit scoring and loan facility are genuine cooperative services."],
               ["✅ Works without new members","Existing active members complete cycles, access loans and build credit indefinitely without new recruitment."],
               ["✅ Registered cooperative","Being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022."],
-              ["✅ Every naira documented","60% benefit pool, 10% bill support, 10% loans, 10% admin, 10% reserve — transparent and automatic."],
+              ["✅ Every naira documented","50% benefit pool, 25% bill support, 10% loans, 10% admin, 5% reserve — transparent and automatic."],
               ["✅ Behaviour-based credit","Loan access is earned through contribution discipline and repayment history — not through recruiting others."],
             ].map(([t,d])=>(
               <div key={t} style={{background:"rgba(255,255,255,.08)",borderRadius:10,padding:13}}>
@@ -992,7 +992,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
           <h2 className="section-title">Collective Bill Financing</h2>
-          <p className="section-sub" style={{margin:"0 auto 24px"}}>10% of every contribution funds the cooperative Bill Support Fund. Active members can apply for support for approved essential bills.</p>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members can apply for support for approved essential bills.</p>
           <div className="grid-3">
             {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
               <div key={l} className="card" style={{textAlign:"center",padding:14}}>
@@ -1090,7 +1090,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {m.status==="pending"&&(
                 <div className="info-box">
                   <strong>🔔 Activate Your Membership</strong><br/>
-                  Pay your first ₦10,000 contribution to activate and enter a contribution cell.
+                  Pay your first monthly contribution of ₦10,000 to activate your membership and enter a contribution cell.
                   <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,marginTop:10,lineHeight:1.9,fontSize:13}}>
                     <strong>Royal Tech Partnership & Investment Limited</strong><br/>
                     Zenith Bank — 1016621205<br/>
@@ -1126,7 +1126,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div key={c.cell_code}>
                     <div style={{marginBottom:6,display:"flex",alignItems:"center",gap:8,fontSize:12}}>
                       <span style={{background:seatInfo.bg,color:C.white,borderRadius:20,padding:"3px 10px",fontWeight:700}}>{seatInfo.icon} {seatInfo.label}</span>
-                      {mySeat?.seat_type==="contributing"&&<span style={{color:C.muted}}>Payout at cycle end: <strong>{fmtNGN(50000)}</strong></span>}
+                      {mySeat?.seat_type==="contributing"&&<span style={{color:C.muted}}>Payout at cycle end: <strong>₦50,000 cash + 250 credit pts</strong></span>}
                       {mySeat?.seat_type!=="contributing"&&<span style={{color:C.muted}}>Earning credit points in this cell</span>}
                     </div>
                     <CellVisual cell={c}/>
