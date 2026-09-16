@@ -987,6 +987,87 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+
+      {/* Two Halves Narrative */}
+      <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"52px 24px"}}>
+        <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
+          <div style={{color:C.gold,fontWeight:900,fontSize:11,textTransform:"uppercase",
+            letterSpacing:1,marginBottom:10}}>How Your Contribution Works Harder</div>
+          <h2 style={{color:C.white,fontSize:22,fontWeight:900,marginBottom:16,lineHeight:1.4}}>
+            Every Contribution Cell Splits Into Two — And the Second Half Does Something Remarkable
+          </h2>
+          <div className="grid-2" style={{gap:20,marginBottom:28,textAlign:"left"}}>
+            <div style={{background:"rgba(255,255,255,0.08)",borderRadius:14,padding:24}}>
+              <div style={{fontSize:32,marginBottom:12}}>💰</div>
+              <div style={{color:C.gold,fontWeight:900,fontSize:14,marginBottom:8}}>
+                The First Half — Yours
+              </div>
+              <div style={{color:"rgba(255,255,255,.85)",fontSize:13,lineHeight:1.85}}>
+                50% of every contribution made inside your cell accumulates month by month 
+                over the full 10-month cycle. At the end of the cycle, this pooled amount 
+                is divided equally among all 10 contributing members of that cell. 
+                <strong style={{color:C.gold}}> ₦50,000 cash — returned to you directly.</strong>
+              </div>
+            </div>
+            <div style={{background:"rgba(255,255,255,0.08)",borderRadius:14,padding:24}}>
+              <div style={{fontSize:32,marginBottom:12}}>🌊</div>
+              <div style={{color:C.gold,fontWeight:900,fontSize:14,marginBottom:8}}>
+                The Second Half — Something Bigger
+              </div>
+              <div style={{color:"rgba(255,255,255,.85)",fontSize:13,lineHeight:1.85}}>
+                The other 50% — drawn from every contribution, across every cell, 
+                across the entire cooperative — flows together into shared funds. 
+                Bill support. Loans. Operations. Reserve. 
+                <strong style={{color:C.gold}}> Many halves from many cells, merging into one massive cooperative pool.</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* Visual flow diagram */}
+          <div style={{background:"rgba(255,255,255,0.06)",borderRadius:14,padding:24,marginBottom:20}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"center",
+              gap:8,flexWrap:"wrap",fontSize:13,color:"rgba(255,255,255,.8)"}}>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:22}}>👥</div>
+                <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell A</div>
+                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+              </div>
+              <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+</div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:22}}>👥</div>
+                <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell B</div>
+                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+              </div>
+              <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+</div>
+              <div style={{textAlign:"center"}}>
+                <div style={{fontSize:22}}>👥</div>
+                <div style={{color:C.gold,fontWeight:700,fontSize:12,marginTop:4}}>Cell C</div>
+                <div style={{fontSize:11,opacity:.7}}>10 contributors</div>
+              </div>
+              <div style={{color:C.gold,fontSize:20,fontWeight:300}}>+ ···</div>
+              <div style={{color:C.gold,fontSize:28,fontWeight:300}}>→</div>
+              <div style={{textAlign:"center",background:"rgba(201,168,76,0.15)",
+                borderRadius:12,padding:"14px 20px",border:`1.5px solid ${C.gold}44`}}>
+                <div style={{fontSize:26}}>🏦</div>
+                <div style={{color:C.gold,fontWeight:900,fontSize:13,marginTop:4}}>Cooperative Pool</div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:2}}>
+                  Bill Support · Loans · Reserve
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{background:"rgba(201,168,76,0.12)",border:`1px solid ${C.gold}44`,
+            borderRadius:12,padding:18,fontSize:13,color:"rgba(255,255,255,.85)",lineHeight:1.85}}>
+            <strong style={{color:C.gold}}>The result:</strong> No single cell carries the burden of bill support alone. 
+            Every cell contributes its second half to a collective fund that grows with every new member, 
+            every new cell, and every monthly contribution — across the entire cooperative simultaneously. 
+            The more the cooperative grows, the more powerful the pool becomes — and every member 
+            benefits from the collective discipline of everyone else.
+          </div>
+        </div>
+      </div>
+
       {/* Bill Support */}
       <div className="section" style={{background:C.white}}>
         <div className="section-inner" style={{textAlign:"center"}}>
