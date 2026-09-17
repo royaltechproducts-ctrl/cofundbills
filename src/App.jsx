@@ -1015,6 +1015,57 @@ Answer warmly, concisely and accurately. Never invent information.`;
       </div>
 
 
+      {/* Bill Support */}
+      <div className="section" style={{background:C.white}}>
+        <div className="section-inner" style={{textAlign:"center"}}>
+          <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
+          <h2 className="section-title">Collective Bill Financing</h2>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative Bill Support Fund. Active members with a credit score of 1,000+ can apply for support for their self-selected essential bills — up to ₦500,000 per claim from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
+          <div className="grid-3">
+            {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
+              <div key={l} className="card" style={{textAlign:"center",padding:14}}>
+                <div style={{fontSize:26,marginBottom:5}}>{i}</div>
+                <div style={{fontSize:13,fontWeight:700,color:C.navy}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:C.navy,marginBottom:8}}>Ready to Co-Fund Your Bills?</h2>
+        <p style={{color:C.muted,fontSize:14,lineHeight:1.8,maxWidth:460,margin:"0 auto 24px"}}>Join free today. Contribute ₦10,000 monthly, build your CoFund Credit Score, and access cooperative bill financing and loans.</p>
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+          <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join CoFundBills Free</button>
+          <a className="wa-btn" href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer">💬 Chat with Admin on WhatsApp</a>
+        </div>
+      </div>
+
+      {/* Not a pyramid */}
+      <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"48px 24px"}}>
+        <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
+          <div style={{color:C.gold,fontWeight:900,fontSize:11,textTransform:"uppercase",letterSpacing:1,marginBottom:10}}>Legally Structured · Cooperative Society</div>
+          <h2 style={{color:C.white,fontSize:22,fontWeight:900,marginBottom:20}}>Why CoFundBills is NOT a Pyramid Scheme</h2>
+          <div className="grid-2" style={{textAlign:"left",gap:12}}>
+            {[
+              ["✅ No cash from recruiting","Host, Anchor and Root earn credit points only — never cash from contributors below them."],
+              ["✅ Real cooperative services","Contribution cells, bill support fund, credit scoring and loan facility are genuine cooperative services."],
+              ["✅ Works without new members","Existing active members complete cycles, access loans and build credit indefinitely without new recruitment."],
+              ["✅ Registered cooperative","Being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022."],
+              ["✅ Every naira documented","50% benefit pool, 25% bill support, 10% loans, 10% admin, 5% reserve — transparent and automatic."],
+              ["✅ Behaviour-based credit","Loan access is earned through contribution discipline and repayment history — not through recruiting others."],
+            ].map(([t,d])=>(
+              <div key={t} style={{background:"rgba(255,255,255,.08)",borderRadius:10,padding:13}}>
+                <div style={{color:C.gold,fontWeight:800,fontSize:12,marginBottom:4}}>{t}</div>
+                <div style={{color:"rgba(255,255,255,.7)",fontSize:12,lineHeight:1.6}}>{d}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+
       {/* Two Halves Narrative */}
       <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"52px 24px"}}>
         <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
