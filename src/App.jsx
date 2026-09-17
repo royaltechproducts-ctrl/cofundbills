@@ -964,6 +964,33 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+      {/* Bill Support */}
+      <div className="section" style={{background:C.white}}>
+        <div className="section-inner" style={{textAlign:"center"}}>
+          <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
+          <h2 className="section-title">Collective Bill Financing</h2>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative Bill Support Fund. Active members with a credit score of 1,000+ can apply for support for their self-selected essential bills — up to ₦500,000 per claim from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
+          <div className="grid-3">
+            {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
+              <div key={l} className="card" style={{textAlign:"center",padding:14}}>
+                <div style={{fontSize:26,marginBottom:5}}>{i}</div>
+                <div style={{fontSize:13,fontWeight:700,color:C.navy}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* CTA */}
+      <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
+        <h2 style={{fontSize:22,fontWeight:900,color:C.navy,marginBottom:8}}>Ready to Co-Fund Your Bills?</h2>
+        <p style={{color:C.muted,fontSize:14,lineHeight:1.8,maxWidth:460,margin:"0 auto 24px"}}>Join free today. Contribute ₦10,000 monthly, build your CoFund Credit Score, and access cooperative bill financing and loans.</p>
+        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
+          <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join CoFundBills Free</button>
+          <a className="wa-btn" href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer">💬 Chat with Admin on WhatsApp</a>
+        </div>
+      </div>
+
       {/* Not a pyramid */}
       <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"48px 24px"}}>
         <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
@@ -1062,33 +1089,6 @@ Answer warmly, concisely and accurately. Never invent information.`;
             The more the cooperative grows, the more powerful the pool becomes — and every member 
             benefits from the collective discipline of everyone else.
           </div>
-        </div>
-      </div>
-
-      {/* Bill Support */}
-      <div className="section" style={{background:C.white}}>
-        <div className="section-inner" style={{textAlign:"center"}}>
-          <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
-          <h2 className="section-title">Collective Bill Financing</h2>
-          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative Bill Support Fund. Active members with a credit score of 1,000+ can apply for support for their self-selected essential bills — up to ₦500,000 per claim from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
-          <div className="grid-3">
-            {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
-              <div key={l} className="card" style={{textAlign:"center",padding:14}}>
-                <div style={{fontSize:26,marginBottom:5}}>{i}</div>
-                <div style={{fontSize:13,fontWeight:700,color:C.navy}}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* CTA */}
-      <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
-        <h2 style={{fontSize:22,fontWeight:900,color:C.navy,marginBottom:8}}>Ready to Co-Fund Your Bills?</h2>
-        <p style={{color:C.muted,fontSize:14,lineHeight:1.8,maxWidth:460,margin:"0 auto 24px"}}>Join free today. Contribute ₦10,000 monthly, build your CoFund Credit Score, and access cooperative bill financing and loans.</p>
-        <div style={{display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap"}}>
-          <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join CoFundBills Free</button>
-          <a className="wa-btn" href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer">💬 Chat with Admin on WhatsApp</a>
         </div>
       </div>
 
