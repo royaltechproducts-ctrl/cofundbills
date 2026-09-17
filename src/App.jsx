@@ -1403,14 +1403,39 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 </div>
                 <div style={{fontSize:12,color:C.muted,marginTop:8}}>Loan rate: <strong>{cat.rate}%/month</strong> · Max loan: <strong>{fmtNGN(cat.limit)}</strong></div>
               </div>
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,marginBottom:10,fontSize:13}}>{getTier(m.contributionTier||1).label} — Score Thresholds & Loan Access</div>
+                {[
+                  {l:"Excellent Performance (Lowest Risk)",s:getTier(m.contributionTier||1).excellentScore,r:1,limit:getTier(m.contributionTier||1).loanLimits.excellent,c:C.green},
+                  {l:"Strong Performance (Low Risk)",s:getTier(m.contributionTier||1).strongScore,r:2,limit:getTier(m.contributionTier||1).loanLimits.strong,c:C.blue},
+                  {l:"Standard Performance (Medium Risk)",s:getTier(m.contributionTier||1).standardScore,r:3,limit:getTier(m.contributionTier||1).loanLimits.standard,c:C.amber},
+                  {l:"Minimal Performance (Higher-Risk)",s:0,r:4,limit:getTier(m.contributionTier||1).loanLimits.minimal,c:C.error},
+                ].map(cat=>(
+                  <div key={cat.l} style={{borderRadius:8,padding:10,marginBottom:6,
+                    background:m.creditScore>=(cat.s||0)?cat.c+"11":C.bg,
+                    border:`1.5px solid ${m.creditScore>=(cat.s||0)?cat.c:C.border}`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                      <div>
+                        <span style={{fontWeight:700,color:cat.c,fontSize:12}}>{cat.l}</span>
+                        <span style={{fontSize:10,color:C.muted,marginLeft:6}}>{cat.s>0?`${cat.s.toLocaleString()}+ pts`:"Below "+getTier(m.contributionTier||1).standardScore.toLocaleString()+" pts"}</span>
+                      </div>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{fontSize:11,fontWeight:700,color:C.navy}}>{cat.r}%/month</div>
+                        <div style={{fontSize:10,color:C.muted}}>Max: {fmtNGN(cat.limit)}</div>
+                      </div>
+                    </div>
+                    {m.creditScore>=(cat.s||0)&&<div style={{fontSize:10,color:cat.c,fontWeight:700,marginTop:3}}>✓ Your current category</div>}
+                  </div>
+                ))}
+              </div>
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:10,fontSize:13}}>How to Improve Your Score</div>
                 {[
-                  ["Contribute on time every month","+10 pts"],
-                  ["Stay active in your contribution cell","Up to +5 pts/month"],
-                  ["Complete a full 10-month cycle","+100 pts"],
-                  ["Repay loans on time","+50 pts per repayment"],
-                  ["Invite members who form new cells","Credit pts as Host/Anchor/Root"],
+                  [`Contribute on time every month`,`+${getTier(m.contributionTier||1).pts.contribution} pts`],
+                  ["Stay active in your contribution cell",`+${getTier(m.contributionTier||1).pts.cellActive} pts/month`],
+                  [`Complete a full 10-month cycle`,`+${getTier(m.contributionTier||1).pts.cycleContrib.toLocaleString()} pts`],
+                  [`Repay loans on time`,`+${getTier(m.contributionTier||1).pts.loanRepaid} pts per repayment`],
+                  ["Invite members who form new cells","Credit pts as Host/Anchor/Root/Founding"],
                 ].map(([a,b])=>(
                   <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
                     <span style={{color:C.navy}}>{a}</span>
@@ -1534,17 +1559,17 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 {isEligible?(
                   <>
                     <strong>✅ You are eligible to apply for bill support.</strong><br/>
-                    Your credit score: <strong>{m.creditScore} pts</strong> — Excellent category.<br/>
-                    Note: A successful claim deducts <strong>500 credit points</strong> from your score. You will need to rebuild to 1,000+ before your next claim.
+                    Your credit score: <strong>{m.creditScore.toLocaleString()} pts</strong> — Excellent Performance ({getTier(m.contributionTier||1).label}).<br/>
+                    Note: A successful claim deducts <strong>{BILL_SCORE_COST} credit points</strong> from your score. You will need to rebuild to {getTier(m.contributionTier||1).billScoreMin.toLocaleString()}+ before your next claim.
                   </>
                 ):(
                   <>
                     <strong>🔒 Bill support is not yet accessible.</strong><br/>
-                    Required credit score: <strong>1,000 pts (Excellent)</strong><br/>
-                    Your current score: <strong>{m.creditScore} pts</strong> — {scoreCategory(m.creditScore).label}<br/>
-                    You need <strong>{Math.max(0,1000-m.creditScore)} more points</strong> to qualify.
+                    Required credit score: <strong>{getTier(m.contributionTier||1).billScoreMin.toLocaleString()} pts (Excellent — {getTier(m.contributionTier||1).label})</strong><br/>
+                    Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {scoreCategory(m.creditScore, m.contributionTier||1).label}<br/>
+                    You need <strong>{Math.max(0,getTier(m.contributionTier||1).billScoreMin-m.creditScore).toLocaleString()} more points</strong> to qualify.
                     <div style={{marginTop:8,fontSize:11,color:C.muted}}>
-                      Build your score through consistent contributions, completing cycles and holding network seats (Host, Anchor, Root/Founding).
+                      Build your score through consistent contributions (+{getTier(m.contributionTier||1).pts.contribution} pts/month), completing cycles (+{getTier(m.contributionTier||1).pts.cycleContrib} pts) and holding network seats (+{getTier(m.contributionTier||1).pts.cellActive} pts/month per seat).
                     </div>
                   </>
                 )}
