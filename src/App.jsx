@@ -28,22 +28,80 @@ const sendEmail = async ({to_email, to_name, subject, message}) => {
 
 // ── Constants ─────────────────────────────────────────────────
 const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
-const MONTHLY_CONTRIB  = 10000;
-const BENEFIT_POOL_AMT = 5000;   // 50% — member benefit pool
-const BILL_SUPPORT_AMT = 2500;   // 25% — bill support fund
-const LOAN_FUND_AMT    = 1000;   // 10% — loan fund
-const ADMIN_AMT        = 1000;   // 10% — administration
-const CONTINGENCY_AMT  = 500;    // 5%  — contingency reserve
-const BILL_SCORE_MIN   = 1000;   // minimum credit score to claim
-const BILL_SCORE_COST  = 500;    // credit points deducted per claim
-const BILL_COOLDOWN    = 10;     // months (one cycle) before next claim
+// ── Contribution Tiers ───────────────────────────────────────
+const TIERS = {
+  1: {
+    id:1, label:"Tier 1", monthly:10000, benefitPool:5000, billSupport:2500,
+    loanFund:1000, admin:1000, contingency:500, cyclePayout:50000,
+    billScoreMin:1000, excellentScore:1000, strongScore:700, standardScore:500,
+    loanLimits:{excellent:600000, strong:360000, standard:180000, minimal:60000},
+    billCaps:[{min:0,max:2000000,cap:100000,tier:"Bronze"},{min:2000000,max:5000000,cap:250000,tier:"Silver"},
+              {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
+    pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:50,
+         loanRepaid:50, missed:-30, loanDefault:-100},
+    color:"#1A4F8A", name:"₦10,000 / month",
+  },
+  2: {
+    id:2, label:"Tier 2", monthly:50000, benefitPool:25000, billSupport:12500,
+    loanFund:5000, admin:5000, contingency:2500, cyclePayout:250000,
+    billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
+    loanLimits:{excellent:3000000, strong:1800000, standard:900000, minimal:300000},
+    billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
+              {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
+    pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:250,
+         loanRepaid:250, missed:-150, loanDefault:-500},
+    color:"#0B6E4F", name:"₦50,000 / month",
+  },
+  3: {
+    id:3, label:"Tier 3", monthly:100000, benefitPool:50000, billSupport:25000,
+    loanFund:10000, admin:10000, contingency:5000, cyclePayout:500000,
+    billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
+    loanLimits:{excellent:6000000, strong:3600000, standard:1800000, minimal:600000},
+    billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
+              {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
+    pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:500,
+         loanRepaid:500, missed:-300, loanDefault:-1000},
+    color:"#7C3AED", name:"₦100,000 / month",
+  },
+  4: {
+    id:4, label:"Tier 4", monthly:200000, benefitPool:100000, billSupport:50000,
+    loanFund:20000, admin:20000, contingency:10000, cyclePayout:1000000,
+    billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
+    loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
+    billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
+              {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
+    pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:1000,
+         loanRepaid:1000, missed:-600, loanDefault:-2000},
+    color:"#B45309", name:"₦200,000 / month",
+  },
+};
 
-// Tiered cap based on fund balance
-const getBillCap = (fundBalance) => {
-  if(fundBalance >= 10000000) return { cap:500000, label:"₦500,000", tier:"Platinum — Excellent Performance", color:"#0B6E4F" };
-  if(fundBalance >= 5000000)  return { cap:350000, label:"₦350,000", tier:"Gold — Strong Performance",       color:"#C9A84C" };
-  if(fundBalance >= 2000000)  return { cap:250000, label:"₦250,000", tier:"Silver — Standard Performance",   color:"#6B7280" };
-  return                             { cap:100000, label:"₦100,000", tier:"Bronze — Minimal Performance", color:"#B45309" };
+const getTier = (tierNum) => TIERS[tierNum] || TIERS[1];
+const getEffectiveTier = (memberTierNum, cellTierNum) => Math.min(memberTierNum||1, cellTierNum||1);
+
+// Legacy constants (Tier 1 defaults)
+const MONTHLY_CONTRIB  = 10000;
+const BENEFIT_POOL_AMT = 5000;
+const BILL_SUPPORT_AMT = 2500;
+const LOAN_FUND_AMT    = 1000;
+const ADMIN_AMT        = 1000;
+const CONTINGENCY_AMT  = 500;
+const BILL_SCORE_MIN   = 1000;
+const BILL_SCORE_COST  = 500;
+const BILL_COOLDOWN    = 10;
+
+// Tiered cap based on fund balance and contribution tier
+const getBillCap = (fundBalance, tierNum=1) => {
+  const t = getTier(tierNum);
+  const caps = t.billCaps;
+  for(const c of [...caps].reverse()) {
+    if(fundBalance >= c.min) {
+      return {cap:c.cap, label:fmtNGN(c.cap), tier:c.tier, color:
+        c.tier==="Platinum"?"#0B6E4F":c.tier==="Gold"?"#C9A84C":c.tier==="Silver"?"#6B7280":"#B45309"};
+    }
+  }
+  const first = caps[0];
+  return {cap:first.cap, label:fmtNGN(first.cap), tier:first.tier, color:"#B45309"};
 };
 const CYCLE_MONTHS     = 10;
 const BENEFIT_POOL_PCT = 0.60;
@@ -79,11 +137,12 @@ const fmtPts = n => Number(n||0).toLocaleString() + " pts";
 const genCode = pfx => pfx + Math.random().toString(36).substr(2,6).toUpperCase();
 const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24)) : 0;
 
-const scoreCategory = score => {
-  if(score>=1000) return {label:"Excellent Performance (Lowest Risk)", rate:1, limit:600000, color:C.green};
-  if(score>=700)  return {label:"Strong Performance (Low Risk)",      rate:2, limit:360000, color:C.blue};
-  if(score>=500)  return {label:"Standard Performance (Medium Risk)", rate:3, limit:180000, color:C.amber};
-  return                 {label:"Minimal Performance (Higher-Risk)",  rate:4, limit:60000,  color:C.error};
+const scoreCategory = (score, tierNum=1) => {
+  const t = getTier(tierNum);
+  if(score>=t.excellentScore) return {label:"Excellent Performance (Lowest Risk)", rate:1, limit:t.loanLimits.excellent, color:C.green};
+  if(score>=t.strongScore)    return {label:"Strong Performance (Low Risk)",       rate:2, limit:t.loanLimits.strong,    color:C.blue};
+  if(score>=t.standardScore)  return {label:"Standard Performance (Medium Risk)",  rate:3, limit:t.loanLimits.standard,  color:C.amber};
+  return                             {label:"Minimal Performance (Higher-Risk)",   rate:4, limit:t.loanLimits.minimal,   color:C.error};
 };
 
 const mapMember = m => ({
@@ -98,6 +157,7 @@ const mapMember = m => ({
   loanBalance:Number(m.loan_balance)||0,
   cyclesCompleted:Number(m.cycles_completed)||0,
   monthsContributed:Number(m.months_contributed)||0,
+  contributionTier:Number(m.contribution_tier)||1,
   joinedAt:m.joined_at, activatedAt:m.activated_at,
 });
 
@@ -197,7 +257,7 @@ export default function App() {
   const [chatMsgs,    setChatMsgs]    = useState([{role:"assistant",content:"👋 Hi! I am the CoFundBills Assistant. Ask me anything about contribution cells, credit scores, loans or bill support!"}]);
   const [chatInput,   setChatInput]   = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [regForm,     setRegForm]     = useState({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:""});
+  const [regForm,     setRegForm]     = useState({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1});
   const [regErrors,   setRegErrors]   = useState({});
   const [loginForm,   setLoginForm]   = useState({email:"",linkCode:""});
   const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:""});
@@ -483,20 +543,20 @@ export default function App() {
       nok_relationship:regForm.nokRelationship.trim(),
       bank_name:regForm.bankName.trim(), account_name:regForm.accountName.trim(),
       account_number:regForm.accountNumber.trim(),
-      ref_code:urlRef||null, status:"pending", member_type:"regular",
+      ref_code:urlRef||null, status:"pending", member_type:"regular", contribution_tier:Number(regForm.contributionTier)||1,
     });
     setLoading(false);
     if(error){ showToast(error.message||"Registration failed","error"); return; }
-    const saved = {linkCode, name:regForm.fullName.trim()};
+    const saved = {linkCode, name:regForm.fullName.trim(), tier:Number(regForm.contributionTier)||1};
     // Email to admin
     await sendEmail({
       to_email: ADMIN_EMAIL, to_name: ADMIN_NAME,
-      subject: `New CoFundBills Registration — ${regForm.fullName.trim()}`,
-      message: `New member registered:\n\nName: ${regForm.fullName.trim()}\nEmail: ${regForm.email.trim()}\nPhone: ${regForm.phone.trim()}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation.trim()}\nAddress: ${regForm.address.trim()}\nState: ${regForm.state.trim()}\nCountry: ${regForm.country}\nNOK: ${regForm.nokName.trim()} (${regForm.nokRelationship.trim()}) — ${regForm.nokPhone.trim()}\nBank: ${regForm.bankName.trim()} | ${regForm.accountName.trim()} | ${regForm.accountNumber.trim()}\nReferred by: ${urlRef||"Direct"}\n\nACTION REQUIRED: Verify payment of NGN10,000 then activate membership in admin dashboard.`,
+      subject: `New CoFundBills Registration — ${regForm.fullName.trim()} (${getTier(Number(regForm.contributionTier)||1).label})`,
+      message: `New member registered:\n\nName: ${regForm.fullName.trim()}\nContribution Tier: ${getTier(Number(regForm.contributionTier)||1).label} — ${getTier(Number(regForm.contributionTier)||1).name}\nEmail: ${regForm.email.trim()}\nPhone: ${regForm.phone.trim()}\nLink Code: ${linkCode}\nOccupation: ${regForm.occupation.trim()}\nAddress: ${regForm.address.trim()}\nState: ${regForm.state.trim()}\nCountry: ${regForm.country}\nNOK: ${regForm.nokName.trim()} (${regForm.nokRelationship.trim()}) — ${regForm.nokPhone.trim()}\nBank: ${regForm.bankName.trim()} | ${regForm.accountName.trim()} | ${regForm.accountNumber.trim()}\nReferred by: ${urlRef||"Direct"}\n\nACTION REQUIRED: Verify payment of NGN10,000 then activate membership in admin dashboard.`,
     });
     // Member email handled manually via cofundbills@gmail.com
     setRegForm({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",
-      nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:""});
+      nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1});
     setRegErrors({});
     await loadMembers();
     setModal({type:"regSuccess", ...saved});
@@ -612,7 +672,7 @@ export default function App() {
   const handleLoanApply = async () => {
     if(!loanForm.amount||!loanForm.billType){ showToast("Fill all required fields","error"); return; }
     const m = member;
-    const cat = scoreCategory(m.creditScore);
+    const cat = scoreCategory(m.creditScore, m.contributionTier||1);
     const maxLoan = cat.limit;
     const amt = Number(loanForm.amount);
     if(amt>maxLoan){ showToast(`Max loan for your category: ${fmtNGN(maxLoan)}`,"error"); return; }
@@ -637,8 +697,9 @@ export default function App() {
   // ── Bill support ──────────────────────────────────────────────
   const handleBillApply = async () => {
     if(!billForm.billType||!billForm.amount){ showToast("Fill all required fields","error"); return; }
-    if(member.creditScore < BILL_SCORE_MIN){ showToast(`Credit score of ${BILL_SCORE_MIN} pts required to apply`,"error"); return; }
-    const tierCap = getBillCap(funds.bill_support||0);
+    const mTierData = getTier(member.contributionTier||1);
+    if(member.creditScore < mTierData.billScoreMin){ showToast(`Credit score of ${mTierData.billScoreMin.toLocaleString()} pts required for ${mTierData.label}`,"error"); return; }
+    const tierCap = getBillCap(funds[`bill_support_t${member.contributionTier||1}`]||funds.bill_support||0, member.contributionTier||1);
     const amt = Number(billForm.amount);
     if(amt > tierCap.cap){ showToast(`Maximum claim is ${tierCap.label} at current fund level`,"error"); return; }
     await supabase.from("cfb_bill_support").insert({
@@ -670,12 +731,24 @@ CONTRIBUTION CELL STRUCTURE (dynamic, 10 to 14 members):
 - Founding Member — seats in the furthest traceable network position. Credit points only.
 Cell size depends on actual invite chain depth: 10 (admin-direct), 11, 12, 13 or 14 members.
 
-CONTRIBUTION SPLIT per NGN10,000:
-- Member Benefit Pool: NGN5,000 (50%) — paid equally to contributing members at cycle end
-- Bill Support Fund: NGN2,500 (25%)
-- Loan Fund: NGN1,000 (10%)
-- Administration: NGN1,000 (10%)
-- Contingency Reserve: NGN500 (5%)
+CONTRIBUTION TIERS (4 tiers available):
+- Tier 1: NGN10,000/month → NGN50,000 cycle payout, bill support up to NGN500,000
+- Tier 2: NGN50,000/month → NGN250,000 cycle payout, bill support up to NGN2,500,000
+- Tier 3: NGN100,000/month → NGN500,000 cycle payout, bill support up to NGN5,000,000
+- Tier 4: NGN200,000/month → NGN1,000,000 cycle payout, bill support up to NGN10,000,000
+
+CONTRIBUTION SPLIT (same % across all tiers):
+- Member Benefit Pool: 50% — paid equally to contributing members at cycle end
+- Bill Support Fund: 25%
+- Loan Fund: 10%
+- Administration: 10%
+- Contingency Reserve: 5% — covers any member defaults so your payout is always guaranteed
+
+PAYOUT PROTECTION: If any cell member defaults, the Contingency Reserve covers the shortfall. Your cycle payout is guaranteed regardless of fellow members' behaviour.
+
+TIER FLEXIBILITY: Members can change their contribution tier any time before their cell activates with 10 members. After activation, tier is locked for that cycle.
+
+CROSS-TIER NETWORK SEATS: Network position holders earn points at the LOWER of their own tier or the cell's tier. You cannot earn above your contribution station.
 
 CYCLE PAYOUT: NGN50,000 cash + 250 credit points per contributing member after 10 months. They contributed NGN100,000.
 
@@ -798,6 +871,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
+    ["What contribution tiers are available?","CoFundBills offers four contribution tiers. Tier 1 (₦10,000/month) — cycle payout ₦50,000, bill support up to ₦500,000. Tier 2 (₦50,000/month) — cycle payout ₦250,000, bill support up to ₦2,500,000. Tier 3 (₦100,000/month) — cycle payout ₦500,000, bill support up to ₦5,000,000. Tier 4 (₦200,000/month) — cycle payout ₦1,000,000, bill support up to ₦10,000,000. You choose your tier at registration and can change it any time before your cell activates."],
+    ["What if a member in my cell defaults on their contribution?","Your payout is fully protected. The cooperative's dedicated Contingency Reserve covers any member's missed contribution immediately — you will never be shortchanged because of someone else's default. Defaulting members face a credit score deduction of 30 points per missed month and are subject to cooperative disciplinary action. Their failure never reaches you. This is why the Contingency Reserve exists — to absorb shocks so the cooperative's promises to you are always kept."],
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
   ];
 
@@ -835,11 +910,22 @@ Answer warmly, concisely and accurately. Never invent information.`;
       </div>
 
       {/* Stats belt */}
-      <div style={{background:C.navy,padding:"18px 24px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap"}}>
+      <div style={{background:C.navy,padding:"14px 24px 10px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",marginBottom:0}}>
         {[["₦10,000","Monthly Contribution"],["₦50,000 + 250 pts","Cycle Payout / Credit Bonus"],["10 Months","Contribution Cycle"],["10–14","Members Per Cell"],["1%–4%","Loan Rate/Month"],["50%","Benefit Pool Split"]].map(([v,l])=>(
           <div key={l} style={{background:C.gold,borderRadius:28,padding:"9px 18px",textAlign:"center",minWidth:120}}>
             <div style={{fontSize:13,fontWeight:900,color:C.navy}}>{v}</div>
             <div style={{fontSize:10,fontWeight:700,color:C.navy,opacity:.75,textTransform:"uppercase",letterSpacing:.4}}>{l}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tier overview belt */}
+      <div style={{background:"#0A1929",padding:"12px 24px 16px",display:"flex",justifyContent:"center",gap:12,flexWrap:"wrap"}}>
+        <div style={{color:"rgba(255,255,255,.5)",fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:1,display:"flex",alignItems:"center",marginRight:4}}>Contribution Tiers:</div>
+        {Object.values(TIERS).map(t=>(
+          <div key={t.id} style={{background:t.color+"22",border:`1px solid ${t.color}55`,borderRadius:20,padding:"6px 14px",textAlign:"center"}}>
+            <div style={{fontSize:12,fontWeight:800,color:t.color}}>{t.label} — {t.name}</div>
+            <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:1}}>Cycle payout: {fmtNGN(t.cyclePayout)}</div>
           </div>
         ))}
       </div>
@@ -880,6 +966,17 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div style={{fontSize:11,fontWeight:700,color:C.navy,marginTop:3}}>{s.l}</div>
                 </div>
               ))}
+            </div>
+          </div>
+
+          {/* Contingency protection */}
+          <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:12,padding:18,marginBottom:16,display:"flex",gap:14,alignItems:"flex-start"}}>
+            <div style={{fontSize:28,flexShrink:0}}>🛡️</div>
+            <div>
+              <div style={{fontWeight:800,color:"#166534",fontSize:14,marginBottom:6}}>Your Payout is Protected — Always</div>
+              <div style={{fontSize:13,color:"#166534",lineHeight:1.8}}>
+                You may end up in a contribution cell with absolute strangers. That is by design — and it is safe. If any member in your cell defaults on a monthly payment, the cooperative's dedicated <strong>Contingency Reserve</strong> covers the shortfall immediately. Your cycle payout is guaranteed in full regardless of what fellow cell members do. Defaulters face credit score deductions and cooperative disciplinary action. You are never affected.
+              </div>
             </div>
           </div>
 
@@ -1113,7 +1210,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
   const Portal = () => {
     if(!member) return null;
     const m = member;
-    const cat = scoreCategory(m.creditScore);
+    const cat = scoreCategory(m.creditScore, m.contributionTier||1);
     const myCells = cells.filter(c=>(c.seats||[]).some(s=>s.link_code===m.linkCode));
     const myLoans = loans.filter(l=>l.link_code===m.linkCode);
 
@@ -1165,10 +1262,49 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   </div>
                 ))}
               </div>
+              {/* Merger opportunity notification */}
+              {(()=>{
+                const myFormingCell = cells.find(c=>c.status==="forming"&&(c.seats||[]).some(s=>s.link_code===m.linkCode&&s.seat_type==="contributing"));
+                const isOverdue = myFormingCell && daysSince(myFormingCell.first_member_at)>=30;
+                const otherFormingCells = cells.filter(c=>c.status==="forming"&&c.cell_code!==myFormingCell?.cell_code);
+                return isOverdue&&otherFormingCells.length>0&&(
+                  <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:10,padding:14,marginBottom:14}}>
+                    <div style={{fontWeight:800,color:"#92400E",fontSize:13,marginBottom:8}}>🔀 Merger Opportunity Available</div>
+                    <div style={{fontSize:12,color:"#92400E",lineHeight:1.7,marginBottom:10}}>
+                      Your forming cell has been waiting over 30 days. There are {otherFormingCells.length} other forming cell(s) on the platform. You can switch to a different contribution tier to join a faster-filling cell — or stay and wait for your tier's next merger pass.
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
+                      {otherFormingCells.slice(0,4).map(c=>{
+                        const contribs = (c.seats||[]).filter(s=>s.seat_type==="contributing").length;
+                        const tierNum = c.contribution_tier||1;
+                        const t = getTier(tierNum);
+                        return(
+                          <div key={c.cell_code} style={{background:C.white,borderRadius:8,padding:10,border:`1px solid ${C.border}`}}>
+                            <div style={{fontWeight:700,color:t.color,fontSize:11}}>{t.label}</div>
+                            <div style={{fontSize:10,color:C.muted}}>{c.cell_code}</div>
+                            <div style={{fontSize:12,fontWeight:700,color:C.navy,marginTop:4}}>{contribs}/10 members</div>
+                            <div style={{fontSize:10,color:C.muted}}>{10-contribs} seats available</div>
+                            {tierNum!==(m.contributionTier||1)&&(
+                              <button style={{marginTop:6,width:"100%",background:t.color,color:C.white,
+                                border:"none",borderRadius:6,padding:"4px 0",fontSize:10,fontWeight:700,cursor:"pointer"}}
+                                onClick={async()=>{
+                                  await supabase.from("cfb_members").update({contribution_tier:tierNum}).eq("link_code",m.linkCode);
+                                  setMember({...m,contributionTier:tierNum});
+                                  showToast(`Switched to ${t.label} — ${t.name}`);
+                                }}>Switch to {t.label}</button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })()}
+
               {m.status==="pending"&&(
                 <div className="info-box">
                   <strong>🔔 Activate Your Membership</strong><br/>
-                  Pay your first monthly contribution of ₦10,000 to activate your membership and enter a contribution cell.
+                  Pay your first monthly contribution of {fmtNGN(getTier(m.contributionTier||1).monthly)} to activate your membership and enter a contribution cell.
                   <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,marginTop:10,lineHeight:1.9,fontSize:13}}>
                     <strong>Royal Tech Partnership & Investment Limited</strong><br/>
                     Zenith Bank — 1016621205<br/>
@@ -1177,6 +1313,42 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   </div>
                 </div>
               )}
+              {/* Tier change — only if not yet in active cell */}
+              {(()=>{
+                const myCell = cells.find(c=>(c.seats||[]).some(s=>s.link_code===m.linkCode && s.seat_type==="contributing"));
+                const isLocked = myCell?.status==="active" || myCell?.status==="completed";
+                const mTier = getTier(m.contributionTier||1);
+                return !isLocked&&(
+                  <div className="card" style={{marginBottom:14,border:`2px solid ${mTier.color}33`}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+                      <div>
+                        <div style={{fontWeight:800,color:C.navy,fontSize:13}}>Your Contribution Tier</div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>You can change this until your cell activates</div>
+                      </div>
+                      <span style={{background:mTier.color,color:C.white,borderRadius:20,padding:"4px 12px",fontSize:12,fontWeight:700}}>{mTier.label} — {mTier.name}</span>
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
+                      {Object.values(TIERS).map(t=>(
+                        <div key={t.id}
+                          style={{borderRadius:10,padding:10,cursor:"pointer",transition:"all .2s",
+                            border:`2px solid ${(m.contributionTier||1)===t.id?t.color:C.border}`,
+                            background:(m.contributionTier||1)===t.id?t.color+"11":C.bg,
+                            opacity:(m.contributionTier||1)===t.id?1:.8}}
+                          onClick={async()=>{
+                            await supabase.from("cfb_members").update({contribution_tier:t.id}).eq("link_code",m.linkCode);
+                            setMember({...m, contributionTier:t.id});
+                            showToast(`Tier updated to ${t.label} — ${t.name}`);
+                          }}>
+                          <div style={{fontWeight:800,color:t.color,fontSize:12}}>{t.label} {(m.contributionTier||1)===t.id?"✓":""}</div>
+                          <div style={{fontSize:11,color:C.navy,fontWeight:600,marginTop:2}}>{t.name}</div>
+                          <div style={{fontSize:10,color:C.muted,marginTop:2}}>Payout: {fmtNGN(t.cyclePayout)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
                 <div style={{background:C.bg,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,fontFamily:"monospace",fontSize:12,wordBreak:"break-all",marginBottom:8}}>
@@ -1193,7 +1365,12 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {/* My Cells */}
           {portalTab==="cells"&&(
             <div>
-              {myCells.length===0?(
+              {/* Contingency protection notice */}
+            <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14,fontSize:13,color:"#166534",lineHeight:1.8}}>
+              <strong>🛡️ Your Payout is Protected</strong><br/>
+              If any contributing member in your cell misses a monthly payment, the cooperative's dedicated Contingency Reserve covers the shortfall immediately. Your cycle payout of <strong>{fmtNGN(getTier(m.contributionTier||1).cyclePayout)}</strong> at the end of 10 months is guaranteed regardless of fellow cell members' defaults. Defaulting members face credit score deductions and cooperative disciplinary action — but their shortfall never reaches you.
+            </div>
+            {myCells.length===0?(
                 <div className="card" style={{textAlign:"center",padding:36,color:C.muted}}>
                   You are not yet placed in a contribution cell. Your cell will form automatically once 10 active members are available, or after a merger.
                 </div>
@@ -1218,10 +1395,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {portalTab==="credit"&&(
             <div>
               <div className="card" style={{textAlign:"center",padding:"24px",marginBottom:14}}>
-                <div style={{fontSize:52,fontWeight:900,color:cat.color}}>{m.creditScore}</div>
+                <div style={{fontSize:11,color:C.muted,marginBottom:4,textTransform:"uppercase",letterSpacing:.5}}>{getTier(m.contributionTier||1).label} · Score threshold: {(getTier(m.contributionTier||1).excellentScore).toLocaleString()} pts for Excellent</div>
+                <div style={{fontSize:52,fontWeight:900,color:cat.color}}>{m.creditScore.toLocaleString()}</div>
                 <div style={{fontSize:15,fontWeight:700,color:cat.color,marginTop:3}}>{cat.label}</div>
                 <div className="score-bar" style={{maxWidth:280,margin:"10px auto 0"}}>
-                  <div className="score-fill" style={{width:Math.min(m.creditScore/10,100)+"%",background:cat.color}}/>
+                  <div className="score-fill" style={{width:Math.min(m.creditScore/getTier(m.contributionTier||1).excellentScore*100,100)+"%",background:cat.color}}/>
                 </div>
                 <div style={{fontSize:12,color:C.muted,marginTop:8}}>Loan rate: <strong>{cat.rate}%/month</strong> · Max loan: <strong>{fmtNGN(cat.limit)}</strong></div>
               </div>
@@ -1248,7 +1426,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div>
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>Your Loan Eligibility</div>
-                <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore} pts ({cat.label})</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {getTier(m.contributionTier||1).label}</div>
                 <div className="grid-3" style={{marginBottom:12}}>
                   {[{l:"Category",v:cat.label,c:cat.color},{l:"Interest Rate",v:`${cat.rate}%/month`,c:C.navy},{l:"Maximum Loan",v:fmtNGN(cat.limit),c:C.green}].map(s=>(
                     <div key={s.l} className="stat-card"><div style={{fontSize:15,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>{s.l}</div></div>
@@ -1296,9 +1474,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {/* Bill Support */}
           {portalTab==="bills"&&(()=>{
-            const billFund = funds.bill_support||0;
-            const tierCap = getBillCap(billFund);
-            const isEligible = m.creditScore >= BILL_SCORE_MIN;
+            const billFund = funds[`bill_support_t${m.contributionTier||1}`]||funds.bill_support||0;
+            const tierCap = getBillCap(billFund, m.contributionTier||1);
+            const isEligible = m.creditScore >= getTier(m.contributionTier||1).billScoreMin;
             const fundPct = Math.min(Math.round(billFund/10000000*100),100);
 
             return(
@@ -1608,7 +1786,10 @@ ${inviteLink}`;
               {allArr.map(m=>(
                 <div key={m.linkCode} className="table-row" style={{display:"grid",gridTemplateColumns:"2fr 1fr 1fr 1fr 1fr 60px",gap:10,alignItems:"center"}}>
                   <div><div style={{fontWeight:700,fontSize:13}}>{m.fullName}</div><div style={{fontSize:11,color:C.muted}}>{m.email}</div><div style={{fontSize:10,color:C.blue,fontFamily:"monospace"}}>{m.linkCode}</div></div>
-                  <span className="pill" style={{background:m.memberType==="admin"?C.green:m.memberType==="founding"?C.burg:C.blue,color:C.white,fontSize:10}}>{m.memberType==="admin"?"Admin":m.memberType==="founding"?"Founding":"Regular"}</span>
+                  <div>
+                    <span className="pill" style={{background:m.memberType==="admin"?C.green:m.memberType==="founding"?C.burg:C.blue,color:C.white,fontSize:10}}>{m.memberType==="admin"?"Admin":m.memberType==="founding"?"Founding":"Regular"}</span>
+                    <span className="pill" style={{background:getTier(m.contributionTier||1).color+"22",color:getTier(m.contributionTier||1).color,border:`1px solid ${getTier(m.contributionTier||1).color}44`,fontSize:10,marginLeft:4}}>{getTier(m.contributionTier||1).label}</span>
+                  </div>
                   <span style={{fontWeight:700,color:scoreCategory(m.creditScore).color,fontSize:12}}>{m.creditScore} pts</span>
                   <span style={{fontSize:12}}>{m.cyclesCompleted}</span>
                   <span className="pill" style={{background:m.status==="active"?"#BBF7D0":m.status==="pending"?"#FEF3C7":"#FEE2E2",color:m.status==="active"?"#166534":m.status==="pending"?"#92400E":C.error,fontSize:10}}>{m.status}</span>
@@ -1784,6 +1965,28 @@ ${inviteLink}`;
                 {["Nigeria","Ghana","Kenya","United Kingdom","United States","Canada","Other"].map(c=><option key={c}>{c}</option>)}
               </select>
             </div>
+            <div className="sec-div">Contribution Group Tier</div>
+            <div className="info-box" style={{marginBottom:12}}>
+              Select your preferred monthly contribution tier. You can change this anytime before your cell is activated with 10 contributing members.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:10,marginBottom:16}}>
+              {Object.values(TIERS).map(t=>(
+                <div key={t.id} onClick={()=>setRegForm({...regForm,contributionTier:t.id})}
+                  style={{borderRadius:12,padding:14,cursor:"pointer",transition:"all .2s",
+                    border:`2px solid ${regForm.contributionTier===t.id?t.color:C.border}`,
+                    background:regForm.contributionTier===t.id?t.color+"11":C.white}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+                    <span style={{fontWeight:800,color:t.color,fontSize:13}}>{t.label}</span>
+                    {regForm.contributionTier===t.id&&<span style={{color:t.color,fontSize:16}}>✓</span>}
+                  </div>
+                  <div style={{fontWeight:700,color:C.navy,fontSize:14}}>{t.name}</div>
+                  <div style={{fontSize:11,color:C.muted,marginTop:4,lineHeight:1.6}}>
+                    Cycle payout: <strong>{fmtNGN(t.cyclePayout)}</strong><br/>
+                    Bill support: up to <strong>{fmtNGN(t.billCaps[t.billCaps.length-1].cap)}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
             <div className="sec-div">Next of Kin</div>
             {[["nokName","Full Name","text",""],["nokPhone","Phone","tel",""],["nokRelationship","Relationship","text","e.g. Spouse, Parent"]].map(([k,l,t,p])=>(
               <div className="field" key={k}>
@@ -1823,6 +2026,7 @@ ${inviteLink}`;
             <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:12,fontSize:13,lineHeight:1.9}}>
               <strong>Royal Tech Partnership & Investment Limited</strong><br/>
               Zenith Bank — 1016621205<br/>
+              Amount: <strong>{fmtNGN(getTier(modal.tier||1).monthly)}</strong> ({getTier(modal.tier||1).label})<br/>
               Reference: <strong>{modal.linkCode}</strong><br/>
               WhatsApp: <strong>+234 909 999 4816</strong>
             </div>
