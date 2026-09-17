@@ -849,7 +849,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>The Contribution Cell</span>
           <h2 className="section-title">How CoFundBills Works</h2>
-          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of 10 to 14 members. Ten contributing members pay monthly and share a payout at cycle end. Network position holders earn credit points that unlock better loan access.</p>
+          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of 10 to 14 members — 10 contributing members plus 1 to 4 non-contributing network position holders (Host, Anchor, Root/Founding Member and Admin). The ten contributing members pay monthly contributions and share a payout at cycle end. Network position holders earn credit points that unlock better loan access.</p>
           <div className="grid-3" style={{marginBottom:24}}>
             {[
               {icon:"💳",title:"Contributing Members (10)",desc:`Each pays ₦10,000/month for 10 months. Receives ₦50,000 cash at cycle end plus credit points. Total contributed: ₦100,000.`,color:C.blue},
@@ -1015,7 +1015,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 The Second Half — Amounting to Something Bigger
               </div>
               <div style={{color:"rgba(255,255,255,.85)",fontSize:13,lineHeight:1.85}}>
-                The other 50% — merges with the 50% from all other cells, across the entire cooperative — into a massive cooperative pool of funds. Half of that pool funds <strong style={{color:C.gold}}>Approved Bill Support Requests</strong>, and the other half caters for <strong style={{color:C.gold}}>Loan Requests, Operations and Reserve.</strong>
+                The other 50% — merges with the 50% from all other cells across the entire cooperative — into a massive cooperative pool of funds. Half of that pool is used to fund <strong style={{color:C.gold}}>Approved Bill Support Requests</strong>, and the other half caters for <strong style={{color:C.gold}}>Loan Requests, Operations and Reserve.</strong>
               </div>
             </div>
           </div>
