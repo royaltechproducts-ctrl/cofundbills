@@ -52,7 +52,7 @@ const CELL_TIMEOUT_DAYS= 30;
 const CREDIT_PTS = {
   contribution:   { contributing:20 },
   cell_active:    { contributing:5, host:5, anchor:5, founding:5, admin:5 },
-  cycle_complete: { contributing:100, host:50, anchor:30, founding:20, admin:10 },
+  cycle_complete: { contributing:100, host:50, anchor:50, founding:50, admin:50 },
   missed:         { contributing:-30 },
   loan_repaid:    { all:50 },
   loan_default:   { all:-100 },
@@ -685,7 +685,7 @@ MERGER RULE: Forming cells over 30 days old without 10 contributors merge — mo
 CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Monthly contribution on time: +20 pts (contributing members)
 - Each month cell is active: +5/5/3/2/1 pts (contributing/host/anchor/root/founding)
-- Cycle completed: +100/50/30/20/10 pts
+- Cycle completed: +100 pts (contributing members) / +50 pts flat (all network seats)
 - Missed contribution: -30 pts
 - Loan repaid: +50 pts all
 - Loan default: -100 pts all
@@ -793,7 +793,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, plus up to 4 network position holders (Host, Anchor, Root/Founding Member, and Admin) whose invite chains led to the cell's formation. Root and Founding Member occupy the same seat — all Founding Members sit in the Root/Founding position. Admin always closes the chain as the last leg. Cell size ranges from 10 to 13 members depending on the depth of the invite chain above the contributing members."],
     ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
-    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) with lower bonuses for network seat holders. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
+    ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) and +50 flat for all network seat holders at cycle end. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Excellent Performance — Lowest Risk (1,000+): 1%/month, max ₦600,000. Strong Performance — Low Risk (700–999): 2%/month, max ₦360,000. Standard Performance — Medium Risk (500–699): 3%/month, max ₦180,000. Minimal Performance — Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
@@ -932,7 +932,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {[
                 ["Monthly contribution on time","+20 pts","Contributing Members only"],
                 ["Each month your cell is active","+5 pts","All seat types equally"],
-                ["Cycle completed","+100/50/30/20/10 pts","Contributing/Host/Anchor/Root-Founding/Admin (see portal for full breakdown)"],
+                ["Cycle completed","+100 / +50 pts flat","Contributing Members (+100) · All network seats (+50 each)"],
                 ["Loan repaid on time","+50 pts","All members"],
                 ["Missed contribution","−30 pts","Contributing Members"],
                 ["Loan default","−100 pts","All members"],
@@ -1500,9 +1500,9 @@ ${inviteLink}`;
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginTop:12}}>
                   {[
                     {seat:"Host",pts:"+5 pts/month + 50 pts cycle",c:C.green},
-                    {seat:"Anchor",pts:"+5 pts/month + 30 pts cycle",c:C.purple},
-                    {seat:"Root/Founding",pts:"+5 pts/month + 20 pts cycle",c:C.burg},
-                    {seat:"Admin",pts:"+5 pts/month + 10 pts cycle",c:C.gold},
+                    {seat:"Anchor",pts:"+5 pts/month + 50 pts cycle",c:C.purple},
+                    {seat:"Root/Founding",pts:"+5 pts/month + 50 pts cycle",c:C.burg},
+                    {seat:"Admin",pts:"+5 pts/month + 50 pts cycle",c:C.gold},
                   ].map(s=>(
                     <div key={s.seat} style={{background:"rgba(255,255,255,.08)",borderRadius:8,padding:10,textAlign:"center"}}>
                       <div style={{color:s.c,fontWeight:800,fontSize:12}}>{s.seat}</div>
