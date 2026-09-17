@@ -1140,7 +1140,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
         <div style={{maxWidth:900,margin:"0 auto",padding:"20px 16px"}}>
           <div className="portal-tabs">
-            {[["dashboard","🏠 Dashboard"],["cells","My Cell"],["credit","Credit Score"],["loan","Co-Fund Loan"],["bills","Bill Support"],["statement","Statement"]].map(([id,lbl])=>(
+            {[["dashboard","🏠 Dashboard"],["cells","My Cell"],["credit","Credit Score"],["loan","Co-Fund Loan"],["bills","Bill Support"],["invite","📨 Invite"],["statement","Statement"]].map(([id,lbl])=>(
               <button key={id} className={`portal-tab${portalTab===id?" active":""}`}
                 style={portalTab===id?{background:C.blue,borderColor:C.blue,color:C.white}:{}}
                 onClick={()=>setPortalTab(id)}>{lbl}</button>
@@ -1399,6 +1399,121 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <button className="btn btn-green" onClick={handleBillApply}>Submit Application</button>
                 </div>
               )}
+            </div>
+            );
+          })()}
+
+          {/* Invite */}
+          {portalTab==="invite"&&(()=>{
+            const inviteLink = `https://cofundbills.vercel.app?ref=${m.linkCode}`;
+            const inviteText = `You are personally invited to join the CoFundBills Cooperative Membership and Monthly Contribution Scheme.
+
+Unlike the traditional thrift contribution and savings scheme where a few friends come together to form a single circle of contributors and one friend at a time gets to receive all the contributions — till everyone gets a turn to complete a cycle — CoFundBills Multipurpose Cooperative Society Limited is a digital version that offers a far more sophisticated and advanced thrift contribution and credit system with several groups of concurrently running contribution cells — where each participant actively participates in one for cycle cash-out and credit scores, and features in several other cells for more credit scores to access cooperative loans and essential bill support funds.
+
+Every contributing member of a cell contributes ₦10,000 monthly for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions merges with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
+
+Summarily — while the individual members in a cell are running joint savings for half cash-out by end of cycle, the cells themselves are merging funds in their numbers to jointly finance co-fund bill requests and loan requests across contribution cells from all active members of the cooperative.
+
+Membership is strictly by existing member's invitation, and new contribution group creation and the resulting cooperative expansion is by organically propagated invite links.
+
+Join to create a new monthly contribution group today — just for you and 9 others. Gain access now with my personal invite link:
+${inviteLink}`;
+
+            const whatsappText = encodeURIComponent(inviteText);
+            const whatsappURL = `https://wa.me/?text=${whatsappText}`;
+            const emailSubject = encodeURIComponent("Personal Invitation — CoFundBills Cooperative Membership");
+            const emailBody = encodeURIComponent(inviteText);
+            const emailURL = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+
+            return(
+            <div>
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>Your Personal Invite Link</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.7}}>
+                  Share your personal invite link to grow the cooperative. Members who join through your link may seat you as Host, Anchor or Root/Founding Member in their contribution cell — earning you CoFund Credit Score points that improve your loan access.
+                </div>
+                <div style={{background:C.bg,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:12,
+                  fontFamily:"monospace",fontSize:12,wordBreak:"break-all",marginBottom:10}}>
+                  {inviteLink}
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={()=>{
+                  navigator.clipboard.writeText(inviteLink);
+                  showToast("Invite link copied!");
+                }}>📋 Copy Link</button>
+              </div>
+
+              {/* Invite message preview */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>Your Personalised Invite Message</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Ready to send — your personal invite link is already embedded.</div>
+                <div style={{background:C.bg,border:`1px solid ${C.border}`,borderRadius:10,padding:14,
+                  fontSize:12,color:C.dark,lineHeight:1.85,whiteSpace:"pre-wrap",marginBottom:14,
+                  maxHeight:280,overflowY:"auto"}}>
+                  {inviteText}
+                </div>
+                <button className="btn btn-ghost btn-sm" onClick={()=>{
+                  navigator.clipboard.writeText(inviteText);
+                  showToast("Invite message copied!");
+                }}>📋 Copy Full Message</button>
+              </div>
+
+              {/* Send buttons */}
+              <div className="card">
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:14}}>Send Your Invitation</div>
+                <div className="grid-2" style={{gap:12}}>
+                  {/* WhatsApp */}
+                  <a href={whatsappURL} target="_blank" rel="noopener noreferrer"
+                    style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                      background:"#25D366",color:C.white,borderRadius:12,padding:"16px 20px",
+                      fontWeight:800,fontSize:14,textDecoration:"none",
+                      boxShadow:"0 4px 14px rgba(37,211,102,.35)"}}>
+                    <span style={{fontSize:22}}>💬</span>
+                    <div>
+                      <div>Send via WhatsApp</div>
+                      <div style={{fontSize:11,fontWeight:400,opacity:.85}}>Opens WhatsApp with message ready</div>
+                    </div>
+                  </a>
+                  {/* Email */}
+                  <a href={emailURL}
+                    style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,
+                      background:C.blue,color:C.white,borderRadius:12,padding:"16px 20px",
+                      fontWeight:800,fontSize:14,textDecoration:"none",
+                      boxShadow:"0 4px 14px rgba(26,79,138,.35)"}}>
+                    <span style={{fontSize:22}}>✉️</span>
+                    <div>
+                      <div>Send via Email</div>
+                      <div style={{fontSize:11,fontWeight:400,opacity:.85}}>Opens your email app with message ready</div>
+                    </div>
+                  </a>
+                </div>
+                <div style={{marginTop:14,background:C.bg,borderRadius:8,padding:10,fontSize:11,color:C.muted,lineHeight:1.7}}>
+                  💡 <strong>Tip:</strong> For WhatsApp, you can select specific contacts or groups after the app opens. For email, add your recipient's address in the To field. Your personal invite link is already embedded in both messages.
+                </div>
+              </div>
+
+              {/* Credit score connection */}
+              <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:18,marginTop:14}}>
+                <div style={{fontWeight:800,color:C.gold,fontSize:13,marginBottom:8}}>Why Inviting Members Benefits You</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,.85)",lineHeight:1.85}}>
+                  Every member who joins through your invite link and activates their membership strengthens your network position. When their contribution cell forms, you may be seated as:
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginTop:12}}>
+                  {[
+                    {seat:"Host",pts:"+5 pts/month + 50 pts cycle",c:C.green},
+                    {seat:"Anchor",pts:"+5 pts/month + 30 pts cycle",c:C.purple},
+                    {seat:"Root/Founding",pts:"+5 pts/month + 20 pts cycle",c:C.burg},
+                    {seat:"Admin",pts:"+5 pts/month + 10 pts cycle",c:C.gold},
+                  ].map(s=>(
+                    <div key={s.seat} style={{background:"rgba(255,255,255,.08)",borderRadius:8,padding:10,textAlign:"center"}}>
+                      <div style={{color:s.c,fontWeight:800,fontSize:12}}>{s.seat}</div>
+                      <div style={{color:"rgba(255,255,255,.7)",fontSize:10,marginTop:3,lineHeight:1.5}}>{s.pts}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:10,lineHeight:1.7}}>
+                  More credit points = better loan access = lower interest rates. Your network grows your credit score.
+                </div>
+              </div>
             </div>
             );
           })()}
