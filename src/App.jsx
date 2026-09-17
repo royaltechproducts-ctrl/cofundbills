@@ -1092,15 +1092,13 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   {t.billCaps.map((cap,i)=>{
                     const capColor = cap.tier==="Platinum"?"#0B6E4F":cap.tier==="Gold"?"#C9A84C":cap.tier==="Silver"?"#6B7280":"#B45309";
                     return(
-                    <div key={i} style={{borderRadius:8,border:`1.5px solid ${capColor}33`,padding:9,marginBottom:7,background:capColor+"0D"}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                        <div>
-                          <div style={{fontWeight:800,fontSize:11,color:capColor}}>{cap.tier} Tier</div>
-                          <div style={{fontSize:10,color:C.muted,marginTop:1}}>
-                            Fund: {cap.min===0?`Up to ${fmtNGN(cap.max)}`:`${fmtNGN(cap.min)}${cap.max<Infinity?` – ${fmtNGN(cap.max)}`:"+"}` }
-                          </div>
+                    <div key={i} style={{borderRadius:8,border:`1.5px solid ${capColor}33`,padding:10,marginBottom:7,background:capColor+"0D"}}>
+                      <div style={{fontWeight:800,fontSize:11,color:capColor,marginBottom:4}}>Cooperative Funding Capacity at {cap.tier} Tier</div>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",fontSize:11}}>
+                        <div style={{color:C.muted}}>
+                          Available Fund: {cap.min===0?`Up to ${fmtNGN(cap.max)}`:`${fmtNGN(cap.min)}${cap.max<Infinity?` – ${fmtNGN(cap.max)}`:"+"}` }
                         </div>
-                        <div style={{fontWeight:900,color:C.navy,fontSize:13}}>Max {fmtNGN(cap.cap)}</div>
+                        <div style={{fontWeight:900,color:C.navy,flexShrink:0,marginLeft:8}}>Support: {fmtNGN(cap.cap)} Max</div>
                       </div>
                     </div>
                     );
