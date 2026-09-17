@@ -672,6 +672,10 @@ export default function App() {
   const handleLoanApply = async () => {
     if(!loanForm.amount||!loanForm.billType){ showToast("Fill all required fields","error"); return; }
     const m = member;
+    const mTierData = getTier(m.contributionTier||1);
+    if(m.creditScore < mTierData.excellentScore){
+      showToast(`Credit score of ${mTierData.excellentScore.toLocaleString()} pts required for ${mTierData.label} loan access`,"error"); return;
+    }
     const cat = scoreCategory(m.creditScore, m.contributionTier||1);
     const maxLoan = cat.limit;
     const amt = Number(loanForm.amount);
@@ -1447,11 +1451,26 @@ Answer warmly, concisely and accurately. Never invent information.`;
           )}
 
           {/* Loan */}
-          {portalTab==="loan"&&(
+          {portalTab==="loan"&&(()=>{
+            const mTier = getTier(m.contributionTier||1);
+            const loanEligible = m.creditScore >= mTier.excellentScore;
+            return(
             <div>
+              {!loanEligible&&(
+                <div className="warn-box">
+                  <strong>🔒 Co-Fund Loan is not yet accessible.</strong><br/>
+                  Required credit score: <strong>{mTier.excellentScore.toLocaleString()} pts (Excellent — {mTier.label})</strong><br/>
+                  Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {cat.label}<br/>
+                  You need <strong>{Math.max(0,mTier.excellentScore-m.creditScore).toLocaleString()} more points</strong> to unlock loan access.<br/>
+                  <div style={{marginTop:8,fontSize:11,lineHeight:1.7}}>
+                    Build your score through consistent contributions (+{mTier.pts.contribution} pts/month), completing cycles (+{mTier.pts.cycleContrib.toLocaleString()} pts) and holding network seats (+{mTier.pts.cellActive} pts/month per seat).
+                  </div>
+                </div>
+              )}
+              {loanEligible&&<div>
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>Your Loan Eligibility</div>
-                <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {getTier(m.contributionTier||1).label}</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {mTier.label}</div>
                 <div className="grid-3" style={{marginBottom:12}}>
                   {[{l:"Category",v:cat.label,c:cat.color},{l:"Interest Rate",v:`${cat.rate}%/month`,c:C.navy},{l:"Maximum Loan",v:fmtNGN(cat.limit),c:C.green}].map(s=>(
                     <div key={s.l} className="stat-card"><div style={{fontSize:15,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>{s.l}</div></div>
@@ -1494,8 +1513,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   ))}
                 </div>
               )}
+              </div>}
             </div>
-          )}
+            );
+          })()}
 
           {/* Bill Support */}
           {portalTab==="bills"&&(()=>{
