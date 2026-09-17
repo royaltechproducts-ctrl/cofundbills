@@ -782,6 +782,21 @@ Once unlocked, interest rate and loan limit by credit category (Tier 1 example):
 All limits scale proportionally with contribution tier.
 Loans subject to fund liquidity and admin approval. Credits improve eligibility — do not guarantee approval.
 
+BILL SUPPORT — COOPERATIVE FUNDING CAPACITY TIER (CRITICAL):
+The funding capacity tier (Bronze/Silver/Gold/Platinum) is NOT determined by the member's own contribution tier. It is determined entirely by the COOPERATIVE'S ACTUAL BILL SUPPORT FUND BALANCE at the time the member submits their request. The fund is shared across all tiers and built from 25% of every monthly contribution platform-wide.
+
+The member portal Bill Support tab shows the live fund balance and current funding capacity tier at any time. Members cannot know their exact claim limit in advance — it depends on what the fund holds at the moment of their request.
+
+How to tell the cooperative funding capacity tier at time of request: Open the Bill Support tab in your member portal. You will see the current fund balance and which tier is active — Bronze, Silver, Gold or Platinum — along with the maximum claim available to you right now.
+
+Funding capacity tiers per member contribution tier:
+Tier 1: Bronze (fund <NGN2M) NGN100k max | Silver (NGN2M-5M) NGN250k max | Gold (NGN5M-10M) NGN350k max | Platinum (NGN10M+) NGN500k max
+Tier 2: Bronze (fund <NGN10M) NGN500k max | Silver (NGN10M-25M) NGN1.25M max | Gold (NGN25M-50M) NGN1.75M max | Platinum (NGN50M+) NGN2.5M max
+Tier 3: Bronze (fund <NGN20M) NGN1M max | Silver (NGN20M-50M) NGN2.5M max | Gold (NGN50M-100M) NGN3.5M max | Platinum (NGN100M+) NGN5M max
+Tier 4: Bronze (fund <NGN40M) NGN2M max | Silver (NGN40M-100M) NGN5M max | Gold (NGN100M-200M) NGN7M max | Platinum (NGN200M+) NGN10M max
+
+Always direct members to check their portal Bill Support tab for their live claim limit. Never tell a member their maximum claim is fixed — it fluctuates with the fund balance.
+
 IS IT A PYRAMID SCHEME? No — because:
 1. Nobody earns cash from recruiting others
 2. Platform functions with zero new members
