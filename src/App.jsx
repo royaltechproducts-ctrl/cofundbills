@@ -33,7 +33,7 @@ const TIERS = {
   1: {
     id:1, label:"Tier 1", monthly:10000, benefitPool:5000, billSupport:2500,
     loanFund:1000, admin:1000, contingency:500, cyclePayout:50000,
-    billScoreMin:1000, excellentScore:1000, strongScore:700, standardScore:500,
+    unlockScore:400, billScoreMin:1000, excellentScore:1000, strongScore:700, standardScore:500,
     loanLimits:{excellent:600000, strong:360000, standard:180000, minimal:60000},
     billCaps:[{min:0,max:2000000,cap:100000,tier:"Bronze"},{min:2000000,max:5000000,cap:250000,tier:"Silver"},
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
@@ -44,7 +44,7 @@ const TIERS = {
   2: {
     id:2, label:"Tier 2", monthly:50000, benefitPool:25000, billSupport:12500,
     loanFund:5000, admin:5000, contingency:2500, cyclePayout:250000,
-    billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
+    unlockScore:2000, billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
     loanLimits:{excellent:3000000, strong:1800000, standard:900000, minimal:300000},
     billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
@@ -55,7 +55,7 @@ const TIERS = {
   3: {
     id:3, label:"Tier 3", monthly:100000, benefitPool:50000, billSupport:25000,
     loanFund:10000, admin:10000, contingency:5000, cyclePayout:500000,
-    billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
+    unlockScore:4000, billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
     loanLimits:{excellent:6000000, strong:3600000, standard:1800000, minimal:600000},
     billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
@@ -66,7 +66,7 @@ const TIERS = {
   4: {
     id:4, label:"Tier 4", monthly:200000, benefitPool:100000, billSupport:50000,
     loanFund:20000, admin:20000, contingency:10000, cyclePayout:1000000,
-    billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
+    unlockScore:8000, billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
     loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
     billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
@@ -673,8 +673,8 @@ export default function App() {
     if(!loanForm.amount||!loanForm.billType){ showToast("Fill all required fields","error"); return; }
     const m = member;
     const mTierData = getTier(m.contributionTier||1);
-    if(m.creditScore < mTierData.excellentScore){
-      showToast(`Credit score of ${mTierData.excellentScore.toLocaleString()} pts required for ${mTierData.label} loan access`,"error"); return;
+    if(m.creditScore < mTierData.unlockScore){
+      showToast(`Minimum credit score of ${mTierData.unlockScore.toLocaleString()} pts required to access ${mTierData.label} loan service`,"error"); return;
     }
     const cat = scoreCategory(m.creditScore, m.contributionTier||1);
     const maxLoan = cat.limit;
@@ -702,7 +702,7 @@ export default function App() {
   const handleBillApply = async () => {
     if(!billForm.billType||!billForm.amount){ showToast("Fill all required fields","error"); return; }
     const mTierData = getTier(member.contributionTier||1);
-    if(member.creditScore < mTierData.billScoreMin){ showToast(`Credit score of ${mTierData.billScoreMin.toLocaleString()} pts required for ${mTierData.label}`,"error"); return; }
+    if(member.creditScore < mTierData.unlockScore){ showToast(`Minimum credit score of ${mTierData.unlockScore.toLocaleString()} pts required for ${mTierData.label} services`,"error"); return; }
     const tierCap = getBillCap(funds[`bill_support_t${member.contributionTier||1}`]||funds.bill_support||0, member.contributionTier||1);
     const amt = Number(billForm.amount);
     if(amt > tierCap.cap){ showToast(`Maximum claim is ${tierCap.label} at current fund level`,"error"); return; }
@@ -767,11 +767,19 @@ CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Loan repaid: +50 pts all
 - Loan default: -100 pts all
 
-LOAN ACCESS (based on credit score):
+LOAN & BILL SUPPORT ACCESS:
+Services unlock at minimum credit score per tier:
+- Tier 1: 400 pts minimum to unlock
+- Tier 2: 2,000 pts minimum to unlock
+- Tier 3: 4,000 pts minimum to unlock
+- Tier 4: 8,000 pts minimum to unlock
+
+Once unlocked, interest rate and loan limit by credit category (Tier 1 example):
 - Excellent Performance (Lowest Risk) 1000+: 1%/month, max loan NGN600,000
 - Strong Performance (Low Risk) 700-999: 2%/month, max loan NGN360,000
 - Standard Performance (Medium Risk) 500-699: 3%/month, max loan NGN180,000
 - Minimal Performance (Higher-Risk) below 500: 4%/month, max loan NGN60,000
+All limits scale proportionally with contribution tier.
 Loans subject to fund liquidity and admin approval. Credits improve eligibility — do not guarantee approval.
 
 IS IT A PYRAMID SCHEME? No — because:
@@ -871,7 +879,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
     ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) and +50 flat for all network seat holders at cycle end. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
-    ["What loan can I access?","Based on your CoFund Credit Score: Excellent Performance — Lowest Risk (1,000+): 1%/month, max ₦600,000. Strong Performance — Low Risk (700–999): 2%/month, max ₦360,000. Standard Performance — Medium Risk (500–699): 3%/month, max ₦180,000. Minimal Performance — Higher-Risk (below 500): 4%/month, max ₦60,000. Loan approval is subject to available fund liquidity, repayment capacity and cooperative credit policy. Credits improve eligibility — they do not guarantee approval."],
+    ["What loan can I access?","Based on your CoFund Credit Score: Loan and bill support services unlock at a minimum credit score per tier: Tier 1 at 400 pts, Tier 2 at 2,000 pts, Tier 3 at 4,000 pts, Tier 4 at 8,000 pts. Once unlocked, your interest rate and loan limit are determined by your credit score category — Excellent Performance (lowest risk): 1%/month · Strong Performance: 2%/month · Standard Performance: 3%/month · Minimal Performance: 4%/month. Loan limits scale with your contribution tier and credit category. Approval is subject to available fund liquidity, repayment capacity and cooperative credit policy."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
@@ -1453,15 +1461,15 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {/* Loan */}
           {portalTab==="loan"&&(()=>{
             const mTier = getTier(m.contributionTier||1);
-            const loanEligible = m.creditScore >= mTier.excellentScore;
+            const loanEligible = m.creditScore >= mTier.unlockScore;
             return(
             <div>
               {!loanEligible&&(
                 <div className="warn-box">
                   <strong>🔒 Co-Fund Loan is not yet accessible.</strong><br/>
-                  Required credit score: <strong>{mTier.excellentScore.toLocaleString()} pts (Excellent — {mTier.label})</strong><br/>
+                  Required credit score: <strong>{mTier.unlockScore.toLocaleString()} pts minimum ({mTier.label})</strong><br/>
                   Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {cat.label}<br/>
-                  You need <strong>{Math.max(0,mTier.excellentScore-m.creditScore).toLocaleString()} more points</strong> to unlock loan access.<br/>
+                  You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock loan access.<br/>
                   <div style={{marginTop:8,fontSize:11,lineHeight:1.7}}>
                     Build your score through consistent contributions (+{mTier.pts.contribution} pts/month), completing cycles (+{mTier.pts.cycleContrib.toLocaleString()} pts) and holding network seats (+{mTier.pts.cellActive} pts/month per seat).
                   </div>
@@ -1522,7 +1530,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {portalTab==="bills"&&(()=>{
             const billFund = funds[`bill_support_t${m.contributionTier||1}`]||funds.bill_support||0;
             const tierCap = getBillCap(billFund, m.contributionTier||1);
-            const isEligible = m.creditScore >= getTier(m.contributionTier||1).billScoreMin;
+            const isEligible = m.creditScore >= getTier(m.contributionTier||1).unlockScore;
             const fundPct = Math.min(Math.round(billFund/10000000*100),100);
 
             return(
@@ -1586,9 +1594,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 ):(
                   <>
                     <strong>🔒 Bill support is not yet accessible.</strong><br/>
-                    Required credit score: <strong>{getTier(m.contributionTier||1).billScoreMin.toLocaleString()} pts (Excellent — {getTier(m.contributionTier||1).label})</strong><br/>
+                    Required credit score: <strong>{getTier(m.contributionTier||1).unlockScore.toLocaleString()} pts minimum ({getTier(m.contributionTier||1).label})</strong><br/>
                     Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {scoreCategory(m.creditScore, m.contributionTier||1).label}<br/>
-                    You need <strong>{Math.max(0,getTier(m.contributionTier||1).billScoreMin-m.creditScore).toLocaleString()} more points</strong> to qualify.
+                    You need <strong>{Math.max(0,getTier(m.contributionTier||1).unlockScore-m.creditScore).toLocaleString()} more points</strong> to qualify.
                     <div style={{marginTop:8,fontSize:11,color:C.muted}}>
                       Build your score through consistent contributions (+{getTier(m.contributionTier||1).pts.contribution} pts/month), completing cycles (+{getTier(m.contributionTier||1).pts.cycleContrib} pts) and holding network seats (+{getTier(m.contributionTier||1).pts.cellActive} pts/month per seat).
                     </div>
