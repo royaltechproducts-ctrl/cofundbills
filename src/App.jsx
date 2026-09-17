@@ -1034,42 +1034,85 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner">
           <span className="section-tag" style={{background:C.gold+"33",color:C.gold}}>CoFund Credit Score</span>
           <h2 className="section-title">Your Behaviour Builds Your Credit</h2>
-          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation — not through who you recruit. Better behaviour means better loan rates and higher loan limits.</p>
-          <div className="grid-2">
-            <div className="card">
-              <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>How You Earn Points</div>
-              {[
-                ["Monthly contribution on time","+20 pts","Contributing Members only"],
-                ["Each month your cell is active","+5 pts","All seat types equally"],
-                ["Cycle completed","+100 / +50 pts flat","Contributing Members (+100) · All network seats (+50 each)"],
-                ["Loan repaid on time","+50 pts","All members"],
-                ["Missed contribution","−30 pts","Contributing Members"],
-                ["Loan default","−100 pts","All members"],
-              ].map(([e,p,w])=>(
-                <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
-                  <div><div style={{color:C.navy,fontWeight:600}}>{e}</div><div style={{fontSize:10,color:C.muted}}>{w}</div></div>
-                  <span style={{fontWeight:900,color:p.startsWith("+")?"#166534":C.error,fontSize:13,marginLeft:8,flexShrink:0}}>{p}</span>
+          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation — not through who you recruit. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
+
+          {Object.values(TIERS).map(t=>(
+            <div key={t.id} style={{marginBottom:32}}>
+              <div style={{background:`linear-gradient(135deg,${t.color},${t.color}CC)`,borderRadius:"14px 14px 0 0",
+                padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{color:C.white,fontWeight:900,fontSize:16}}>{t.label} Contribution Group</div>
+                  <div style={{color:"rgba(255,255,255,.75)",fontSize:12,marginTop:2}}>{t.name} · Cycle payout: {fmtNGN(t.cyclePayout)} · Unlock services at {t.unlockScore.toLocaleString()} pts</div>
                 </div>
-              ))}
-            </div>
-            <div className="card">
-              <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>Credit Score → Loan Access</div>
-              {[
-                {l:"Excellent Performance (Lowest Risk)",r:"1,000+",rate:"1%/month",limit:"₦600,000",c:C.green},
-                {l:"Strong Performance (Low Risk)",r:"700–999",rate:"2%/month",limit:"₦360,000",c:C.blue},
-                {l:"Standard Performance (Medium Risk)",r:"500–699",rate:"3%/month",limit:"₦180,000",c:C.amber},
-                {l:"Minimal Performance (Higher-Risk)",r:"Below 500",rate:"4%/month",limit:"₦60,000",c:C.error},
-              ].map(c=>(
-                <div key={c.l} style={{borderRadius:10,border:`1.5px solid ${c.c}33`,padding:11,marginBottom:8,background:c.c+"11"}}>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <div><span style={{fontWeight:800,color:c.c,fontSize:12}}>{c.l}</span><span style={{fontSize:10,color:C.muted,marginLeft:6}}>{c.r}</span></div>
-                    <div style={{textAlign:"right"}}><div style={{fontWeight:700,color:C.navy,fontSize:12}}>{c.rate}</div><div style={{fontSize:10,color:C.muted}}>Max: {c.mult} × ₦10,000</div></div>
+                <div style={{background:"rgba(255,255,255,.15)",borderRadius:20,padding:"6px 14px",color:C.white,fontSize:12,fontWeight:700}}>{fmtNGN(t.monthly)}/month</div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
+                border:`1px solid ${t.color}44`,borderTop:"none",borderRadius:"0 0 14px 14px",overflow:"hidden"}}>
+                <div style={{padding:18,borderRight:`1px solid ${t.color}22`,background:C.white}}>
+                  <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>How You Earn Points</div>
+                  {[
+                    [`Monthly contribution on time`,`+${t.pts.contribution} pts`,"Contributing Members"],
+                    [`Each month cell is active`,`+${t.pts.cellActive} pts`,"All seat types equally"],
+                    [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
+                    [`Cycle completed (network seat)`,`+${t.pts.cycleNetwork.toLocaleString()} pts`,"Host / Anchor / Root / Admin"],
+                    [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
+                    [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
+                    [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
+                  ].map(([e,p,w])=>(
+                    <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.bg}`,fontSize:11}}>
+                      <div><div style={{color:C.navy,fontWeight:600}}>{e}</div><div style={{fontSize:10,color:C.muted}}>{w}</div></div>
+                      <span style={{fontWeight:900,color:p.startsWith("+")?"#166534":C.error,fontSize:12,marginLeft:8,flexShrink:0}}>{p}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{padding:18,borderRight:`1px solid ${t.color}22`,background:"#FAFBFF"}}>
+                  <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>Credit Score → Loan Access</div>
+                  {[
+                    {l:"Excellent Performance (Lowest Risk)",r:`${t.excellentScore.toLocaleString()}+`,rate:"1%/month",limit:t.loanLimits.excellent,c:C.green},
+                    {l:"Strong Performance (Low Risk)",r:`${t.strongScore.toLocaleString()}–${(t.excellentScore-1).toLocaleString()}`,rate:"2%/month",limit:t.loanLimits.strong,c:C.blue},
+                    {l:"Standard Performance (Medium Risk)",r:`${t.standardScore.toLocaleString()}–${(t.strongScore-1).toLocaleString()}`,rate:"3%/month",limit:t.loanLimits.standard,c:C.amber},
+                    {l:"Minimal Performance (Higher-Risk)",r:`Below ${t.standardScore.toLocaleString()}`,rate:"4%/month",limit:t.loanLimits.minimal,c:C.error},
+                  ].map(c=>(
+                    <div key={c.l} style={{borderRadius:8,border:`1.5px solid ${c.c}33`,padding:9,marginBottom:7,background:c.c+"0D"}}>
+                      <div style={{fontWeight:800,color:c.c,fontSize:11}}>{c.l}</div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:1}}>{c.r} pts</div>
+                      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+                        <span style={{fontWeight:700,color:C.navy,fontSize:11}}>{c.rate}</span>
+                        <span style={{fontSize:10,color:C.muted}}>Max: {fmtNGN(c.limit)}</span>
+                      </div>
+                    </div>
+                  ))}
+                  <div style={{background:`${t.color}11`,border:`1px solid ${t.color}33`,borderRadius:8,padding:9,fontSize:11,color:t.color,lineHeight:1.6,marginTop:8}}>
+                    🔓 Unlock loan service with a minimum of <strong>{t.unlockScore.toLocaleString()} credit score</strong><br/>
+                    <span style={{color:C.muted,fontSize:10}}>Loan approval subject to fund liquidity, repayment capacity and cooperative credit policy.</span>
                   </div>
                 </div>
-              ))}
-              <div style={{fontSize:11,color:C.muted,marginTop:6,lineHeight:1.6}}>Loan approval subject to fund liquidity, repayment capacity and cooperative credit policy.</div>
+                <div style={{padding:18,background:C.white}}>
+                  <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>Essential Bill Support Access</div>
+                  {t.billCaps.map((cap,i)=>{
+                    const capColor = cap.tier==="Platinum"?"#0B6E4F":cap.tier==="Gold"?"#C9A84C":cap.tier==="Silver"?"#6B7280":"#B45309";
+                    return(
+                    <div key={i} style={{borderRadius:8,border:`1.5px solid ${capColor}33`,padding:9,marginBottom:7,background:capColor+"0D"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                        <div>
+                          <div style={{fontWeight:800,fontSize:11,color:capColor}}>{cap.tier} Tier</div>
+                          <div style={{fontSize:10,color:C.muted,marginTop:1}}>
+                            Fund: {cap.min===0?`Up to ${fmtNGN(cap.max)}`:`${fmtNGN(cap.min)}${cap.max<Infinity?` – ${fmtNGN(cap.max)}`:"+"}` }
+                          </div>
+                        </div>
+                        <div style={{fontWeight:900,color:C.navy,fontSize:13}}>Max {fmtNGN(cap.cap)}</div>
+                      </div>
+                    </div>
+                    );
+                  })}
+                  <div style={{background:`${t.color}11`,border:`1px solid ${t.color}33`,borderRadius:8,padding:9,fontSize:11,color:t.color,lineHeight:1.6,marginTop:8}}>
+                    🔓 Unlock Essential Bills Support with a minimum of <strong>{t.unlockScore.toLocaleString()} credit score</strong><br/>
+                    <span style={{color:C.muted,fontSize:10}}>Support received subject to cooperative funding capacity tier at the material time of your request.</span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ))}
         </div>
       </div>
 
