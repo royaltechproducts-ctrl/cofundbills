@@ -39,7 +39,7 @@ const TIERS = {
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
     pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:0,
          loanRepaid:50,
-         hostActivation:10, hostCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
+         referralActivation:10, referralCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
     color:"#1A4F8A", name:"₦10,000 / month",
   },
   2: {
@@ -51,7 +51,7 @@ const TIERS = {
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
          loanRepaid:250,
-         hostActivation:50, hostCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
+         referralActivation:50, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
     color:"#0B6E4F", name:"₦50,000 / month",
   },
   3: {
@@ -63,7 +63,7 @@ const TIERS = {
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
          loanRepaid:500,
-         hostActivation:100, hostCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
+         referralActivation:100, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
     color:"#7C3AED", name:"₦100,000 / month",
   },
   4: {
@@ -75,7 +75,7 @@ const TIERS = {
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
          loanRepaid:1000,
-         hostActivation:200, hostCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
+         referralActivation:200, referralCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
     color:"#B45309", name:"₦200,000 / month",
   },
 };
@@ -113,8 +113,8 @@ const CELL_TIMEOUT_DAYS= 30;
 
 const CREDIT_PTS = {
   contribution:   { contributing:20 },
-  cell_active:    { contributing:5, host:5, anchor:5, founding:5, admin:5 },
-  cycle_complete: { contributing:100, host:50, anchor:50, founding:50, admin:50 },
+  cell_active:    { contributing:5 },
+  cycle_complete: { contributing:100 },
   missed:         { contributing:-30 },
   loan_repaid:    { all:50 },
   loan_default:   { all:-100 },
@@ -337,19 +337,19 @@ export default function App() {
   };
 
   // ── Determine network seats from ref chain ────────────────────
-  // ── Host Credit award ─────────────────────────────────────
-  const awardHostCredit = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
+  // ── Referral Bonus award ─────────────────────────────────────
+  const awardReferralBonus = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
     if(!inviterCode) return;
     const inviter = members[inviterCode];
     if(!inviter || inviter.memberType==="admin") return;
     // Effective tier = MIN(inviter tier, invitee tier) — cannot earn above your station
     const effectiveTierNum = Math.min(inviterTier||1, inviteeTier||1);
     const t = getTier(effectiveTierNum);
-    const pts = eventType==="activation" ? t.pts.hostActivation : t.pts.hostCycle;
+    const pts = eventType==="activation" ? t.pts.referralActivation : t.pts.referralCycle;
     if(!pts) return;
     await supabase.from("cfb_credit_events").insert({
-      link_code:inviterCode, event_type:`host_credit_${eventType}`,
-      points:pts, description:`Host Credit — invitee ${eventType}`,
+      link_code:inviterCode, event_type:`referral_bonus_${eventType}`,
+      points:pts, description:`Referral Bonus — invitee ${eventType}`,
     });
     await supabase.from("cfb_members").update({
       credit_score: Math.max(0,(inviter.creditScore||0)+pts)
@@ -462,10 +462,10 @@ export default function App() {
       credit_score:(activated?.creditScore||0)+aTier.pts.contribution,
       months_contributed:1, contribution_balance:aTier.benefitPool,
     }).eq("link_code",code);
-    // Award host credit to inviter using MIN tier rule
+    // Award referral bonus to inviter using MIN tier rule
     if(activated?.refCode) {
       const inviter = allM0[activated.refCode];
-      await awardHostCredit(
+      await awardReferralBonus(
         activated.refCode,
         inviter?.contributionTier||1,
         "activation",
@@ -560,10 +560,10 @@ export default function App() {
       await supabase.from("cfb_members").update({
         credit_score:Math.max(0,(m?.creditScore||0)+cellTier.pts.cycleContrib)
       }).eq("link_code",c.link_code);
-      // Award host cycle credit to inviter
+      // Award referral bonus cycle credit to inviter
       if(m?.refCode){
         const inviter = members[m.refCode];
-        await awardHostCredit(
+        await awardReferralBonus(
           m.refCode,
           inviter?.contributionTier||1,
           "cycle",
@@ -634,22 +634,22 @@ export default function App() {
   // ── AI Chat ───────────────────────────────────────────────────
   const CHAT_SYSTEM = `You are the CoFundBills Cooperative Assistant. CoFundBills is a member-owned digital cooperative platform being registered under Lagos State Cooperative Societies Law 2022.
 
-CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Host, Anchor, Root and Founding Member positions earn cooperative credit points only — never cash.
+CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Network position seats earn cooperative credit points only — never cash.
 
 CONTRIBUTION CELL STRUCTURE (always exactly 10 members):
 - 10 Contributing Members — all equal, all contributing, all sharing the cycle payout equally
-- No network position seats — no Host seat, no Anchor, no Root, no Founding Member seat in cells
+- No network position seats — no network seats, no chains, no positional hierarchy in cells
 - Cells form by tier queue — first activated, first placed
 - Tiers never mix — Tier 1 with Tier 1, Tier 2 with Tier 2, etc.
 
 HOST CREDIT SYSTEM (replaces network positions):
-- When you invite someone and they activate: you earn Host Credit points at your tier rate
+- When you invite someone and they activate: you earn Referral Bonus points at your tier rate
   Tier 1: +10 pts | Tier 2: +50 pts | Tier 3: +100 pts | Tier 4: +200 pts
 
 - No seat required. No chain. No limit.
 - Credits earned at the LOWER of inviter tier or invitee tier (MIN rule)
   Example: Tier 1 inviting Tier 4 → earns Tier 1 credits. Tier 4 inviting Tier 1 → earns Tier 1 credits. Tier 3 inviting Tier 4 → earns Tier 3 credits. You cannot earn above your own contribution station.
-- Admin invite link earns NO Host Credits. Admin is compensated via the 7.5% admin split only.
+- Admin invite link earns NO Referral Bonuss. Admin is compensated via the 7.5% admin split only.
 
 CONTRIBUTION TIERS (4 tiers available):
 - Tier 1: NGN10,000/month → NGN50,000 cycle payout, bill support up to NGN500,000
@@ -676,7 +676,7 @@ CELL FORMATION: Cells form instantly when 10 activated members are in the same t
 
 CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Monthly contribution on time: +20 pts (contributing members)
-- Each month cell is active: +5/5/3/2/1 pts (contributing/host/anchor/root/founding)
+- Each month cell is active: +5/5/3/2/1 pts (contributing members)
 - Cycle completed: +100 pts (contributing members) / +50 pts flat (all network seats)
 - Missed contribution: -30 pts
 - Loan repaid: +50 pts all
@@ -807,13 +807,13 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦50,000 cash payout each at cycle end, plus 250 credit points. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, Cells form automatically when 10 activated members are in the same tier's queue. No network seats. No chains. First activated, first placed."],
     ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
-    ["What is a Founding Member?","Founding Members are personally invited by the cooperative\'s admin to help establish the cooperative\'s founding register — a minimum of 20 founding members is required under Lagos State law to register a Multi-Purpose Cooperative Society. Founding Members contribute and participate exactly like all regular members. Their exclusive benefit is a quarterly share of the cooperative\'s loan interest revenue. Every quarter, loan interest income is divided into 25 equal slots — 23 slots distributed equally among all active Founding Members, and 2 slots allocated to the cooperative\'s Admin. This quarterly distribution is permanent and in addition to their normal cycle payouts and Host Credits."],
-    ["What is Host Credit?","When you share your invite link and someone activates their membership through it, you automatically earn Host Credit points — scored at the lower of the two tiers between you and the invited member. There are no seats, no chains and no limits — you earn Host Credits for every activated member you bring into the cooperative."],
+    ["What is a Founding Member?","Founding Members are personally invited by the cooperative\'s admin to help establish the cooperative\'s founding register — a minimum of 20 founding members is required under Lagos State law to register a Multi-Purpose Cooperative Society. Founding Members contribute and participate exactly like all regular members. Their exclusive benefit is a quarterly share of the cooperative\'s loan interest revenue. Every quarter, loan interest income is divided into 25 equal slots — 23 slots distributed equally among all active Founding Members, and 2 slots allocated to the cooperative\'s Admin. This quarterly distribution is permanent and in addition to their normal cycle payouts and Referral Bonuss."],
+    ["What is Referral Bonus?","When you share your invite link and someone activates their membership through it, you automatically earn Referral Bonus points — scored at the lower of the two tiers between you and the invited member. There are no seats, no chains and no limits — you earn Referral Bonuss for every activated member you bring into the cooperative."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) and +50 flat for all network seat holders at cycle end. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Loan and bill support services unlock at a minimum credit score per tier: Tier 1 at 400 pts, Tier 2 at 2,000 pts, Tier 3 at 4,000 pts, Tier 4 at 8,000 pts. Once unlocked, your interest rate and loan limit are determined by your credit score category — Excellent Performance (lowest risk): 1%/month · Strong Performance: 2%/month · Standard Performance: 3%/month · Minimal Performance: 4%/month. Loan limits scale with your contribution tier and credit category. Approval is subject to available fund liquidity, repayment capacity and cooperative credit policy."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
     ["How do contribution cells form?","When you activate your membership, you join your tier's queue — Tier 1 with Tier 1, Tier 2 with Tier 2, and so on. The moment 10 members are in the queue, a new contribution cell forms instantly and automatically. First activated, first placed. Tiers never mix. There are no mergers, no timers and no complicated arrangements."],
-    ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Invite links earn Host Credit points only — never cash. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
+    ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Invite links earn Referral Bonus points only — never cash. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
     ["What contribution tiers are available?","CoFundBills offers four contribution tiers. Tier 1 (₦10,000/month) — cycle payout ₦50,000, bill support up to ₦500,000. Tier 2 (₦50,000/month) — cycle payout ₦250,000, bill support up to ₦2,500,000. Tier 3 (₦100,000/month) — cycle payout ₦500,000, bill support up to ₦5,000,000. Tier 4 (₦200,000/month) — cycle payout ₦1,000,000, bill support up to ₦10,000,000. You choose your tier at registration and can change it any time before your cell activates."],
     ["What if a member in my cell defaults on their contribution?","Your payout is fully protected. The cooperative's dedicated Contingency Reserve covers any member's missed contribution immediately — you will never be shortchanged because of someone else's default. Defaulting members face a credit score deduction of 30 points per missed month and are subject to cooperative disciplinary action. Their failure never reaches you. This is why the Contingency Reserve exists — to absorb shocks so the cooperative's promises to you are always kept."],
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
@@ -827,7 +827,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 12.5% (₦1,250), Administration 7.5% (₦750), Contingency Reserve 5% (₦500)."],
     ["5. Cycle Payout","₦50,000 cash is paid to each contributing member at cycle completion, plus credit points earned during the cycle. Payouts are processed within 7 business days of cycle completion."],
     ["5b. Founding Member Loan Interest Benefit","Every quarter, the cooperative's loan interest revenue is divided into 25 equal slots — 23 slots distributed equally among all active Founding Members, and 2 slots allocated to the cooperative's Admin. This quarterly distribution is exclusive to Founding Members and is in addition to their regular cycle payout and credit score benefits. Distribution is subject to available loan interest revenue in the period."],
-    ["6. Network Positions","Members who invite others earn Host Credit points — on invitee activation and cycle completion. No member receives cash or guaranteed financial return for introducing another member."],
+    ["6. Network Positions","Members who invite others earn Referral Bonus points — on invitee activation and cycle completion. No member receives cash or guaranteed financial return for introducing another member."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
     ["9. Bill Support","Bill support applications are subject to available fund balance and admin approval. Bill support is not an entitlement."],
@@ -879,11 +879,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>The Contribution Cell</span>
           <h2 className="section-title">How CoFundBills Works</h2>
-          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of exactly 10 contributing members — all equal, all contributing, all sharing the cycle payout equally. Cells form automatically when 10 activated members are in the same tier's queue. Your invite link earns you Host Credit bonus — no seats, no chains, just credit bonus points for every activated member that joined the cooperative on your invite.</p>
+          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of exactly 10 contributing members — all equal, all contributing, all sharing the cycle payout equally. Cells form automatically when 10 activated members are in the same tier's queue. Your invite link earns you Referral Bonus bonus — no seats, no chains, just credit bonus points for every activated member that joined the cooperative on your invite.</p>
           <div className="grid-3" style={{marginBottom:24}}>
             {[
               {icon:"💳",title:"10 Contributing Members",desc:"Each pays their tier's monthly contribution for 10 months. At cycle end, each receives 50% of their total contributions back as cash. The other 50% merges into the cooperative's shared funds.",color:C.blue},
-              {icon:"🤝",title:"Host Credit",desc:"When you invite someone and they activate their membership through your link, you earn Host Credit points automatically — at the lower of the two tiers between you and the invited member. No seats, no chains, no limits.",color:C.green},
+              {icon:"🤝",title:"Referral Bonus",desc:"When you invite someone and they activate their membership through your link, you earn Referral Bonus points automatically — at the lower of the two tiers between you and the invited member. No seats, no chains, no limits.",color:C.green},
               {icon:"🎖️",title:"Founding Members",desc:"Personally invited by cooperative admin to establish the founding register required for cooperative registration. Founding Members contribute and participate like all regular members — with one exclusive benefit: a share in the cooperative's quarterly loan interest revenue.",color:C.burg},
             ].map(c=>(
               <div key={c.title} className="card" style={{borderTop:`3px solid ${c.color}`,textAlign:"left"}}>
@@ -966,7 +966,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner">
           <span className="section-tag" style={{background:C.gold+"33",color:C.gold}}>CoFund Credit Score</span>
           <h2 className="section-title">Your Behaviour Builds Your Credit</h2>
-          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — not through who you invite to join the cooperative — even though there is a marginal score credit for referral. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
+          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — not through who you invite to join the cooperative — even though there is a marginal score credit for referral bonuses. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
 
           {Object.values(TIERS).map(t=>(
             <div key={t.id} style={{marginBottom:32}}>
@@ -987,7 +987,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     [`Each month your cell is active`,`+${t.pts.cellActive} pts`,"All contributing members"],
                     [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
 
-                    [`Host Credit — invited member activates`,`+${t.pts.hostActivation} pts`,"Earned at lower of the two tiers between Host and Invited"],
+                    [`Referral Bonus — invited member activates`,`+${t.pts.referralActivation} pts`,"Earned at lower of the two tiers between Host and Invited"],
                     [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
                     [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
@@ -1159,7 +1159,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <h2 style={{color:C.white,fontSize:22,fontWeight:900,marginBottom:20}}>Why CoFundBills is NOT a Pyramid Scheme</h2>
           <div className="grid-2" style={{textAlign:"left",gap:12}}>
             {[
-              ["✅ No cash from recruiting","Invite links earn Host Credit points only — never cash. No tiered positions, no chain structure, no multi-level commissions."],
+              ["✅ No cash from recruiting","Invite links earn Referral Bonus points only — never cash. No tiered positions, no chain structure, no multi-level commissions."],
               ["✅ Real cooperative services","Contribution cells, bill support fund, credit scoring and loan facility are genuine cooperative services."],
               ["✅ Works without new members","Existing active members complete cycles, access loans and build credit indefinitely without new recruitment."],
               ["✅ Registered cooperative","Being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022."],
@@ -1304,7 +1304,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 </div>
                 <button className="btn btn-ghost btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${m.linkCode}`);showToast("Link copied!");}}>📋 Copy</button>
                 <div style={{fontSize:11,color:C.muted,marginTop:8,lineHeight:1.7}}>
-                  Share your invite link to help grow the cooperative. Members who join through your link earn you Host Credit points automatically when they activate — at the lower of the two tiers between you and the invited member.
+                  Share your invite link to help grow the cooperative. Members who join through your link earn you Referral Bonus points automatically when they activate — at the lower of the two tiers between you and the invited member.
                 </div>
               </div>
             </div>
@@ -1383,7 +1383,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   ["Stay active in your contribution cell",`+${getTier(m.contributionTier||1).pts.cellActive} pts/month`],
                   [`Complete a full 10-month cycle`,`+${getTier(m.contributionTier||1).pts.cycleContrib.toLocaleString()} pts`],
                   [`Repay loans on time`,`+${getTier(m.contributionTier||1).pts.loanRepaid} pts per repayment`],
-                  ["Invite members through your link","Host Credits: +pts per activated member (scored at lower of both tiers)"],
+                  ["Invite members through your link","Referral Bonuss: +pts per activated member (scored at lower of both tiers)"],
                 ].map(([a,b])=>(
                   <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
                     <span style={{color:C.navy}}>{a}</span>
@@ -1598,7 +1598,7 @@ ${inviteLink}`;
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>Your Personal Invite Link</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.7}}>
-                  Share your personal invite link to grow the cooperative. Members who join through your link earn you Host Credit points automatically when they activate — at the lower of the two tiers between you and the invited member.
+                  Share your personal invite link to grow the cooperative. Members who join through your link earn you Referral Bonus points automatically when they activate — at the lower of the two tiers between you and the invited member.
                 </div>
                 <div style={{background:C.bg,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:12,
                   fontFamily:"monospace",fontSize:12,wordBreak:"break-all",marginBottom:10}}>
@@ -1663,11 +1663,11 @@ ${inviteLink}`;
               <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:18,marginTop:14}}>
                 <div style={{fontWeight:800,color:C.gold,fontSize:13,marginBottom:8}}>Why Inviting Members Benefits You</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,.85)",lineHeight:1.85}}>
-                  Every member who joins through your invite link and activates their membership earns you Host Credit points — automatically, no seat required. No seats, no chains, no limits. The more you invite, the more Host Credits you build.
+                  Every member who joins through your invite link and activates their membership earns you Referral Bonus points — automatically, no seat required. No seats, no chains, no limits. The more you invite, the more Referral Bonuss you build.
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginTop:12}}>
                   {[
-                    {seat:"Invitee Activates",pts:`+${getTier(m.contributionTier||1).pts.hostActivation} pts (Host Credit)`,c:C.green},
+                    {seat:"Referral Bonus — invited member activates",pts:`+${getTier(m.contributionTier||1).pts.referralActivation} pts`,c:C.green},
                     
                     {seat:"Each Additional Invitee",pts:"Same credits per person",c:C.amber},
                     {seat:"No Limit",pts:"Invite as many as you want",c:C.burg},
@@ -1679,7 +1679,7 @@ ${inviteLink}`;
                   ))}
                 </div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:10,lineHeight:1.7}}>
-                  Host Credits are a marginal score bonus for growing the cooperative. Your primary credit score growth comes from consistent contributions, completed cycles and timely loan repayments.
+                  Referral Bonuss are a marginal score bonus for growing the cooperative. Your primary credit score growth comes from consistent contributions, completed cycles and timely loan repayments.
                 </div>
               </div>
             </div>
