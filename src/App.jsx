@@ -987,7 +987,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     [`Each month your cell is active`,`+${t.pts.cellActive} pts`,"All contributing members"],
                     [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
 
-                    [`Referral Bonus — invited member activates`,`+${t.pts.referralActivation} pts`,"Earned at lower of the two tiers between Host and Invited"],
+                    [`Referral Bonus — invited member activates`,`+${t.pts.referralActivation} pts`,"Credit bonus decided by the referral bonus tied to the lower of the two tiers where the Invited activates a different tier"],
                     [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
                     [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
