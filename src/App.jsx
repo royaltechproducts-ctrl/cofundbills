@@ -338,11 +338,13 @@ export default function App() {
 
   // ── Determine network seats from ref chain ────────────────────
   // ── Host Credit award ─────────────────────────────────────
-  const awardHostCredit = async (inviterCode, inviterTier, eventType) => {
+  const awardHostCredit = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
     if(!inviterCode) return;
     const inviter = members[inviterCode];
     if(!inviter || inviter.memberType==="admin") return;
-    const t = getTier(inviterTier||1);
+    // Effective tier = MIN(inviter tier, invitee tier) — cannot earn above your station
+    const effectiveTierNum = Math.min(inviterTier||1, inviteeTier||1);
+    const t = getTier(effectiveTierNum);
     const pts = eventType==="activation" ? t.pts.hostActivation : t.pts.hostCycle;
     if(!pts) return;
     await supabase.from("cfb_credit_events").insert({
@@ -448,10 +450,30 @@ export default function App() {
     await supabase.from("cfb_members").update({
       status:"active", activated_at:new Date().toISOString()
     }).eq("link_code",code);
-    await addCredit(code,"contribution","contributing",null,"Account activated");
+    // Award first contribution credit
+    const allM0 = await loadMembers();
+    const activated = allM0[code];
+    const aTier = getTier(activated?.contributionTier||1);
+    await supabase.from("cfb_credit_events").insert({
+      link_code:code, event_type:"contribution", points:aTier.pts.contribution,
+      description:"First contribution — account activated",
+    });
+    await supabase.from("cfb_members").update({
+      credit_score:(activated?.creditScore||0)+aTier.pts.contribution,
+      months_contributed:1, contribution_balance:aTier.benefitPool,
+    }).eq("link_code",code);
+    // Award host credit to inviter using MIN tier rule
+    if(activated?.refCode) {
+      const inviter = allM0[activated.refCode];
+      await awardHostCredit(
+        activated.refCode,
+        inviter?.contributionTier||1,
+        "activation",
+        activated.contributionTier||1
+      );
+    }
     // Activation email sent manually from cofundbills@gmail.com
     const allM = await loadMembers();
-    const allC = await loadCells();
     await tryFormCell(allM);
     showToast(`${allM[code]?.fullName||code} activated.`);
   };
@@ -541,7 +563,12 @@ export default function App() {
       // Award host cycle credit to inviter
       if(m?.refCode){
         const inviter = members[m.refCode];
-        await awardHostCredit(m.refCode, inviter?.contributionTier||1, "cycle");
+        await awardHostCredit(
+          m.refCode,
+          inviter?.contributionTier||1,
+          "cycle",
+          m.contributionTier||1
+        );
       }
     }
     await supabase.from("cfb_cells").update({
@@ -620,7 +647,9 @@ HOST CREDIT SYSTEM (replaces network positions):
   Tier 1: +10 pts | Tier 2: +50 pts | Tier 3: +100 pts | Tier 4: +200 pts
 - When your invitee completes a 10-month cycle: you earn more Host Credits
   Tier 1: +25 pts | Tier 2: +125 pts | Tier 3: +250 pts | Tier 4: +500 pts
-- No seat required. No chain. No limit. Credits earned at your OWN tier rate.
+- No seat required. No chain. No limit.
+- Credits earned at the LOWER of inviter tier or invitee tier (MIN rule)
+  Example: Tier 1 inviting Tier 4 → earns Tier 1 credits. Tier 4 inviting Tier 1 → earns Tier 1 credits. Tier 3 inviting Tier 4 → earns Tier 3 credits. You cannot earn above your own contribution station.
 - Admin invite link earns NO Host Credits. Admin is compensated via the 7.5% admin split only.
 
 CONTRIBUTION TIERS (4 tiers available):
@@ -956,12 +985,15 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>How You Earn Points</div>
                   {[
                     [`Monthly contribution on time`,`+${t.pts.contribution} pts`,"Contributing Members"],
-                    [`Each month cell is active`,`+${t.pts.cellActive} pts`,"All seat types equally"],
+                    [`Each month your cell is active`,`+${t.pts.cellActive} pts`,"All contributing members"],
                     [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
-                    [`Cycle completed (network seat)`,`+${t.pts.cycleNetwork.toLocaleString()} pts`,"Network seats (legacy)"],
+
+                    [`Host Credit — invitee activates`,`+${t.pts.hostActivation} pts`,"Earned at lower of your tier or invitee's tier"],
+                    [`Host Credit — invitee completes cycle`,`+${t.pts.hostCycle} pts`,"Earned at lower of your tier or invitee's tier"],
                     [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
                     [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
+                    [`Bill support claim`,`${t.pts.billClaim.toLocaleString()} pts`,"Score deduction on approval"],
                   ].map(([e,p,w])=>(
                     <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.bg}`,fontSize:11}}>
                       <div><div style={{color:C.navy,fontWeight:600}}>{e}</div><div style={{fontSize:10,color:C.muted}}>{w}</div></div>
