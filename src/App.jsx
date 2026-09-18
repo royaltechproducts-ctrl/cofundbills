@@ -32,46 +32,50 @@ const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
 const TIERS = {
   1: {
     id:1, label:"Tier 1", monthly:10000, benefitPool:5000, billSupport:2500,
-    loanFund:1000, admin:1000, contingency:500, cyclePayout:50000,
+    loanFund:1250, admin:750, contingency:500, cyclePayout:50000,
     unlockScore:400, billScoreMin:1000, excellentScore:1000, strongScore:700, standardScore:500,
     loanLimits:{excellent:600000, strong:360000, standard:180000, minimal:60000},
     billCaps:[{min:0,max:2000000,cap:100000,tier:"Bronze"},{min:2000000,max:5000000,cap:250000,tier:"Silver"},
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
-    pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:50,
-         loanRepaid:50, missed:-30, loanDefault:-100},
+    pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:0,
+         loanRepaid:50,
+         hostActivation:10, hostCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
     color:"#1A4F8A", name:"₦10,000 / month",
   },
   2: {
     id:2, label:"Tier 2", monthly:50000, benefitPool:25000, billSupport:12500,
-    loanFund:5000, admin:5000, contingency:2500, cyclePayout:250000,
+    loanFund:6250, admin:3750, contingency:2500, cyclePayout:250000,
     unlockScore:2000, billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
     loanLimits:{excellent:3000000, strong:1800000, standard:900000, minimal:300000},
     billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
-    pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:250,
-         loanRepaid:250, missed:-150, loanDefault:-500},
+    pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
+         loanRepaid:250,
+         hostActivation:50, hostCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
     color:"#0B6E4F", name:"₦50,000 / month",
   },
   3: {
     id:3, label:"Tier 3", monthly:100000, benefitPool:50000, billSupport:25000,
-    loanFund:10000, admin:10000, contingency:5000, cyclePayout:500000,
+    loanFund:12500, admin:7500, contingency:5000, cyclePayout:500000,
     unlockScore:4000, billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
     loanLimits:{excellent:6000000, strong:3600000, standard:1800000, minimal:600000},
     billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
-    pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:500,
-         loanRepaid:500, missed:-300, loanDefault:-1000},
+    pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
+         loanRepaid:500,
+         hostActivation:100, hostCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
     color:"#7C3AED", name:"₦100,000 / month",
   },
   4: {
     id:4, label:"Tier 4", monthly:200000, benefitPool:100000, billSupport:50000,
-    loanFund:20000, admin:20000, contingency:10000, cyclePayout:1000000,
+    loanFund:25000, admin:15000, contingency:10000, cyclePayout:1000000,
     unlockScore:8000, billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
     loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
     billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
-    pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:1000,
-         loanRepaid:1000, missed:-600, loanDefault:-2000},
+    pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
+         loanRepaid:1000,
+         hostActivation:200, hostCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
     color:"#B45309", name:"₦200,000 / month",
   },
 };
@@ -124,11 +128,7 @@ const C = {
 };
 
 const SEAT = {
-  contributing: { bg:C.blue,  light:"#E8F0FA", label:"Contributing Member",  icon:"💳" },
-  host:         { bg:C.green, light:"#E6F4EF", label:"Host",                 icon:"🔗" },
-  anchor:       { bg:C.purple,light:"#F0E8FF", label:"Anchor",               icon:"⚓" },
-  founding:     { bg:C.burg,  light:"#FDF2F2", label:"Root / Founding",      icon:"🎖️" },
-  admin:        { bg:C.gold,  light:"#FFF9EC", label:"Admin",                icon:"🛡️" },
+  contributing: { bg:C.blue, light:"#E8F0FA", label:"Contributing Member", icon:"💳" },
 };
 
 // ── Helpers ───────────────────────────────────────────────────
@@ -337,194 +337,57 @@ export default function App() {
   };
 
   // ── Determine network seats from ref chain ────────────────────
-  const resolveChain = (firstMemberRefCode, allMembers) => {
-    // Chain: Host → Anchor → Root/Founding → Admin (always last)
-    // Founding Members occupy the Root/Founding seat
-    // Admin always closes the chain as the last leg
-    const chain = [];
-    const regularSeats = ["host","anchor"];
-    let cur = firstMemberRefCode;
-    let idx = 0;
-
-    while(cur && idx < 2) {
-      const m = allMembers[cur];
-      if(!m || m.status!=="active") break;
-      if(m.memberType==="admin") {
-        // Admin reached before filling host/anchor — Admin takes last leg
-        chain.push({linkCode:cur, seatType:"admin"});
-        return chain;
-      }
-      if(m.memberType==="founding") {
-        // Founding Member fills next available seat (host or anchor)
-        // then Admin takes last leg
-        chain.push({linkCode:cur, seatType:idx===0?"host":"anchor"});
-        // Now find Admin for last leg
-        let adminCur = m.refCode;
-        while(adminCur) {
-          const parent = allMembers[adminCur];
-          if(!parent) break;
-          if(parent.memberType==="admin") {
-            chain.push({linkCode:adminCur, seatType:"admin"});
-            break;
-          }
-          adminCur = parent.refCode;
-        }
-        // If no admin found via chain, seat first active admin
-        if(!chain.some(c=>allMembers[c.linkCode]?.memberType==="admin")) {
-          const admin = Object.values(allMembers).find(m=>m.memberType==="admin"&&m.status==="active");
-          if(admin) chain.push({linkCode:admin.linkCode, seatType:"admin"});
-        }
-        return chain;
-      }
-      chain.push({linkCode:cur, seatType:regularSeats[idx]});
-      cur = m.refCode;
-      idx++;
-    }
-
-    // After host/anchor — look for founding member then admin
-    if(cur) {
-      const m = allMembers[cur];
-      if(m && m.status==="active") {
-        if(m.memberType==="founding") {
-          chain.push({linkCode:cur, seatType:"founding"});
-          cur = m.refCode;
-        }
-      }
-    }
-
-    // Find admin for last leg — walk up remaining chain
-    let adminFound = false;
-    while(cur && !adminFound) {
-      const m = allMembers[cur];
-      if(!m) break;
-      if(m.memberType==="admin") {
-        chain.push({linkCode:cur, seatType:"admin"});
-        adminFound = true;
-      }
-      cur = m.refCode;
-    }
-    // Fallback — seat first active admin
-    if(!adminFound) {
-      const admin = Object.values(allMembers).find(m=>m.memberType==="admin"&&m.status==="active");
-      if(admin) chain.push({linkCode:admin.linkCode, seatType:"admin"});
-    }
-
-    return chain;
+  // ── Host Credit award ─────────────────────────────────────
+  const awardHostCredit = async (inviterCode, inviterTier, eventType) => {
+    if(!inviterCode) return;
+    const inviter = members[inviterCode];
+    if(!inviter || inviter.memberType==="admin") return;
+    const t = getTier(inviterTier||1);
+    const pts = eventType==="activation" ? t.pts.hostActivation : t.pts.hostCycle;
+    if(!pts) return;
+    await supabase.from("cfb_credit_events").insert({
+      link_code:inviterCode, event_type:`host_credit_${eventType}`,
+      points:pts, description:`Host Credit — invitee ${eventType}`,
+    });
+    await supabase.from("cfb_members").update({
+      credit_score: Math.max(0,(inviter.creditScore||0)+pts)
+    }).eq("link_code",inviterCode);
   };
 
-  // ── Try to form a cell ────────────────────────────────────────
-  const tryFormCell = async (allMembers, allCells) => {
-    // Get all active regular members not yet in an active/forming cell
-    const seatedCodes = new Set();
-    (allCells||[]).filter(c=>c.status!=="completed").forEach(c=>{
-      (c.seats||[]).filter(s=>s.seat_type==="contributing").forEach(s=>seatedCodes.add(s.link_code));
-    });
-    const unplaced = Object.values(allMembers).filter(m=>
-      m.status==="active" && m.memberType==="regular" && !seatedCodes.has(m.linkCode)
-    ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
+  // ── Try to form a cell — simple queue per tier ──────────────
+  const tryFormCell = async (allMembers) => {
+    // For each tier, check if 10 unplaced active members are waiting
+    for(const tierNum of [1,2,3,4]) {
+      const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
+      const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
+      const queue = Object.values(allMembers).filter(m=>
+        m.status==="active" &&
+        m.memberType!=="admin" &&
+        (m.contributionTier||1)===tierNum &&
+        !seatedCodes.has(m.linkCode)
+      ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
 
-    if(unplaced.length < 10) return; // not enough yet
-
-    const contributors = unplaced.slice(0,10);
-    const cellCode = genCode("CELL-");
-    await supabase.from("cfb_cells").insert({
-      cell_code:cellCode, status:"active",
-      started_at:new Date().toISOString(), month_number:1,
-      first_member_at:new Date().toISOString(),
-    });
-
-    // Seat contributing members
-    for(const m of contributors) {
-      await supabase.from("cfb_cell_members").insert({
-        cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
-      });
-    }
-
-    // Resolve network chain from first contributor's ref
-    const chain = resolveChain(contributors[0].refCode, allMembers);
-    for(const s of chain) {
-      // Avoid duplicate seat
-      const exists = await supabase.from("cfb_cell_members")
-        .select("id").eq("cell_code",cellCode).eq("link_code",s.linkCode).single();
-      if(!exists.data) {
-        await supabase.from("cfb_cell_members").insert({
-          cell_code:cellCode, link_code:s.linkCode, seat_type:s.seatType
+      if(queue.length>=10){
+        const ten = queue.slice(0,10);
+        const cellCode = genCode("CELL-");
+        await supabase.from("cfb_cells").insert({
+          cell_code:cellCode, status:"active",
+          contribution_tier:tierNum,
+          started_at:new Date().toISOString(), month_number:1,
         });
-        await addCredit(s.linkCode,"cell_active",s.seatType,cellCode,"Cell formed");
+        for(const m of ten){
+          await supabase.from("cfb_cell_members").insert({
+            cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
+          });
+        }
+        await loadCells();
+        showToast(`Tier ${tierNum} cell ${cellCode} formed with 10 members!`);
       }
     }
-
-    await loadCells();
-    showToast(`New contribution cell ${cellCode} formed with ${10+chain.length} members!`);
   };
 
-  // ── Merger engine ─────────────────────────────────────────────
-  const runMergerCheck = async (allMembers, allCells) => {
-    const forming = (allCells||[]).filter(c=>c.status==="forming");
-    const overdue = forming.filter(c=>daysSince(c.first_member_at)>=CELL_TIMEOUT_DAYS);
-    if(overdue.length<2) return;
 
-    // Sort: overdue/priority first, then by contributor count desc
-    const sorted = [...overdue].sort((a,b)=>{
-      const aC = (a.seats||[]).filter(s=>s.seat_type==="contributing").length;
-      const bC = (b.seats||[]).filter(s=>s.seat_type==="contributing").length;
-      if(b.is_priority && !a.is_priority) return 1;
-      if(a.is_priority && !b.is_priority) return -1;
-      return bC - aC;
-    });
-
-    const bigger = sorted[0];
-    const smaller = sorted[1];
-    const bigContribs = (bigger.seats||[]).filter(s=>s.seat_type==="contributing").map(s=>s.link_code);
-    const smallContribs = (smaller.seats||[]).filter(s=>s.seat_type==="contributing").map(s=>s.link_code);
-
-    const slotsAvailable = 10 - bigContribs.length;
-    const toMerge = smallContribs.slice(0, slotsAvailable);
-    const overflow = smallContribs.slice(slotsAvailable);
-
-    // Move toMerge into bigger cell
-    for(const lc of toMerge) {
-      await supabase.from("cfb_cell_members")
-        .update({cell_code:bigger.cell_code})
-        .eq("cell_code",smaller.cell_code).eq("link_code",lc);
-    }
-
-    // Remove smaller cell's network positions (suspend, not delete)
-    await supabase.from("cfb_cell_members")
-      .delete()
-      .eq("cell_code",smaller.cell_code)
-      .in("seat_type",["host","anchor","root","founding"]);
-
-    // If bigger cell now has 10 contributors — activate it
-    const newCount = bigContribs.length + toMerge.length;
-    if(newCount>=10) {
-      await supabase.from("cfb_cells").update({
-        status:"active", started_at:new Date().toISOString(), month_number:1
-      }).eq("cell_code",bigger.cell_code);
-      showToast(`Cell ${bigger.cell_code} activated after merger!`);
-    }
-
-    // Handle overflow — return to smaller cell with priority flag
-    if(overflow.length>0) {
-      await supabase.from("cfb_cells").update({
-        is_priority:true, first_member_at:new Date().toISOString()
-      }).eq("cell_code",smaller.cell_code);
-      // Remove merged members from smaller cell
-      for(const lc of toMerge) {
-        await supabase.from("cfb_cell_members")
-          .delete()
-          .eq("cell_code",smaller.cell_code).eq("link_code",lc);
-      }
-      showToast(`${overflow.length} member(s) retained in ${smaller.cell_code} with priority status.`);
-    } else {
-      // Smaller cell fully merged — mark completed
-      await supabase.from("cfb_cells").update({status:"completed"}).eq("cell_code",smaller.cell_code);
-    }
-
-    await loadCells();
-  };
-
-  // ── Registration ──────────────────────────────────────────────
+    // ── Registration ──────────────────────────────────────────────
   const handleRegister = async () => {
     const errs = {};
     ["fullName","email","phone","occupation","address","state",
@@ -589,8 +452,7 @@ export default function App() {
     // Activation email sent manually from cofundbills@gmail.com
     const allM = await loadMembers();
     const allC = await loadCells();
-    await tryFormCell(allM, allC);
-    await runMergerCheck(allM, allC);
+    await tryFormCell(allM);
     showToast(`${allM[code]?.fullName||code} activated.`);
   };
 
@@ -620,7 +482,7 @@ export default function App() {
     const m = members[linkCode];
     await supabase.from("cfb_members").update({
       months_contributed:(m?.monthsContributed||0)+1,
-      contribution_balance:(m?.contributionBalance||0)+BENEFIT_POOL_AMT,
+      contribution_balance:(m?.contributionBalance||0)+cTier.benefitPool,
     }).eq("link_code",linkCode);
     // Credit all seat holders
     const seats = cell.seats||[];
@@ -629,10 +491,16 @@ export default function App() {
     }
     await addCredit(linkCode,"contribution","contributing",cellCode,`Month ${monthNum} contribution`);
     // Update funds
-    await supabase.from("cfb_funds").update({balance:(funds.bill_support||0)+BILL_SUPPORT_AMT}).eq("fund_type","bill_support");
-    await supabase.from("cfb_funds").update({balance:(funds.loan_fund||0)+LOAN_FUND_AMT}).eq("fund_type","loan_fund");
-    await supabase.from("cfb_funds").update({balance:(funds.administration||0)+ADMIN_AMT}).eq("fund_type","administration");
-    await supabase.from("cfb_funds").update({balance:(funds.contingency||0)+CONTINGENCY_AMT}).eq("fund_type","contingency");
+    // Update funds based on cell tier
+    const {data:cellTierData} = await supabase.from("cfb_cells").select("contribution_tier").eq("cell_code",cellCode).single();
+    const cTierNum = cellTierData?.contribution_tier||1;
+    const cTier = getTier(cTierNum);
+    const bsFundKey = `bill_support_t${cTierNum}`;
+    const loanFundKey = cTierNum>1?`loan_fund_t${cTierNum}`:"loan_fund";
+    await supabase.from("cfb_funds").update({balance:(funds[bsFundKey]||funds.bill_support||0)+cTier.billSupport}).eq("fund_type",bsFundKey);
+    await supabase.from("cfb_funds").update({balance:(funds[loanFundKey]||funds.loan_fund||0)+cTier.loanFund}).eq("fund_type",loanFundKey);
+    await supabase.from("cfb_funds").update({balance:(funds.administration||0)+cTier.admin}).eq("fund_type","administration");
+    await supabase.from("cfb_funds").update({balance:(funds.contingency||0)+cTier.contingency}).eq("fund_type","contingency");
     // Check cycle completion
     const {data:contribs} = await supabase.from("cfb_contributions")
       .select("id").eq("cell_code",cellCode).eq("status","confirmed");
@@ -649,18 +517,32 @@ export default function App() {
   };
 
   const completeCycle = async (cellCode, seats) => {
+    const {data:cellData} = await supabase.from("cfb_cells").select("contribution_tier").eq("cell_code",cellCode).single();
+    const cellTierNum = cellData?.contribution_tier||1;
+    const cellTier = getTier(cellTierNum);
     const contributors = seats.filter(s=>s.seat_type==="contributing");
     for(const c of contributors) {
       await supabase.from("cfb_payouts").insert({
-        cell_code:cellCode, link_code:c.link_code, amount:50000, status:"pending"
+        cell_code:cellCode, link_code:c.link_code, amount:cellTier.cyclePayout, status:"pending"
+      });
+      const m = members[c.link_code];
+      await supabase.from("cfb_members").update({
+        cycles_completed:(m?.cyclesCompleted||0)+1
+      }).eq("link_code",c.link_code);
+      // Cycle completion credit
+      await supabase.from("cfb_credit_events").insert({
+        link_code:c.link_code, event_type:"cycle_complete",
+        points:cellTier.pts.cycleContrib, cell_code:cellCode,
+        description:`Cycle completed — ${cellTier.label}`,
       });
       await supabase.from("cfb_members").update({
-        cycles_completed:(members[c.link_code]?.cyclesCompleted||0)+1
+        credit_score:Math.max(0,(m?.creditScore||0)+cellTier.pts.cycleContrib)
       }).eq("link_code",c.link_code);
-      await addCredit(c.link_code,"cycle_complete","contributing",cellCode,"Cycle completed");
-    }
-    for(const s of seats.filter(s=>s.seat_type!=="contributing")) {
-      await addCredit(s.link_code,"cycle_complete",s.seat_type,cellCode,"Cycle completed");
+      // Award host cycle credit to inviter
+      if(m?.refCode){
+        const inviter = members[m.refCode];
+        await awardHostCredit(m.refCode, inviter?.contributionTier||1, "cycle");
+      }
     }
     await supabase.from("cfb_cells").update({
       status:"completed", completed_at:new Date().toISOString()
@@ -727,13 +609,19 @@ export default function App() {
 
 CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Host, Anchor, Root and Founding Member positions earn cooperative credit points only — never cash.
 
-CONTRIBUTION CELL STRUCTURE (dynamic, 10 to 14 members):
-- 10 Contributing Members — pay NGN10,000/month for 10 months, receive NGN50,000 cash + 250 credit points at cycle end
-- Host — the member whose invite link brought contributors to this cell. Credit points only.
-- Anchor — the member who introduced the Host. Credit points only.
-- Root — the member who introduced the Anchor. Credit points only.
-- Founding Member — seats in the furthest traceable network position. Credit points only.
-Cell size depends on actual invite chain depth: 10 (admin-direct), 11, 12, 13 or 14 members.
+CONTRIBUTION CELL STRUCTURE (always exactly 10 members):
+- 10 Contributing Members — all equal, all contributing, all sharing the cycle payout equally
+- No network position seats — no Host seat, no Anchor, no Root, no Founding Member seat in cells
+- Cells form by tier queue — first activated, first placed
+- Tiers never mix — Tier 1 with Tier 1, Tier 2 with Tier 2, etc.
+
+HOST CREDIT SYSTEM (replaces network positions):
+- When you invite someone and they activate: you earn Host Credit points at your tier rate
+  Tier 1: +10 pts | Tier 2: +50 pts | Tier 3: +100 pts | Tier 4: +200 pts
+- When your invitee completes a 10-month cycle: you earn more Host Credits
+  Tier 1: +25 pts | Tier 2: +125 pts | Tier 3: +250 pts | Tier 4: +500 pts
+- No seat required. No chain. No limit. Credits earned at your OWN tier rate.
+- Admin invite link earns NO Host Credits. Admin is compensated via the 7.5% admin split only.
 
 CONTRIBUTION TIERS (4 tiers available):
 - Tier 1: NGN10,000/month → NGN50,000 cycle payout, bill support up to NGN500,000
@@ -744,8 +632,8 @@ CONTRIBUTION TIERS (4 tiers available):
 CONTRIBUTION SPLIT (same % across all tiers):
 - Member Benefit Pool: 50% — paid equally to contributing members at cycle end
 - Bill Support Fund: 25%
-- Loan Fund: 10%
-- Administration: 10%
+- Loan Fund: 12.5%
+- Administration: 7.5%
 - Contingency Reserve: 5% — covers any member defaults so your payout is always guaranteed
 
 PAYOUT PROTECTION: If any cell member defaults, the Contingency Reserve covers the shortfall. Your cycle payout is guaranteed regardless of fellow members' behaviour.
@@ -756,8 +644,7 @@ CROSS-TIER NETWORK SEATS: Network position holders earn points at the LOWER of t
 
 CYCLE PAYOUT: NGN50,000 cash + 250 credit points per contributing member after 10 months. They contributed NGN100,000.
 
-CELL FORMATION: Cells form automatically when 10 active unplaced contributing members are available.
-MERGER RULE: Forming cells over 30 days old without 10 contributors merge — more populated absorbs less populated. Network positions of more populated cell are kept.
+CELL FORMATION: Cells form instantly when 10 activated members are in the same tier's queue. First activated, first placed. No mergers. No timers. No forming state.
 
 CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Monthly contribution on time: +20 pts (contributing members)
@@ -843,12 +730,12 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div>
             <div style={{fontWeight:800,color:C.navy,fontSize:13}}>{cell.cell_code}</div>
-            <div style={{fontSize:11,color:C.muted}}>{seats.length} members · Month {cell.month_number||0}/{CYCLE_MONTHS}{cell.is_priority?" · 🔴 Priority":""}</div>
+            <div style={{fontSize:11,color:C.muted}}>{seats.length} members · Month {cell.month_number||0}/{CYCLE_MONTHS}</div>
           </div>
           <span className="pill" style={{
-            background:cell.status==="active"?"#BBF7D0":cell.status==="completed"?"#BFDBFE":cell.is_priority?"#FEE2E2":"#FEF3C7",
-            color:cell.status==="active"?"#166534":cell.status==="completed"?C.blue:cell.is_priority?C.error:"#92400E",
-          }}>{cell.is_priority&&cell.status==="forming"?"Priority":cell.status}</span>
+            background:cell.status==="active"?"#BBF7D0":cell.status==="completed"?"#BFDBFE":"#FEF3C7",
+            color:cell.status==="active"?"#166534":cell.status==="completed"?C.blue:"#92400E",
+          }}>{cell.status}</span>
         </div>
         {/* Cycle progress */}
         {cell.status==="active"&&(
@@ -890,14 +777,14 @@ Answer warmly, concisely and accurately. Never invent information.`;
   // ── FAQ data ──────────────────────────────────────────────────
   const FAQS = [
     ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦50,000 cash payout each at cycle end, plus 250 credit points. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
-    ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, plus up to 4 network position holders (Host, Anchor, Root/Founding Member, and Admin) whose invite chains led to the cell's formation. Root and Founding Member occupy the same seat — all Founding Members sit in the Root/Founding position. Admin always closes the chain as the last leg. Cell size ranges from 10 to 13 members depending on the depth of the invite chain above the contributing members."],
+    ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, Cells form automatically when 10 activated members are in the same tier's queue. No network seats. No chains. First activated, first placed."],
     ["How much do I receive at cycle end?","Each contributing member receives ₦50,000 cash at cycle end, plus 250 credit points (20 per month × 10 months + 100 cycle completion bonus). You will have contributed ₦100,000 in total. The ₦50,000 difference funds the cooperative: bill support (25% — ₦2,500/month), loan fund (10%), administration (10%) and contingency reserve (5%) for default payments, operational shocks and make-up funds."],
-    ["What do Host, Anchor, Root and Founding Member receive?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
+    ["What is Host Credit?","These are network positions earned by existing active members whose invite chain led to the cell's formation. They earn cooperative credit points only — no cash from contributions. Credit points build their CoFund Credit Score which determines their loan rate and loan limit."],
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) and +50 flat for all network seat holders at cycle end. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Loan and bill support services unlock at a minimum credit score per tier: Tier 1 at 400 pts, Tier 2 at 2,000 pts, Tier 3 at 4,000 pts, Tier 4 at 8,000 pts. Once unlocked, your interest rate and loan limit are determined by your credit score category — Excellent Performance (lowest risk): 1%/month · Strong Performance: 2%/month · Standard Performance: 3%/month · Minimal Performance: 4%/month. Loan limits scale with your contribution tier and credit category. Approval is subject to available fund liquidity, repayment capacity and cooperative credit policy."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
-    ["What is the cell merger rule?","If a forming cell has not reached 10 contributing members within 30 days, it becomes eligible for merger. The more populated cell absorbs the less populated. The merged cell adopts the network positions of the more populated cell. Members who do not get a seat in the merger return to their original cell with priority status for the next merger."],
-    ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Host, Anchor and Root earn credit points only — never cash from contributors below them. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
+    ["How do contribution cells form?","When you activate your membership, you join your tier's queue — Tier 1 with Tier 1, Tier 2 with Tier 2, and so on. The moment 10 members are in the queue, a new contribution cell forms instantly and automatically. First activated, first placed. Tiers never mix. There are no mergers, no timers and no complicated arrangements."],
+    ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Invite links earn Host Credit points only — never cash. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
     ["What contribution tiers are available?","CoFundBills offers four contribution tiers. Tier 1 (₦10,000/month) — cycle payout ₦50,000, bill support up to ₦500,000. Tier 2 (₦50,000/month) — cycle payout ₦250,000, bill support up to ₦2,500,000. Tier 3 (₦100,000/month) — cycle payout ₦500,000, bill support up to ₦5,000,000. Tier 4 (₦200,000/month) — cycle payout ₦1,000,000, bill support up to ₦10,000,000. You choose your tier at registration and can change it any time before your cell activates."],
     ["What if a member in my cell defaults on their contribution?","Your payout is fully protected. The cooperative's dedicated Contingency Reserve covers any member's missed contribution immediately — you will never be shortchanged because of someone else's default. Defaulting members face a credit score deduction of 30 points per missed month and are subject to cooperative disciplinary action. Their failure never reaches you. This is why the Contingency Reserve exists — to absorb shocks so the cooperative's promises to you are always kept."],
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
@@ -908,9 +795,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["1. Membership","Membership is open to individuals who register through the platform and pay the first monthly contribution of ₦10,000. Membership is personal and non-transferable."],
     ["2. Contribution Obligation","Contributing members must pay ₦10,000 monthly for the full 10-month cycle. Failure to contribute suspends cycle payout eligibility and cooperative service access until arrears are cleared."],
     ["3. Contribution Cell","Members are automatically assigned to a contribution cell upon activation. Cell size ranges from 10 to 14 members. The cycle runs for 10 months."],
-    ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 10% (₦1,000), Administration 10% (₦1,000), Contingency Reserve 5% (₦500)."],
+    ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 12.5% (₦1,250), Administration 7.5% (₦750), Contingency Reserve 5% (₦500)."],
     ["5. Cycle Payout","₦50,000 cash is paid to each contributing member at cycle completion, plus 250 credit points earned during the cycle. Payouts are processed within 7 business days of cycle completion."],
-    ["6. Network Positions","Host, Anchor, Root and Founding Member earn cooperative credit points only. No member receives a commission or guaranteed financial return for introducing another member."],
+    ["6. Network Positions","Members who invite others earn Host Credit points — on invitee activation and cycle completion. No member receives cash or guaranteed financial return for introducing another member."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
     ["9. Bill Support","Bill support applications are subject to available fund balance and admin approval. Bill support is not an entitlement."],
@@ -962,12 +849,12 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>The Contribution Cell</span>
           <h2 className="section-title">How CoFundBills Works</h2>
-          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of 10 to 14 members — 10 contributing members plus 1 to 4 non-contributing network position holders (Host, Anchor, Root/Founding Member and Admin). The ten contributing members pay monthly contributions and share a payout at cycle end. Network position holders earn credit points that unlock better loan access.</p>
+          <p className="section-sub" style={{margin:"0 auto 28px"}}>Members join contribution cells of exactly 10 contributing members — all equal, all contributing, all sharing the cycle payout equally. Cells form automatically when 10 activated members are in the same tier's queue. Your invite link earns you Host Credit points — no seats, no chains, just credit points for every member you bring into the cooperative.</p>
           <div className="grid-3" style={{marginBottom:24}}>
             {[
-              {icon:"💳",title:"Contributing Members (10)",desc:`Each pays ₦10,000/month for 10 months. Receives ₦50,000 cash at cycle end plus credit points. Total contributed: ₦100,000.`,color:C.blue},
-              {icon:"🔗",title:"Host · Anchor · Root",desc:"Three network positions for existing active members whose invite chain led to this cell. Earn credit points only — no cash from contributions.",color:C.green},
-              {icon:"🎖️",title:"Founding Member",desc:"Seats in the Root/Founding position in cells traceable to their network. Contributes ₦10,000/month like all members. Earns credit points in every traceable cell simultaneously — boosting their credit score and loan access faster.",color:C.burg},
+              {icon:"💳",title:"10 Contributing Members",desc:"Each pays their tier's monthly contribution for 10 months. At cycle end, each receives 50% of their total contributions back as cash. The other 50% merges into the cooperative's shared funds.",color:C.blue},
+              {icon:"🤝",title:"Host Credit",desc:"When you invite someone and they activate their membership, you earn Host Credit points — automatically. When they complete a cycle, you earn more. No seat required. No chain. Just credit points for growing the cooperative.",color:C.green},
+              {icon:"🎖️",title:"Founding Members",desc:"Personally invited by cooperative admin to establish the founding register required for cooperative registration under Lagos State law. Founding Members contribute and participate like all regular members.",color:C.burg},
             ].map(c=>(
               <div key={c.title} className="card" style={{borderTop:`3px solid ${c.color}`,textAlign:"left"}}>
                 <div style={{fontSize:26,marginBottom:8}}>{c.icon}</div>
@@ -984,8 +871,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {[
                 {l:"Member Benefit Pool",a:"₦5,000",p:"50%",c:C.blue},
                 {l:"Bill Support Fund",a:"₦2,500",p:"25%",c:C.green},
-                {l:"Loan Fund",a:"₦1,000",p:"10%",c:C.purple},
-                {l:"Administration",a:"₦1,000",p:"10%",c:C.amber},
+                {l:"Loan Fund",a:"₦1,250",p:"12.5%",c:C.purple},
+                {l:"Administration",a:"₦750",p:"7.5%",c:C.amber},
                 {l:"Contingency Reserve",a:"₦500", p:"5%", c:C.burg},
               ].map(s=>(
                 <div key={s.l} style={{background:C.bg,borderRadius:10,padding:12,borderLeft:`3px solid ${s.c}`}}>
@@ -1015,7 +902,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               Divided equally → <strong style={{color:C.gold}}>₦50,000 per contributing member</strong> at cycle end
             </div>
             <div style={{fontSize:11,opacity:.65,lineHeight:1.7}}>
-              * Each contributing member contributed ₦100,000 over 10 months. They receive ₦50,000 cash. The ₦50,000 difference funds cooperative services — 25% to bill support, 10% to loans, 10% to administration and 5% to contingency reserve — all available to active members.
+              * Each contributing member contributed ₦100,000 over 10 months. They receive ₦50,000 cash. The ₦50,000 difference funds cooperative services — 25% to bill support, 12.5% to loans, 7.5% to administration and 5% to contingency reserve — all available to active members.
             </div>
           </div>
         </div>
@@ -1024,15 +911,15 @@ Answer warmly, concisely and accurately. Never invent information.`;
       {/* Cell Merger */}
       <div className="section" style={{background:C.bg}}>
         <div className="section-inner">
-          <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>Cell Formation & Merger</span>
-          <h2 className="section-title">No Member is Left Behind</h2>
-          <p className="section-sub">Cells form automatically when 10 active contributing members are available. If a forming cell does not fill within 30 days, the cooperative's merger mechanism ensures all members find a cell without unnecessary delay.</p>
+          <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>How Your Cell Forms</span>
+          <h2 className="section-title">Simple. Fair. Automatic.</h2>
+          <p className="section-sub">There are no complex group arrangements or network chains. When you activate your membership, you simply join your tier's queue. The moment 10 members are in the queue — a new contribution cell forms instantly. First activated, first placed.</p>
           <div className="grid-2">
             {[
-              {icon:"⚡",title:"Automatic Cell Formation",desc:"As soon as 10 unplaced active members are available, a new contribution cell forms automatically — no admin intervention needed.",color:C.blue},
-              {icon:"🔀",title:"30-Day Merger Rule",desc:"Forming cells over 30 days old without 10 contributors are merged. The more populated cell absorbs the less populated, adopting its network positions.",color:C.amber},
-              {icon:"🏆",title:"Priority for Waiting Members",desc:"Members who miss a merger seat return to a priority queue and are placed first in the next available merger.",color:C.green},
-              {icon:"🛡️",title:"Network Positions Preserved",desc:"Original network positions are suspended — not lost — during a merger. If a cell ever completes independently, original positions are fully restored.",color:C.burg},
+              {icon:"🎯",title:"Four Independent Queues",desc:"One queue per contribution tier. Tier 1 members form Tier 1 cells. Tier 2 members form Tier 2 cells. Tiers never mix. You always contribute alongside members at the same level.",color:C.blue},
+              {icon:"⚡",title:"Instant Cell Formation",desc:"The moment 10 activated members are in a tier's queue, a new contribution cell forms automatically — no waiting, no admin intervention, no complicated arrangements.",color:C.green},
+              {icon:"🔄",title:"Tier Flexibility",desc:"You can change your contribution tier any time before your cell forms. Switch up or down — you simply move to the back of your new tier's queue.",color:C.amber},
+              {icon:"🛡️",title:"Your Payout is Protected",desc:"If any cell member defaults, the cooperative's Contingency Reserve covers the shortfall immediately. Your cycle payout is guaranteed regardless of fellow members' behaviour.",color:C.burg},
             ].map(c=>(
               <div key={c.title} className="card" style={{borderLeft:`3px solid ${c.color}`}}>
                 <div style={{fontSize:22,marginBottom:6}}>{c.icon}</div>
@@ -1069,7 +956,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     [`Monthly contribution on time`,`+${t.pts.contribution} pts`,"Contributing Members"],
                     [`Each month cell is active`,`+${t.pts.cellActive} pts`,"All seat types equally"],
                     [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
-                    [`Cycle completed (network seat)`,`+${t.pts.cycleNetwork.toLocaleString()} pts`,"Host / Anchor / Root / Admin"],
+                    [`Cycle completed (network seat)`,`+${t.pts.cycleNetwork.toLocaleString()} pts`,"Network seats (legacy)"],
                     [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
                     [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
@@ -1240,11 +1127,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <h2 style={{color:C.white,fontSize:22,fontWeight:900,marginBottom:20}}>Why CoFundBills is NOT a Pyramid Scheme</h2>
           <div className="grid-2" style={{textAlign:"left",gap:12}}>
             {[
-              ["✅ No cash from recruiting","Host, Anchor and Root earn credit points only — never cash from contributors below them."],
+              ["✅ No cash from recruiting","Invite links earn Host Credit points only — never cash. No tiered positions, no chain structure, no multi-level commissions."],
               ["✅ Real cooperative services","Contribution cells, bill support fund, credit scoring and loan facility are genuine cooperative services."],
               ["✅ Works without new members","Existing active members complete cycles, access loans and build credit indefinitely without new recruitment."],
               ["✅ Registered cooperative","Being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022."],
-              ["✅ Every naira documented","50% benefit pool, 25% bill support, 10% loans, 10% admin, 5% reserve — transparent and automatic."],
+              ["✅ Every naira documented","50% benefit pool, 25% bill support, 12.5% loans, 7.5% admin, 5% reserve — transparent and automatic."],
               ["✅ Behaviour-based credit","Loan access is earned through contribution discipline and repayment history — not through recruiting others."],
             ].map(([t,d])=>(
               <div key={t} style={{background:"rgba(255,255,255,.08)",borderRadius:10,padding:13}}>
@@ -1330,46 +1217,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   </div>
                 ))}
               </div>
-              {/* Merger opportunity notification */}
-              {(()=>{
-                const myFormingCell = cells.find(c=>c.status==="forming"&&(c.seats||[]).some(s=>s.link_code===m.linkCode&&s.seat_type==="contributing"));
-                const isOverdue = myFormingCell && daysSince(myFormingCell.first_member_at)>=30;
-                const otherFormingCells = cells.filter(c=>c.status==="forming"&&c.cell_code!==myFormingCell?.cell_code);
-                return isOverdue&&otherFormingCells.length>0&&(
-                  <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:10,padding:14,marginBottom:14}}>
-                    <div style={{fontWeight:800,color:"#92400E",fontSize:13,marginBottom:8}}>🔀 Merger Opportunity Available</div>
-                    <div style={{fontSize:12,color:"#92400E",lineHeight:1.7,marginBottom:10}}>
-                      Your forming cell has been waiting over 30 days. There are {otherFormingCells.length} other forming cell(s) on the platform. You can switch to a different contribution tier to join a faster-filling cell — or stay and wait for your tier's next merger pass.
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",gap:8}}>
-                      {otherFormingCells.slice(0,4).map(c=>{
-                        const contribs = (c.seats||[]).filter(s=>s.seat_type==="contributing").length;
-                        const tierNum = c.contribution_tier||1;
-                        const t = getTier(tierNum);
-                        return(
-                          <div key={c.cell_code} style={{background:C.white,borderRadius:8,padding:10,border:`1px solid ${C.border}`}}>
-                            <div style={{fontWeight:700,color:t.color,fontSize:11}}>{t.label}</div>
-                            <div style={{fontSize:10,color:C.muted}}>{c.cell_code}</div>
-                            <div style={{fontSize:12,fontWeight:700,color:C.navy,marginTop:4}}>{contribs}/10 members</div>
-                            <div style={{fontSize:10,color:C.muted}}>{10-contribs} seats available</div>
-                            {tierNum!==(m.contributionTier||1)&&(
-                              <button style={{marginTop:6,width:"100%",background:t.color,color:C.white,
-                                border:"none",borderRadius:6,padding:"4px 0",fontSize:10,fontWeight:700,cursor:"pointer"}}
-                                onClick={async()=>{
-                                  await supabase.from("cfb_members").update({contribution_tier:tierNum}).eq("link_code",m.linkCode);
-                                  setMember({...m,contributionTier:tierNum});
-                                  showToast(`Switched to ${t.label} — ${t.name}`);
-                                }}>Switch to {t.label}</button>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              })()}
-
-              {m.status==="pending"&&(
+                            {m.status==="pending"&&(
                 <div className="info-box">
                   <strong>🔔 Activate Your Membership</strong><br/>
                   Pay your first monthly contribution of {fmtNGN(getTier(m.contributionTier||1).monthly)} to activate your membership and enter a contribution cell.
@@ -1383,8 +1231,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
               )}
               {/* Tier change — only if not yet in active cell */}
               {(()=>{
-                const myCell = cells.find(c=>(c.seats||[]).some(s=>s.link_code===m.linkCode && s.seat_type==="contributing"));
-                const isLocked = myCell?.status==="active" || myCell?.status==="completed";
+                const myCell = cells.find(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode));
+                const isLocked = !!myCell;
                 const mTier = getTier(m.contributionTier||1);
                 return !isLocked&&(
                   <div className="card" style={{marginBottom:14,border:`2px solid ${mTier.color}33`}}>
@@ -1424,7 +1272,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 </div>
                 <button className="btn btn-ghost btn-sm" onClick={()=>{navigator.clipboard.writeText(`https://cofundbills.vercel.app?ref=${m.linkCode}`);showToast("Link copied!");}}>📋 Copy</button>
                 <div style={{fontSize:11,color:C.muted,marginTop:8,lineHeight:1.7}}>
-                  Share your invite link to help grow the cooperative. Members you introduce may seat you as Host, Anchor or Root/Founding in their contribution cell — earning you CoFund Credit Score points that improve your loan access.
+                  Share your invite link to help grow the cooperative. Members who join through your link earn you Host Credit points automatically — on activation and on every cycle they complete.
                 </div>
               </div>
             </div>
@@ -1503,7 +1351,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   ["Stay active in your contribution cell",`+${getTier(m.contributionTier||1).pts.cellActive} pts/month`],
                   [`Complete a full 10-month cycle`,`+${getTier(m.contributionTier||1).pts.cycleContrib.toLocaleString()} pts`],
                   [`Repay loans on time`,`+${getTier(m.contributionTier||1).pts.loanRepaid} pts per repayment`],
-                  ["Invite members who form new cells","Credit pts as Host/Anchor/Root/Founding"],
+                  ["Invite members through your link","Host Credits: +pts on activation, +pts per cycle completed"],
                 ].map(([a,b])=>(
                   <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
                     <span style={{color:C.navy}}>{a}</span>
@@ -1718,7 +1566,7 @@ ${inviteLink}`;
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>Your Personal Invite Link</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.7}}>
-                  Share your personal invite link to grow the cooperative. Members who join through your link may seat you as Host, Anchor or Root/Founding Member in their contribution cell — earning you CoFund Credit Score points that improve your loan access.
+                  Share your personal invite link to grow the cooperative. Members who join through your link earn you Host Credit points automatically — when they activate and when they complete each cycle.
                 </div>
                 <div style={{background:C.bg,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:12,
                   fontFamily:"monospace",fontSize:12,wordBreak:"break-all",marginBottom:10}}>
@@ -1783,14 +1631,14 @@ ${inviteLink}`;
               <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:18,marginTop:14}}>
                 <div style={{fontWeight:800,color:C.gold,fontSize:13,marginBottom:8}}>Why Inviting Members Benefits You</div>
                 <div style={{fontSize:12,color:"rgba(255,255,255,.85)",lineHeight:1.85}}>
-                  Every member who joins through your invite link and activates their membership strengthens your network position. When their contribution cell forms, you may be seated as:
+                  Every member who joins through your invite link and activates their membership earns you Host Credit points — automatically, no seat required. When they complete their 10-month cycle, you earn more. No limits. No chains. The more you invite, the more Host Credits you build.
                 </div>
                 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:8,marginTop:12}}>
                   {[
-                    {seat:"Host",pts:"+5 pts/month + 50 pts cycle",c:C.green},
-                    {seat:"Anchor",pts:"+5 pts/month + 50 pts cycle",c:C.purple},
-                    {seat:"Root/Founding",pts:"+5 pts/month + 50 pts cycle",c:C.burg},
-                    {seat:"Admin",pts:"+5 pts/month + 50 pts cycle",c:C.gold},
+                    {seat:"Invitee Activates",pts:`+${getTier(m.contributionTier||1).pts.hostActivation} pts (Host Credit)`,c:C.green},
+                    {seat:"Invitee Completes Cycle",pts:`+${getTier(m.contributionTier||1).pts.hostCycle} pts (Host Credit)`,c:C.blue},
+                    {seat:"Each Additional Invitee",pts:"Same credits per person",c:C.amber},
+                    {seat:"No Limit",pts:"Invite as many as you want",c:C.burg},
                   ].map(s=>(
                     <div key={s.seat} style={{background:"rgba(255,255,255,.08)",borderRadius:8,padding:10,textAlign:"center"}}>
                       <div style={{color:s.c,fontWeight:800,fontSize:12}}>{s.seat}</div>
@@ -1799,7 +1647,7 @@ ${inviteLink}`;
                   ))}
                 </div>
                 <div style={{fontSize:11,color:"rgba(255,255,255,.6)",marginTop:10,lineHeight:1.7}}>
-                  More credit points = better loan access = lower interest rates. Your network grows your credit score.
+                  Host Credits build your CoFund Credit Score — the higher your score, the better your loan access, lower your interest rate and faster you unlock bill support services.
                 </div>
               </div>
             </div>
@@ -1853,7 +1701,7 @@ ${inviteLink}`;
             <div style={{color:C.white,fontWeight:900,fontSize:17,marginTop:2}}>CoFundBills Cooperative</div>
           </div>
           <div style={{display:"flex",gap:8}}>
-            <button className="btn btn-outline btn-sm" onClick={async()=>{const allM=await loadMembers();const allC=await loadCells();await runMergerCheck(allM,allC);}}>🔀 Run Merger Check</button>
+
             <button className="btn btn-outline btn-sm" onClick={()=>setView("landing")}>🏠 Home</button>
           </div>
         </div>
@@ -1864,7 +1712,11 @@ ${inviteLink}`;
             {[
               ["Total Members",allArr.length],["Active",activeArr.length],
               ["Pending",pendingArr.length],["Founding",foundingArr.length+"/25"],
-              ["Forming Cells",formingCells.length],["Active Cells",activeCells.length],
+              ["Queue T1",Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===1&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting"],
+              ["Queue T2",Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===2&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting"],
+              ["Queue T3",Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===3&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting"],
+              ["Queue T4",Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===4&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting"],
+              ["Active Cells",activeCells.length],
               ["Completed Cells",completedCells.length],["Pending Loans",pendingLoans.length],
               ["Pending Bills",pendingBills.length],["Bill Support Fund",fmtNGN(funds.bill_support||0)],
               ["Loan Fund",fmtNGN(funds.loan_fund||0)],["Reserve",fmtNGN(funds.contingency||0)],
