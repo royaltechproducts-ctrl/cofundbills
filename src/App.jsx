@@ -135,6 +135,32 @@ const SEAT = {
 const fmtNGN = n => "₦" + Number(n||0).toLocaleString("en-NG");
 const fmtPts = n => Number(n||0).toLocaleString() + " pts";
 const genCode = pfx => pfx + Math.random().toString(36).substr(2,6).toUpperCase();
+
+// ── Payment schedule helpers ──────────────────────────────────
+const getMonthName = (date) => date.toLocaleString("en-NG",{month:"long",year:"numeric"});
+
+const getDeadline = (activationDate, monthNumber) => {
+  // Month 1 = activation payment (already paid)
+  // Month 2 due = last day of month AFTER activation month
+  const d = new Date(activationDate);
+  d.setMonth(d.getMonth() + monthNumber); // add monthNumber months
+  return new Date(d.getFullYear(), d.getMonth()+1, 0); // last day of that month
+};
+
+const getReminderWeekStart = (deadline) => {
+  const d = new Date(deadline);
+  d.setDate(d.getDate() - 6); // last 7 days of month
+  return d;
+};
+
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("en-NG",{
+  day:"numeric", month:"long", year:"numeric"
+}) : "—";
+
+const isInQueue = (member, cells) => {
+  return member.status==="active" && 
+    !cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===member.linkCode));
+};
 const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24)) : 0;
 
 const scoreCategory = (score, tierNum=1) => {
@@ -372,15 +398,34 @@ export default function App() {
       if(queue.length>=10){
         const ten = queue.slice(0,10);
         const cellCode = genCode("CELL-");
+        const now = new Date();
+        const activationMonth = now.toISOString().slice(0,7); // YYYY-MM
+        // Next payment deadline = last day of following month
+        const nextDeadline = new Date(now.getFullYear(), now.getMonth()+2, 0);
+        const nextDeadlineStr = nextDeadline.toISOString().slice(0,10);
+
         await supabase.from("cfb_cells").insert({
           cell_code:cellCode, status:"active",
           contribution_tier:tierNum,
-          started_at:new Date().toISOString(), month_number:1,
+          started_at:now.toISOString(), month_number:1,
+          activation_month:activationMonth,
+          next_payment_deadline:nextDeadlineStr,
         });
         for(const m of ten){
           await supabase.from("cfb_cell_members").insert({
             cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
           });
+        }
+        // Send cell activation email to all 10 members
+        const t = getTier(tierNum);
+        for(const m of ten){
+          if(m.email) {
+            await sendEmail({
+              to_email:m.email, to_name:m.fullName,
+              subject:`CoFundBills — Your Contribution Cell is Now Active!`,
+              message:`Dear ${m.fullName},\n\nGreat news! Your CoFundBills ${t.label} contribution cell has been formed and is now active.\n\nCell Code: ${cellCode}\nTier: ${t.label} (${t.name})\nCell Members: 10 contributing members\n\nYOUR PAYMENT SCHEDULE:\nMonth 1 (your activation payment) — Already paid ✅\nMonth 2 — Due by: ${fmtDate(nextDeadline)} (last day of ${nextDeadline.toLocaleString("en-NG",{month:"long",year:"numeric"})})\n\nMonthly contributions of ${fmtNGN(t.monthly)} are due by the last day of each month from now. The last week of each month is your reminder window. Missing the deadline costs you ${Math.abs(t.pts.missed)} credit score points.\n\nYour cycle payout of ${fmtNGN(t.cyclePayout)} will be disbursed at the end of Month 10.\n\nLog in to track your cell progress: cofundbills.vercel.app\nQuestions? WhatsApp +234 909 999 4816\n\nWarm regards,\nCoFundBills Cooperative`,
+            });
+          }
         }
         await loadCells();
         showToast(`Tier ${tierNum} cell ${cellCode} formed with 10 members!`);
@@ -682,6 +727,14 @@ CYCLE PAYOUT: NGN50,000 cash + 250 credit points per contributing member after 1
 
 CELL FORMATION: Cells form instantly when 10 activated members are in the same tier's queue. First activated, first placed. No mergers. No timers. No forming state.
 
+PAYMENT SCHEDULE:
+- First payment activates membership and joins the queue. NO further payments until the cell activates.
+- When cell activates: all 10 members receive email with Month 2 due date = last day of the FOLLOWING calendar month
+- Monthly thereafter: due by the last day of each calendar month
+- Last week of each month = reminder window
+- Last day of month = deadline. Missing costs credit score points (not cycle payout — that is protected by Contingency Reserve)
+- Example: Cell activates September → Month 2 due 31 October → Month 3 due 30 November etc.
+
 CREDIT SCORE (behaviour-based, NOT recruitment-based):
 - Monthly contribution on time: +20 pts (contributing members)
 - Each month cell is active: +5/5/3/2/1 pts (contributing members)
@@ -824,6 +877,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Invite links earn Referral Bonus points only — never cash. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
     ["What contribution tiers are available?","CoFundBills offers four contribution tiers. Tier 1 (₦10,000/month) — cycle payout ₦50,000, bill support up to ₦500,000. Tier 2 (₦50,000/month) — cycle payout ₦250,000, bill support up to ₦2,500,000. Tier 3 (₦100,000/month) — cycle payout ₦500,000, bill support up to ₦5,000,000. Tier 4 (₦200,000/month) — cycle payout ₦1,000,000, bill support up to ₦10,000,000. You choose your tier at registration and can change it any time before your cell activates."],
     ["What if a member in my cell defaults on their contribution?","Your payout is fully protected. The cooperative's dedicated Contingency Reserve covers any member's missed contribution immediately — you will never be shortchanged because of someone else's default. Defaulting members face a credit score deduction of 30 points per missed month and are subject to cooperative disciplinary action. Their failure never reaches you. This is why the Contingency Reserve exists — to absorb shocks so the cooperative's promises to you are always kept."],
+    ["What is the contribution payment schedule?","Your first monthly contribution activates your membership and places you in your tier's queue — this is the only payment required until your contribution cell activates. When 10 members queue up and your cell forms, you will receive an email with your Month 2 due date — the last day of the following calendar month. From then, contributions are due by the last day of every calendar month. The last week of each month is your reminder window. Missing the deadline costs you credit score points, though your cycle payout remains protected by the cooperative's Contingency Reserve."],
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
   ];
 
@@ -1150,6 +1204,53 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+      {/* Payment Schedule */}
+      <div style={{background:C.bg,padding:"48px 24px"}}>
+        <div style={{maxWidth:860,margin:"0 auto"}}>
+          <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>Payment Schedule</span>
+          <h2 className="section-title">Simple. Structured. Predictable.</h2>
+          <p className="section-sub">Your contribution schedule is clear from day one. One payment to activate. Then monthly contributions aligned to the calendar — with no surprises.</p>
+          <div className="grid-2" style={{marginBottom:24}}>
+            <div className="card" style={{borderTop:`3px solid ${C.blue}`}}>
+              <div style={{fontSize:24,marginBottom:8}}>1️⃣</div>
+              <div style={{fontWeight:800,color:C.blue,fontSize:14,marginBottom:8}}>First Payment — Activation</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+                Your first monthly contribution activates your membership and places you in your tier's queue. <strong>This is the only payment required until your contribution cell activates.</strong> No further payments are collected while you wait in the queue.
+              </div>
+            </div>
+            <div className="card" style={{borderTop:`3px solid ${C.green}`}}>
+              <div style={{fontSize:24,marginBottom:8}}>2️⃣</div>
+              <div style={{fontWeight:800,color:C.green,fontSize:14,marginBottom:8}}>Cell Activates — Cycle Begins</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+                When 10 members queue up, your cell activates instantly. All 10 members receive an email with their Month 2 due date — the <strong>last day of the following calendar month</strong>. From that point, monthly contributions follow the calendar.
+              </div>
+            </div>
+            <div className="card" style={{borderTop:`3px solid ${C.amber}`}}>
+              <div style={{fontSize:24,marginBottom:8}}>📅</div>
+              <div style={{fontWeight:800,color:C.amber,fontSize:14,marginBottom:8}}>Monthly Rhythm — Last Week / Last Day</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+                The <strong>last week of every month</strong> is your reminder window. The <strong>last day of every month</strong> is your contribution deadline. Pay before midnight on the last day to protect your CoFund Credit Score.
+              </div>
+            </div>
+            <div className="card" style={{borderTop:`3px solid ${C.burg}`}}>
+              <div style={{fontSize:24,marginBottom:8}}>⚠️</div>
+              <div style={{fontWeight:800,color:C.burg,fontSize:14,marginBottom:8}}>Missing the Deadline</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
+                A missed monthly payment costs you <strong>credit score points</strong> (−30 pts for Tier 1, scales with tier). Your cycle payout remains protected by the Contingency Reserve — but your credit score and loan access will be impacted until you catch up.
+              </div>
+            </div>
+          </div>
+          <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:20,color:C.white,fontSize:13,lineHeight:1.9}}>
+            <strong style={{color:C.gold,fontSize:14}}>Example — Cell activates in September 2026:</strong><br/>
+            Month 1 (Activation) — Paid ✅<br/>
+            Month 2 — Due by <strong>31st October 2026</strong><br/>
+            Month 3 — Due by <strong>30th November 2026</strong><br/>
+            Month 4 — Due by <strong>31st December 2026</strong><br/>
+            <span style={{opacity:.7,fontSize:11}}>...continuing monthly through Month 10 → Cycle payout disbursed</span>
+          </div>
+        </div>
+      </div>
+
       {/* CTA */}
       <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
         <h2 style={{fontSize:22,fontWeight:900,color:C.navy,marginBottom:8}}>Ready to Co-Fund Your Bills?</h2>
@@ -1260,12 +1361,21 @@ Answer warmly, concisely and accurately. Never invent information.`;
                             {m.status==="pending"&&(
                 <div className="info-box">
                   <strong>🔔 Activate Your Membership</strong><br/>
-                  Pay your first monthly contribution of {fmtNGN(getTier(m.contributionTier||1).monthly)} to activate your membership and enter a contribution cell.
+                  Pay your first monthly contribution of <strong>{fmtNGN(getTier(m.contributionTier||1).monthly)}</strong> to activate your membership and join the {getTier(m.contributionTier||1).label} queue. This is the only payment required until your contribution cell activates.
                   <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,marginTop:10,lineHeight:1.9,fontSize:13}}>
                     <strong>Royal Tech Partnership & Investment Limited</strong><br/>
                     Zenith Bank — 1016621205<br/>
                     Reference: <strong>{m.linkCode}</strong><br/>
                     WhatsApp: <strong>+234 909 999 4816</strong>
+                  </div>
+                </div>
+              )}
+              {m.status==="active"&&isInQueue(m,cells)&&(
+                <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14}}>
+                  <strong style={{color:"#166534"}}>✅ You are in the {getTier(m.contributionTier||1).label} Queue</strong><br/>
+                  <div style={{fontSize:12,color:"#166534",lineHeight:1.8,marginTop:6}}>
+                    Your first contribution has been received and you are now in the queue. <strong>No further payments are required until your contribution cell activates.</strong><br/>
+                    When 10 members are in the {getTier(m.contributionTier||1).label} queue, your cell will form automatically and you will receive an email with your Month 2 payment due date — the last day of the following calendar month.
                   </div>
                 </div>
               )}
@@ -1328,18 +1438,43 @@ Answer warmly, concisely and accurately. Never invent information.`;
             </div>
             {myCells.length===0?(
                 <div className="card" style={{textAlign:"center",padding:36,color:C.muted}}>
-                  You are not yet placed in a contribution cell. Your cell will form automatically once 10 active members are available, or after a merger.
+                  {isInQueue(m,cells)
+                    ? "You are in the queue. No further payments are due until your cell activates. You will receive an email when your cell is ready."
+                    : "You are not yet placed in a contribution cell. Activate your membership to join the queue."}
                 </div>
               ):myCells.map(c=>{
                 const mySeat = (c.seats||[]).find(s=>s.link_code===m.linkCode);
                 const seatInfo = SEAT[mySeat?.seat_type]||SEAT.contributing;
+                const cellTier = getTier(c.contribution_tier||1);
+                const nextDeadline = c.next_payment_deadline ? new Date(c.next_payment_deadline) : null;
+                const today = new Date();
+                const daysLeft = nextDeadline ? Math.ceil((nextDeadline-today)/(1000*60*60*24)) : null;
                 return(
                   <div key={c.cell_code}>
-                    <div style={{marginBottom:6,display:"flex",alignItems:"center",gap:8,fontSize:12}}>
+                    <div style={{marginBottom:6,display:"flex",alignItems:"center",gap:8,fontSize:12,flexWrap:"wrap"}}>
                       <span style={{background:seatInfo.bg,color:C.white,borderRadius:20,padding:"3px 10px",fontWeight:700}}>{seatInfo.icon} {seatInfo.label}</span>
-                      {mySeat?.seat_type==="contributing"&&<span style={{color:C.muted}}>Payout at cycle end: <strong>₦50,000 cash + 250 credit pts</strong></span>}
-                      {mySeat?.seat_type!=="contributing"&&<span style={{color:C.muted}}>Earning credit points in this cell</span>}
+                      <span style={{color:C.muted}}>Cycle payout: <strong>{fmtNGN(cellTier.cyclePayout)}</strong></span>
                     </div>
+                    {/* Payment schedule card */}
+                    {nextDeadline&&(
+                      <div style={{background:daysLeft<=7?"#FEF2F2":daysLeft<=14?"#FEF3C7":"#EFF6FF",
+                        border:`1.5px solid ${daysLeft<=7?"#FCA5A5":daysLeft<=14?"#FCD34D":"#BFDBFE"}`,
+                        borderRadius:10,padding:12,marginBottom:10,fontSize:12}}>
+                        <div style={{fontWeight:800,color:daysLeft<=7?C.error:daysLeft<=14?"#92400E":C.blue,marginBottom:4}}>
+                          {daysLeft<=0?"⚠️ Payment Overdue!":daysLeft<=7?"🔴 Payment Due This Week":daysLeft<=14?"🟡 Payment Due Soon":"📅 Next Payment Due"}
+                        </div>
+                        <div style={{color:C.navy,lineHeight:1.8}}>
+                          Month {(c.month_number||1)+1} of 10 — Due by: <strong>{fmtDate(nextDeadline)}</strong><br/>
+                          Amount: <strong>{fmtNGN(cellTier.monthly)}</strong><br/>
+                          {daysLeft>0?<span style={{color:C.muted}}>{daysLeft} day{daysLeft!==1?"s":""} remaining</span>:<span style={{color:C.error}}>Missing deadline costs you {Math.abs(cellTier.pts.missed)} credit points</span>}
+                        </div>
+                        <div style={{marginTop:8,background:C.white,border:`1px solid ${C.border}`,borderRadius:8,padding:10,fontSize:12,lineHeight:1.8}}>
+                          <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                          Zenith Bank — 1016621205<br/>
+                          Reference: <strong>{m.linkCode}</strong>
+                        </div>
+                      </div>
+                    )}
                     <CellVisual cell={c}/>
                   </div>
                 );
