@@ -1665,7 +1665,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   ["Stay active in your contribution cell",`+${getTier(m.contributionTier||1).pts.cellActive} pts/month`],
                   [`Complete a full 10-month cycle`,`+${getTier(m.contributionTier||1).pts.cycleContrib.toLocaleString()} pts`],
                   [`Repay loans on time`,`+${getTier(m.contributionTier||1).pts.loanRepaid} pts per repayment`],
-                  ["Invite members through your link","Referral Bonuss: +pts per activated member (scored at lower of both tiers)"],
+                  [`Invite members through your link`,`Referral Bonus: +${getTier(m.contributionTier||1).pts.referralActivation} pts per activated member (scored at lower of both tiers)`],
                 ].map(([a,b])=>(
                   <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
                     <span style={{color:C.navy}}>{a}</span>
