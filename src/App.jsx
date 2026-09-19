@@ -288,6 +288,7 @@ export default function App() {
   const [loginForm,   setLoginForm]   = useState({email:"",linkCode:""});
   const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:""});
   const [billForm,    setBillForm]    = useState({billType:"",amount:"",description:""});
+  const [tick,        setTick]        = useState(0); // forces countdown re-render
 
   const urlRef = new URLSearchParams(window.location.search).get("ref")||"";
 
@@ -335,6 +336,12 @@ export default function App() {
 
   useEffect(() => {
     loadMembers(); loadCells(); loadFunds(); loadLoans(); loadBillApps();
+  }, []);
+
+  // Live countdown tick — updates every 60 seconds
+  useEffect(() => {
+    const interval = setInterval(() => setTick(t => t+1), 60000);
+    return () => clearInterval(interval);
   }, []);
 
   // ── Visitor tracking ─────────────────────────────────────────
@@ -1229,7 +1236,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div style={{fontSize:24,marginBottom:8}}>📅</div>
               <div style={{fontWeight:800,color:C.amber,fontSize:14,marginBottom:8}}>Monthly Rhythm — Last Week / Last Day</div>
               <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
-                The <strong>last week of every month</strong> is your reminder window. The <strong>last day of every month</strong> is your contribution deadline. Pay before midnight on the last day to protect your CoFund Credit Score.
+                The <strong>last week of every month</strong> is your reminder window. The <strong>last day of every month</strong> is your contribution deadline. Pay before midnight on the last day to protect and grow your CoFund Credit Score.
               </div>
             </div>
             <div className="card" style={{borderTop:`3px solid ${C.burg}`}}>
@@ -1343,6 +1350,64 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {/* Dashboard */}
           {portalTab==="dashboard"&&(
             <div>
+              {/* Countdown timer for active cell members */}
+              {(()=>{
+                const myActiveCell = cells.find(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode));
+                if(!myActiveCell||!myActiveCell.next_payment_deadline) return null;
+                const deadline = new Date(myActiveCell.next_payment_deadline);
+                deadline.setHours(23,59,59,999); // midnight on last day
+                const now = new Date(); void tick; // tick forces re-render every minute
+                const totalMs = deadline - now;
+                const isOverdue = totalMs <= 0;
+                const days = isOverdue ? 0 : Math.floor(totalMs/(1000*60*60*24));
+                const hours = isOverdue ? 0 : Math.floor((totalMs%(1000*60*60*24))/(1000*60*60));
+                const mins = isOverdue ? 0 : Math.floor((totalMs%(1000*60*60))/(1000*60));
+                const urgency = isOverdue?"error":days<=3?"error":days<=7?"amber":"blue";
+                const urgencyColor = urgency==="error"?C.error:urgency==="amber"?C.amber:C.blue;
+                const cellTier = getTier(myActiveCell.contribution_tier||1);
+                return(
+                  <div style={{background:isOverdue?"#FEF2F2":days<=7?"#FEF3C7":"#EFF6FF",
+                    border:`2px solid ${urgencyColor}`,borderRadius:14,padding:18,marginBottom:16}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:12}}>
+                      <div>
+                        <div style={{fontWeight:800,color:urgencyColor,fontSize:13}}>
+                          {isOverdue?"⚠️ Payment Overdue":days<=3?"🔴 Payment Due Urgently":days<=7?"🟡 Payment Due This Week":"📅 Next Contribution Due"}
+                        </div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>
+                          Month {(myActiveCell.month_number||1)+1} of 10 · {fmtDate(deadline)} · {cellTier.label}
+                        </div>
+                      </div>
+                      <div style={{fontWeight:900,color:urgencyColor,fontSize:18}}>{fmtNGN(cellTier.monthly)}</div>
+                    </div>
+                    {/* Countdown boxes */}
+                    {!isOverdue&&(
+                      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:12}}>
+                        {[["Days",days],["Hours",hours],["Minutes",mins]].map(([label,val])=>(
+                          <div key={label} style={{background:urgencyColor,borderRadius:10,padding:"10px 16px",
+                            textAlign:"center",minWidth:70,flex:1}}>
+                            <div style={{fontSize:28,fontWeight:900,color:C.white,lineHeight:1}}>{String(val).padStart(2,"0")}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,.8)",marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isOverdue&&(
+                      <div style={{background:C.error,borderRadius:10,padding:"10px 16px",textAlign:"center",marginBottom:12}}>
+                        <div style={{fontWeight:900,color:C.white,fontSize:14}}>Payment deadline has passed</div>
+                        <div style={{fontSize:11,color:"rgba(255,255,255,.8)",marginTop:2}}>Contact admin immediately — WhatsApp +234 909 999 4816</div>
+                      </div>
+                    )}
+                    <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:8,padding:10,fontSize:12,lineHeight:1.8}}>
+                      <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                      Zenith Bank — 1016621205 · Ref: <strong>{m.linkCode}</strong>
+                    </div>
+                    {!isOverdue&&<div style={{fontSize:11,color:C.muted,marginTop:8,textAlign:"center"}}>
+                      Pay before midnight on {fmtDate(deadline)} to protect and grow your CoFund Credit Score
+                    </div>}
+                  </div>
+                );
+              })()}
+
               <div className="grid-3" style={{marginBottom:16}}>
                 {[
                   {l:"Contribution Balance",v:fmtNGN(m.contributionBalance),c:C.blue},
