@@ -995,13 +995,20 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {/* Cycle payout */}
           <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:22,color:C.white,marginBottom:8}}>
-            <div style={{fontWeight:900,fontSize:17,marginBottom:8}}>Cycle Payout — What Every Contributing Member Receives</div>
-            <div style={{opacity:.85,fontSize:14,lineHeight:1.8,marginBottom:12}}>
-              ₦5,000 × 10 months × 10 members = <strong style={{color:C.gold}}>₦500,000 total benefit pool</strong><br/>
-              Divided equally → <strong style={{color:C.gold}}>₦50,000 per contributing member</strong> at cycle end
-            </div>
-            <div style={{fontSize:11,opacity:.65,lineHeight:1.7}}>
-              * Each contributing member contributed ₦100,000 over 10 months. They receive ₦50,000 cash. The ₦50,000 difference funds cooperative services — 25% to bill support, 12.5% to loans, 7.5% to administration and 5% to contingency reserve — all available to active members.
+            <div style={{fontWeight:900,fontSize:17,marginBottom:14}}>Cycle Payout — What Every Contributing Member Receives</div>
+            {Object.values(TIERS).map(t=>(
+              <div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
+                padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.1)",flexWrap:"wrap",gap:4}}>
+                <div style={{fontSize:13,opacity:.85}}>
+                  <strong style={{color:C.gold}}>{t.label}:</strong> {fmtNGN(t.benefitPool)} × 10 months × 10 members = <strong style={{color:C.gold}}>{fmtNGN(t.benefitPool*100)} total benefit pool</strong>
+                </div>
+                <div style={{fontSize:13,opacity:.85}}>
+                  Divided equally → <strong style={{color:C.gold}}>{fmtNGN(t.cyclePayout)} per member</strong>
+                </div>
+              </div>
+            ))}
+            <div style={{fontSize:11,opacity:.65,lineHeight:1.7,marginTop:12}}>
+              * Each contributing member receives half of their 10 months contributions as cashback at the end of a cycle. The other half merges with the halves from all other contribution cells across the cooperative into a massive shared pool — half of which funds Approved Bill Support Requests (house rent, school fees, medical bills, etc.), and the other half caters for Approved Loan Requests, Operations and Reserve.
             </div>
           </div>
         </div>
