@@ -1871,7 +1871,7 @@ CoFundBills offers four contribution tiers to suit your financial capacity:
 
 Each tier has its own independent contribution cells — Tier 1 members form Tier 1 cells, Tier 2 members form Tier 2 cells, and so on. You choose the tier that works for you at registration and can change it any time before your cell activates.
 
-Membership is strictly by existing member's invitation. New contribution groups form automatically when 10 members of the same tier are in the queue — first registered, first placed.
+Membership is strictly by invitation. New contribution groups form automatically when 10 members of the same tier are in the queue — first registered, first placed.
 
 Join today at the tier that suits you best. Register now with my personal invite link and choose your preferred contribution tier:
 ${inviteLink}` ;
