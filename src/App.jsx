@@ -1858,16 +1858,23 @@ Answer warmly, concisely and accurately. Never invent information.`;
             const inviteLink = `https://cofundbills.vercel.app?ref=${m.linkCode}`;
             const inviteText = `You are personally invited to join the CoFundBills Cooperative Membership and Monthly Contribution Scheme.
 
-Unlike the traditional thrift contribution and savings scheme where a few friends come together to form a single circle of contributors and one friend at a time gets to receive all the contributions — till everyone gets a turn to complete a cycle — CoFundBills Multipurpose Cooperative Society Limited is a digital version that offers a far more sophisticated and advanced thrift contribution and credit system with several groups of concurrently running contribution cells — where each participant actively participates in one for cycle cash-out and credit scores, and features in several other cells for more credit scores to access cooperative loans and essential bill support funds.
+Unlike the traditional thrift contribution and savings scheme where a few friends come together to form a single circle of contributors and one friend at a time gets to receive all the contributions — till everyone gets a turn to complete a cycle — CoFundBills Multipurpose Cooperative Society Limited is a digital version that offers a far more sophisticated and advanced thrift contribution and credit system with several groups of concurrently running contribution cells.
 
-Every contributing member of a cell contributes ₦10,000 monthly for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions merges with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
+Every contributing member of a cell contributes their tier's monthly amount for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions merges with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
 
-Summarily — while the individual members in a cell are running joint savings for half cash-out by end of cycle, the cells themselves are merging funds in their numbers to jointly finance co-fund bill requests and loan requests across contribution cells from all active members of the cooperative.
+CoFundBills offers four contribution tiers to suit your financial capacity:
 
-Membership is strictly by existing member's invitation, and new contribution group creation and the resulting cooperative expansion is by organically propagated invite links.
+— Tier 1: ₦10,000/month → ₦50,000 cycle payout
+— Tier 2: ₦50,000/month → ₦250,000 cycle payout
+— Tier 3: ₦100,000/month → ₦500,000 cycle payout
+— Tier 4: ₦200,000/month → ₦1,000,000 cycle payout
 
-Join to create a new monthly contribution group today — just for you and 9 others. Gain access now with my personal invite link:
-${inviteLink}`;
+Each tier has its own independent contribution cells — Tier 1 members form Tier 1 cells, Tier 2 members form Tier 2 cells, and so on. You choose the tier that works for you at registration and can change it any time before your cell activates.
+
+Membership is strictly by existing member's invitation. New contribution groups form automatically when 10 members of the same tier are in the queue — first registered, first placed.
+
+Join today at the tier that suits you best. Register now with my personal invite link and choose your preferred contribution tier:
+${inviteLink}` ;
 
             const whatsappText = encodeURIComponent(inviteText);
             const whatsappURL = `https://wa.me/?text=${whatsappText}`;
