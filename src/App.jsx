@@ -1399,7 +1399,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div>
               <div style={{color:C.gold,fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1,marginBottom:3}}>Member Portal</div>
               <div style={{fontWeight:900,fontSize:19,color:C.white}}>{m.fullName}</div>
-              <div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}}>{m.linkCode} · {m.memberType==="founding"?"🎖️ Founding Member — Quarterly Interest Share":"Regular Member"}</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.65)",marginTop:2}}>{m.linkCode} · {m.memberType==="founding"?"🎖️ Founding Member — Zero Interest Loans & Quarterly Interest Share":"Regular Member"}</div>
               <div style={{marginTop:8,display:"flex",gap:6,flexWrap:"wrap"}}>
                 <span className="pill" style={{background:m.status==="active"?"#BBF7D0":"#FEF3C7",color:m.status==="active"?"#166534":"#92400E"}}>
                   {m.status==="active"?"✅ Active":"⏳ Pending Activation"}
@@ -1647,10 +1647,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,marginBottom:10,fontSize:13}}>{getTier(m.contributionTier||1).label} — Score Thresholds & Loan Access</div>
                 {[
-                  {l:"Excellent Performance (Lowest Risk)",s:getTier(m.contributionTier||1).excellentScore,r:1,limit:getTier(m.contributionTier||1).loanLimits.excellent,c:C.green},
-                  {l:"Strong Performance (Low Risk)",s:getTier(m.contributionTier||1).strongScore,r:2,limit:getTier(m.contributionTier||1).loanLimits.strong,c:C.blue},
-                  {l:"Standard Performance (Medium Risk)",s:getTier(m.contributionTier||1).standardScore,r:3,limit:getTier(m.contributionTier||1).loanLimits.standard,c:C.amber},
-                  {l:"Minimal Performance (Higher-Risk)",s:0,r:4,limit:getTier(m.contributionTier||1).loanLimits.minimal,c:C.error},
+                  {l:"Excellent Performance (Lowest Risk)",s:getTier(m.contributionTier||1).excellentScore,r:m.memberType==="founding"?0:1,limit:getTier(m.contributionTier||1).loanLimits.excellent,c:C.green},
+                  {l:"Strong Performance (Low Risk)",s:getTier(m.contributionTier||1).strongScore,r:m.memberType==="founding"?0:2,limit:getTier(m.contributionTier||1).loanLimits.strong,c:C.blue},
+                  {l:"Standard Performance (Medium Risk)",s:getTier(m.contributionTier||1).standardScore,r:m.memberType==="founding"?0:3,limit:getTier(m.contributionTier||1).loanLimits.standard,c:C.amber},
+                  {l:"Minimal Performance (Higher-Risk)",s:0,r:m.memberType==="founding"?0:4,limit:getTier(m.contributionTier||1).loanLimits.minimal,c:C.error},
                 ].map(cat=>(
                   <div key={cat.l} style={{borderRadius:8,padding:10,marginBottom:6,
                     background:m.creditScore>=(cat.s||0)?cat.c+"11":C.bg,
