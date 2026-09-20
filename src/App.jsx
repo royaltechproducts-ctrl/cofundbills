@@ -163,12 +163,13 @@ const isInQueue = (member, cells) => {
 };
 const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24)) : 0;
 
-const scoreCategory = (score, tierNum=1) => {
+const scoreCategory = (score, tierNum=1, isFounding=false) => {
   const t = getTier(tierNum);
-  if(score>=t.excellentScore) return {label:"Excellent Performance (Lowest Risk)", rate:1, limit:t.loanLimits.excellent, color:C.green};
-  if(score>=t.strongScore)    return {label:"Strong Performance (Low Risk)",       rate:2, limit:t.loanLimits.strong,    color:C.blue};
-  if(score>=t.standardScore)  return {label:"Standard Performance (Medium Risk)",  rate:3, limit:t.loanLimits.standard,  color:C.amber};
-  return                             {label:"Minimal Performance (Higher-Risk)",   rate:4, limit:t.loanLimits.minimal,   color:C.error};
+  const rate = isFounding ? 0 : null; // founding members always 0%
+  if(score>=t.excellentScore) return {label:"Excellent Performance (Lowest Risk)", rate:rate??1, limit:t.loanLimits.excellent, color:C.green};
+  if(score>=t.strongScore)    return {label:"Strong Performance (Low Risk)",       rate:rate??2, limit:t.loanLimits.strong,    color:C.blue};
+  if(score>=t.standardScore)  return {label:"Standard Performance (Medium Risk)",  rate:rate??3, limit:t.loanLimits.standard,  color:C.amber};
+  return                             {label:"Minimal Performance (Higher-Risk)",   rate:rate??4, limit:t.loanLimits.minimal,   color:C.error};
 };
 
 const mapMember = m => ({
@@ -645,7 +646,7 @@ export default function App() {
     if(m.creditScore < mTierData.unlockScore){
       showToast(`Minimum credit score of ${mTierData.unlockScore.toLocaleString()} pts required to access ${mTierData.label} loan service`,"error"); return;
     }
-    const cat = scoreCategory(m.creditScore, m.contributionTier||1);
+    const cat = scoreCategory(m.creditScore, m.contributionTier||1, m.memberType==="founding");
     const maxLoan = cat.limit;
     const amt = Number(loanForm.amount);
     if(amt>maxLoan){ showToast(`Max loan for your category: ${fmtNGN(maxLoan)}`,"error"); return; }
@@ -895,7 +896,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["3. Contribution Cell","Members are automatically assigned to a contribution cell upon activation. Cell size ranges from 10 to 14 members. The cycle runs for 10 months."],
     ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 12.5% (₦1,250), Administration 7.5% (₦750), Contingency Reserve 5% (₦500)."],
     ["5. Cycle Payout","₦50,000 cash is paid to each contributing member at cycle completion, plus credit points earned during the cycle. Payouts are processed within 7 business days of cycle completion."],
-    ["5b. Founding Member Loan Interest Benefit","Every quarter, the cooperative's loan interest revenue is divided into 25 equal slots — 23 slots distributed equally among all active Founding Members, and 2 slots allocated to the cooperative's Admin. This quarterly distribution is exclusive to Founding Members and is in addition to their regular cycle payout and credit score benefits. Distribution is subject to available loan interest revenue in the period."],
+    ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
     ["6. Network Positions","Members who invite others earn Referral Bonus points — on invitee activation and cycle completion. No member receives cash or guaranteed financial return for introducing another member."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
@@ -1387,7 +1388,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
   const Portal = () => {
     if(!member) return null;
     const m = member;
-    const cat = scoreCategory(m.creditScore, m.contributionTier||1);
+    const cat = scoreCategory(m.creditScore, m.contributionTier||1, m.memberType==="founding");
     const myCells = cells.filter(c=>(c.seats||[]).some(s=>s.link_code===m.linkCode));
     const myLoans = loans.filter(l=>l.link_code===m.linkCode);
 
@@ -1554,6 +1555,16 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 );
               })()}
 
+              {m.memberType==="founding"&&(
+                <div style={{background:`linear-gradient(135deg,${C.burg},#9B2335)`,borderRadius:14,
+                  padding:16,marginBottom:14,color:C.white}}>
+                  <div style={{fontWeight:900,fontSize:14,marginBottom:8}}>🎖️ Founding Member Benefits</div>
+                  <div style={{fontSize:13,lineHeight:1.85,opacity:.92}}>
+                    As a Founding Member, you get <strong>loans at zero interest</strong>, and benefit from an <strong>exclusive quarterly share of loan interest revenue</strong> — 23 of every 25 quarterly slots distributed equally among all active Founding Members.
+                  </div>
+                </div>
+              )}
+
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
                 <div style={{background:C.bg,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,fontFamily:"monospace",fontSize:12,wordBreak:"break-all",marginBottom:8}}>
@@ -1697,6 +1708,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>Your Loan Eligibility</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {mTier.label}</div>
+              {m.memberType==="founding"&&(
+                <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:8,padding:10,marginBottom:12,fontSize:12,color:"#166534",fontWeight:700}}>
+                  🎖️ As a Founding Member, you get loans at zero interest, and benefit from exclusive quarterly share of loan interest revenue.
+                </div>
+              )}
                 <div className="grid-3" style={{marginBottom:12}}>
                   {[{l:"Category",v:cat.label,c:cat.color},{l:"Interest Rate",v:`${cat.rate}%/month`,c:C.navy},{l:"Maximum Loan",v:fmtNGN(cat.limit),c:C.green}].map(s=>(
                     <div key={s.l} className="stat-card"><div style={{fontSize:15,fontWeight:900,color:s.c}}>{s.v}</div><div style={{fontSize:10,color:C.muted,marginTop:3,textTransform:"uppercase"}}>{s.l}</div></div>
