@@ -265,6 +265,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.da
 // ═══════════════════════════════════════════════════════════════
 export default function App() {
   const [view,        setView]        = useState("landing");
+  const [ajoView,     setAjoView]     = useState("landing"); // landing | create | portal
+  const [ajoGroups,   setAjoGroups]   = useState({});
+  const [currentAjo,  setCurrentAjo]  = useState(null); // active group code
+  const [ajoMembers,  setAjoMembers]  = useState([]);
+  const [ajoPayments, setAjoPayments] = useState([]);
+  const [ajoForm,     setAjoForm]     = useState({
+    groupName:"", coordinatorName:"", coordinatorPhone:"", coordinatorEmail:"",
+    memberCount:"", contributionAmount:"", payoutFrequency:"Monthly",
+    contributionDay:"", bankName:"", accountName:"", accountNumber:"",
+    cycleStartDate:""
+  });
+  const [ajoJoinForm, setAjoJoinForm] = useState({groupCode:"", name:"", phone:"", email:""});
+  const [ajoErrors,   setAjoErrors]   = useState({});
   const [member,      setMember]      = useState(null);
   const [members,     setMembers]     = useState({});
   const [cells,       setCells]       = useState([]);
@@ -290,6 +303,8 @@ export default function App() {
   const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:""});
   const [billForm,    setBillForm]    = useState({billType:"",amount:"",description:""});
   const [tick,        setTick]        = useState(0); // forces countdown re-render
+        const [ajoMemberForm, setAjoMemberForm] = useState({name:"", phone:"", email:""});
+  const [ajoCode,     setAjoCode]     = useState("");
 
   const urlRef = new URLSearchParams(window.location.search).get("ref")||"";
 
@@ -371,78 +386,128 @@ export default function App() {
   };
 
   // ── Determine network seats from ref chain ────────────────────
-  // ── Referral Bonus award ─────────────────────────────────────
-  const awardReferralBonus = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
-    if(!inviterCode) return;
-    const inviter = members[inviterCode];
-    if(!inviter || inviter.memberType==="admin") return;
-    // Effective tier = MIN(inviter tier, invitee tier) — cannot earn above your station
-    const effectiveTierNum = Math.min(inviterTier||1, inviteeTier||1);
-    const t = getTier(effectiveTierNum);
-    const pts = eventType==="activation" ? t.pts.referralActivation : t.pts.referralCycle;
-    if(!pts) return;
-    await supabase.from("cfb_credit_events").insert({
-      link_code:inviterCode, event_type:`referral_bonus_${eventType}`,
-      points:pts, description:`Referral Bonus — invitee ${eventType}`,
+  // ── Ajo Functions ────────────────────────────────────────────
+  const loadAjoGroup = async (groupCode) => {
+    const {data:grp} = await supabase.from("cfb_ajo_groups").select("*").eq("group_code",groupCode).single();
+    const {data:mems} = await supabase.from("cfb_ajo_members").select("*").eq("group_code",groupCode);
+    const {data:pays} = await supabase.from("cfb_ajo_payments").select("*").eq("group_code",groupCode);
+    if(grp) setAjoGroups(prev=>({...prev,[groupCode]:grp}));
+    setAjoMembers(mems||[]);
+    setAjoPayments(pays||[]);
+    return grp;
+  };
+
+  const handleCreateAjo = async () => {
+    const errs = {};
+    if(!ajoForm.groupName.trim()) errs.groupName="Group name required";
+    if(!ajoForm.coordinatorName.trim()) errs.coordinatorName="Coordinator name required";
+    if(!ajoForm.coordinatorPhone.trim()) errs.coordinatorPhone="Phone required";
+    if(!ajoForm.coordinatorEmail.trim()) errs.coordinatorEmail="Email required";
+    if(!ajoForm.memberCount||isNaN(ajoForm.memberCount)) errs.memberCount="Number of members required";
+    if(!ajoForm.contributionAmount||isNaN(ajoForm.contributionAmount)) errs.contributionAmount="Contribution amount required";
+    if(!ajoForm.contributionDay||isNaN(ajoForm.contributionDay)) errs.contributionDay="Contribution day required";
+    if(!ajoForm.bankName.trim()) errs.bankName="Bank name required";
+    if(!ajoForm.accountName.trim()) errs.accountName="Account name required";
+    if(!ajoForm.accountNumber.trim()) errs.accountNumber="Account number required";
+    if(Object.keys(errs).length){setAjoErrors(errs);return;}
+    setAjoErrors({});
+    const groupCode = "AJO-"+Math.random().toString(36).substr(2,6).toUpperCase();
+    const {error} = await supabase.from("cfb_ajo_groups").insert({
+      group_code:groupCode,
+      group_name:ajoForm.groupName.trim(),
+      coordinator_name:ajoForm.coordinatorName.trim(),
+      coordinator_phone:ajoForm.coordinatorPhone.trim(),
+      coordinator_email:ajoForm.coordinatorEmail.trim(),
+      member_count:Number(ajoForm.memberCount),
+      contribution_amount:Number(ajoForm.contributionAmount),
+      payout_frequency:ajoForm.payoutFrequency,
+      contribution_day:Number(ajoForm.contributionDay),
+      bank_name:ajoForm.bankName.trim(),
+      account_name:ajoForm.accountName.trim(),
+      account_number:ajoForm.accountNumber.trim(),
+      cycle_start_date:ajoForm.cycleStartDate||null,
+      status:"active",
     });
-    await supabase.from("cfb_members").update({
-      credit_score: Math.max(0,(inviter.creditScore||0)+pts)
-    }).eq("link_code",inviterCode);
+    if(error){showToast("Error creating group: "+error.message);return;}
+    // Add coordinator as first member
+    await supabase.from("cfb_ajo_members").insert({
+      group_code:groupCode, name:ajoForm.coordinatorName.trim(),
+      phone:ajoForm.coordinatorPhone.trim(), email:ajoForm.coordinatorEmail.trim(),
+      role:"coordinator", status:"active",
+    });
+    // Send confirmation email to coordinator
+    await sendEmail({
+      to_email:ajoForm.coordinatorEmail.trim(), to_name:ajoForm.coordinatorName.trim(),
+      subject:`Your Ajo Group is Live on CoFundBills — ${ajoForm.groupName.trim()}`,
+      message:`Dear ${ajoForm.coordinatorName.trim()},\n\nYour Ajo group "${ajoForm.groupName.trim()}" has been successfully created on CoFundBills.\n\nGroup Code: ${groupCode}\nMembers: ${ajoForm.memberCount}\nMonthly Contribution: ${fmtNGN(Number(ajoForm.contributionAmount))}\nContribution Day: ${ajoForm.contributionDay}th of every month\nPayout Account: ${ajoForm.bankName.trim()} — ${ajoForm.accountNumber.trim()} (${ajoForm.accountName.trim()})\n\nShare this link with your members to join the group portal:\ncofundbills.vercel.app\n\nGroup Code to share: ${groupCode}\n\nEach member can join, view the contribution schedule, see who has paid, and upload their proof of payment every month.\n\nThis service is completely free of charge from CoFundBills Cooperative.\n\nWarm regards,\nCoFundBills Cooperative\ncofundbills@gmail.com\n+234 909 999 4816`,
+    });
+    await loadAjoGroup(groupCode);
+    setCurrentAjo(groupCode);
+    setAjoView("portal");
+    showToast(`Group ${groupCode} created successfully!`);
   };
 
-  // ── Try to form a cell — simple queue per tier ──────────────
-  const tryFormCell = async (allMembers) => {
-    // For each tier, check if 10 unplaced active members are waiting
-    for(const tierNum of [1,2,3,4]) {
-      const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
-      const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
-      const queue = Object.values(allMembers).filter(m=>
-        m.status==="active" &&
-        m.memberType!=="admin" &&
-        (m.contributionTier||1)===tierNum &&
-        !seatedCodes.has(m.linkCode)
-      ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
-
-      if(queue.length>=10){
-        const ten = queue.slice(0,10);
-        const cellCode = genCode("CELL-");
-        const now = new Date();
-        const activationMonth = now.toISOString().slice(0,7); // YYYY-MM
-        // Next payment deadline = last day of following month
-        const nextDeadline = new Date(now.getFullYear(), now.getMonth()+2, 0);
-        const nextDeadlineStr = nextDeadline.toISOString().slice(0,10);
-
-        await supabase.from("cfb_cells").insert({
-          cell_code:cellCode, status:"active",
-          contribution_tier:tierNum,
-          started_at:now.toISOString(), month_number:1,
-          activation_month:activationMonth,
-          next_payment_deadline:nextDeadlineStr,
-        });
-        for(const m of ten){
-          await supabase.from("cfb_cell_members").insert({
-            cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
-          });
-        }
-        // Send cell activation email to all 10 members
-        const t = getTier(tierNum);
-        for(const m of ten){
-          if(m.email) {
-            await sendEmail({
-              to_email:m.email, to_name:m.fullName,
-              subject:`CoFundBills — Your Contribution Cell is Now Active!`,
-              message:`Dear ${m.fullName},\n\nGreat news! Your CoFundBills ${t.label} contribution cell has been formed and is now active.\n\nCell Code: ${cellCode}\nTier: ${t.label} (${t.name})\nCell Members: 10 contributing members\n\nYOUR PAYMENT SCHEDULE:\nMonth 1 (your activation payment) — Already paid ✅\nMonth 2 — Due by: ${fmtDate(nextDeadline)} (last day of ${nextDeadline.toLocaleString("en-NG",{month:"long",year:"numeric"})})\n\nMonthly contributions of ${fmtNGN(t.monthly)} are due by the last day of each month from now. The last week of each month is your reminder window. Missing the deadline costs you ${Math.abs(t.pts.missed)} credit score points.\n\nYour cycle payout of ${fmtNGN(t.cyclePayout)} will be disbursed at the end of Month 10.\n\nLog in to track your cell progress: cofundbills.vercel.app\nQuestions? WhatsApp +234 909 999 4816\n\nWarm regards,\nCoFundBills Cooperative`,
-            });
-          }
-        }
-        await loadCells();
-        showToast(`Tier ${tierNum} cell ${cellCode} formed with 10 members!`);
-      }
+  const handleJoinAjo = async () => {
+    const errs = {};
+    if(!ajoJoinForm.groupCode.trim()) errs.groupCode="Group code required";
+    if(!ajoJoinForm.name.trim()) errs.name="Your name required";
+    if(!ajoJoinForm.phone.trim()) errs.phone="Phone required";
+    if(Object.keys(errs).length){setAjoErrors(errs);return;}
+    setAjoErrors({});
+    const code = ajoJoinForm.groupCode.trim().toUpperCase();
+    const grp = await loadAjoGroup(code);
+    if(!grp){showToast("Group not found. Check your group code.");return;}
+    // Check not already a member
+    const exists = ajoMembers.find(m=>m.phone===ajoJoinForm.phone.trim());
+    if(!exists){
+      await supabase.from("cfb_ajo_members").insert({
+        group_code:code, name:ajoJoinForm.name.trim(),
+        phone:ajoJoinForm.phone.trim(), email:ajoJoinForm.email.trim(),
+        role:"member", status:"active",
+      });
     }
+    await loadAjoGroup(code);
+    setCurrentAjo(code);
+    setAjoView("portal");
   };
 
+  const handleAjoPayment = async (memberId, monthRef, proofUrl="confirmed") => {
+    await supabase.from("cfb_ajo_payments").insert({
+      group_code:currentAjo, member_id:memberId,
+      month_ref:monthRef, proof_url:proofUrl,
+      status:"confirmed", confirmed_at:new Date().toISOString(),
+    });
+    await loadAjoGroup(currentAjo);
+    showToast("Payment recorded.");
+  };
 
-    // ── Registration ──────────────────────────────────────────────
+  const handleAjoPayout = async (memberId, monthRef) => {
+    await supabase.from("cfb_ajo_payments").insert({
+      group_code:currentAjo, member_id:memberId,
+      month_ref:"PAYOUT-"+monthRef, proof_url:"payout_confirmed",
+      status:"payout_confirmed", confirmed_at:new Date().toISOString(),
+    });
+    await loadAjoGroup(currentAjo);
+    showToast("Payout recorded.");
+  };
+
+  const sendAjoReminders = async (groupCode) => {
+    const grp = ajoGroups[groupCode];
+    if(!grp) return;
+    const members = ajoMembers.filter(m=>m.group_code===groupCode&&m.email);
+    let sent = 0;
+    for(const mem of members){
+      await sendEmail({
+        to_email:mem.email, to_name:mem.name,
+        subject:`Ajo Reminder — ${grp.group_name} Contribution Due`,
+        message:`Dear ${mem.name},\n\nThis is a reminder that your monthly contribution of ${fmtNGN(grp.contribution_amount)} for the group "${grp.group_name}" is due on the ${grp.contribution_day}th of this month.\n\nPayment Details:\nBank: ${grp.bank_name}\nAccount Name: ${grp.account_name}\nAccount Number: ${grp.account_number}\n\nAfter payment, please upload your proof of payment on the group portal at cofundbills.vercel.app using your Group Code: ${groupCode}\n\nThis reminder is a free service from CoFundBills Cooperative.\nInterested in more structured cooperative savings? Visit cofundbills.vercel.app to learn more.\n\nWarm regards,\nCoFundBills Cooperative`,
+      });
+      sent++;
+    }
+    showToast(`Reminders sent to ${sent} members.`);
+  };
+
+  // ── Registration ──────────────────────────────────────────────
   const handleRegister = async () => {
     const errs = {};
     ["fullName","email","phone","occupation","address","state",
@@ -1266,6 +1331,66 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+      {/* Import Ajo */}
+      <div style={{background:C.white,padding:"52px 24px"}}>
+        <div style={{maxWidth:860,margin:"0 auto",textAlign:"center"}}>
+          <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>Import Ajo</span>
+          <h2 className="section-title">Already Running a Contribution Circle?</h2>
+          <p className="section-sub" style={{margin:"0 auto 28px"}}>
+            Bring your existing Ajo, Esusu or Adashe group onto CoFundBills — completely free. We automate your payment reminders, track contributions transparently and give every member a clear view of the group's status. Your money still goes to your own group account. Your rules stay exactly as they are. We just make it run smoother.
+          </p>
+          <div className="grid-2" style={{marginBottom:28,textAlign:"left"}}>
+            {[
+              {icon:"📋",title:"Keep Your Own Rules",desc:"Your contribution amount, payout order, cycle length — all unchanged. We simply put it online.",color:C.blue},
+              {icon:"🔔",title:"Automated Reminders",desc:"Members receive payment reminders as contribution day approaches. No more chasing people manually.",color:C.amber},
+              {icon:"📊",title:"Full Transparency",desc:"Every member can see who has paid and who hasn't. Coordinator uploads payout proof. No disputes.",color:C.green},
+              {icon:"🏦",title:"Your Money Stays Yours",desc:"Contributions go directly to your group's nominated bank account. CoFundBills never touches your funds.",color:C.burg},
+            ].map(c=>(
+              <div key={c.title} className="card" style={{borderLeft:`3px solid ${c.color}`}}>
+                <div style={{fontSize:22,marginBottom:6}}>{c.icon}</div>
+                <div style={{fontWeight:800,color:c.color,fontSize:13,marginBottom:6}}>{c.title}</div>
+                <div style={{fontSize:12,color:C.muted,lineHeight:1.7}}>{c.desc}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn btn-gold btn-lg" onClick={()=>setView("ajo-create")}>
+              🤝 Register Your Ajo Group — Free
+            </button>
+            <button className="btn btn-ghost btn-lg" onClick={()=>{
+              const code = prompt("Enter your Ajo group code:");
+              if(code){ loadAjoGroup(code.trim().toUpperCase()).then(g=>{
+                if(g){setAjoCode(code.trim().toUpperCase());setView("ajo-portal");}
+                else showToast("Group not found","error");
+              });}
+            }}>
+              🔑 Access My Ajo Group
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Import Ajo landing section */}
+      <div style={{background:`linear-gradient(135deg,${C.navy}F0,${C.blue}E0)`,padding:"52px 24px",textAlign:"center"}}>
+        <div style={{maxWidth:700,margin:"0 auto"}}>
+          <span style={{background:"rgba(255,255,255,.15)",color:C.gold,borderRadius:20,
+            padding:"6px 18px",fontSize:12,fontWeight:700,display:"inline-block",marginBottom:16}}>
+            🧺 Free Service — Import Ajo
+          </span>
+          <h2 style={{color:C.white,fontWeight:900,fontSize:26,marginBottom:12,lineHeight:1.3}}>
+            Already Running an Ajo Circle?<br/>Bring It Online — Free.
+          </h2>
+          <p style={{color:"rgba(255,255,255,.8)",fontSize:14,lineHeight:1.85,marginBottom:28,maxWidth:560,margin:"0 auto 28px"}}>
+            Move your traditional Ajo, Esusu or thrift contribution group onto CoFundBills. Keep your own rules, your own account, your own payout order. We provide automated reminders, full payment transparency and a group portal — completely free of charge.
+          </p>
+          <button className="btn btn-primary" style={{background:C.gold,color:C.navy,fontWeight:900,
+            fontSize:15,padding:"14px 36px",borderRadius:30}}
+            onClick={()=>{setView("ajo");setAjoView("landing");}}>
+            🧺 Import Your Ajo Group →
+          </button>
+        </div>
+      </div>
+
       {/* CTA */}
       <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
         <h2 style={{fontSize:22,fontWeight:900,color:C.navy,marginBottom:8}}>Ready to Co-Fund Your Bills?</h2>
@@ -1366,6 +1491,311 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+
+      {/* Import Ajo Landing */}
+      {view==="ajo"&&ajoView==="landing"&&(
+        <div style={{minHeight:"100vh",background:C.bg,padding:"48px 24px"}}>
+          <div style={{maxWidth:860,margin:"0 auto"}}>
+            <div style={{textAlign:"center",marginBottom:40}}>
+              <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>Import Ajo</span>
+              <h2 className="section-title">Bring Your Ajo Group Online — Free</h2>
+              <p className="section-sub" style={{maxWidth:620,margin:"0 auto"}}>
+                Already running a traditional Ajo, Esusu or thrift contribution circle? Move it onto CoFundBills — keep your own rules, keep your own account, and let us handle the reminders, transparency and record keeping. Completely free of charge.
+              </p>
+            </div>
+            <div className="grid-2" style={{marginBottom:40}}>
+              {[
+                {icon:"📅",title:"Automated Reminders",desc:"We send contribution reminders to every member when their payment date approaches — by email. No more chasing people.",c:C.blue},
+                {icon:"📊",title:"Full Transparency",desc:"Every member can see who has paid and who hasn't. The coordinator records proofs of payment and payout confirmations.",c:C.green},
+                {icon:"🏦",title:"Your Account, Your Rules",desc:"Contributions go directly into your group's own nominated bank account. CoFundBills never touches your money.",c:C.amber},
+                {icon:"🆓",title:"Completely Free",desc:"This is a free service from CoFundBills Cooperative — no charges, no commissions, no catches. Just better tools for your group.",c:C.burg},
+              ].map(f=>(
+                <div key={f.title} className="card" style={{borderLeft:`3px solid ${f.c}`}}>
+                  <div style={{fontSize:24,marginBottom:8}}>{f.icon}</div>
+                  <div style={{fontWeight:800,color:f.c,marginBottom:6,fontSize:13}}>{f.title}</div>
+                  <div style={{fontSize:12,color:C.muted,lineHeight:1.8}}>{f.desc}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap",marginBottom:40}}>
+              <button className="btn btn-primary" style={{fontSize:15,padding:"14px 32px"}}
+                onClick={()=>setAjoView("create")}>
+                ➕ Create a New Group Portal
+              </button>
+              <button className="btn btn-outline" style={{fontSize:15,padding:"14px 32px"}}
+                onClick={()=>setAjoView("join")}>
+                🔑 Join an Existing Group
+              </button>
+            </div>
+            <div style={{textAlign:"center",marginTop:16}}>
+              <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13}}
+                onClick={()=>setView("landing")}>← Back to CoFundBills</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ajo Create Form */}
+      {view==="ajo"&&ajoView==="create"&&(
+        <div style={{minHeight:"100vh",background:C.bg,padding:"40px 24px"}}>
+          <div style={{maxWidth:600,margin:"0 auto"}}>
+            <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}}
+              onClick={()=>setAjoView("landing")}>← Back</button>
+            <h2 style={{color:C.navy,fontWeight:900,fontSize:22,marginBottom:6}}>Create Your Group Portal</h2>
+            <p style={{color:C.muted,fontSize:13,marginBottom:24}}>Fill in your group details. You will receive a Group Code to share with your members.</p>
+            <div className="card">
+              {[
+                ["groupName","Group Name","text","e.g. Victoria Island Ladies Circle"],
+                ["coordinatorName","Coordinator Name","text","Your full name"],
+                ["coordinatorPhone","Coordinator Phone","tel","+234..."],
+                ["coordinatorEmail","Coordinator Email","email","(gmail address preferably)"],
+              ].map(([k,l,t,p])=>(
+                <div className="field" key={k} style={{marginBottom:14}}>
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+                  <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
+                    value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
+                  {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+                </div>
+              ))}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                <div className="field">
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Number of Members</label>
+                  <input type="number" placeholder="e.g. 10" className={ajoErrors.memberCount?"field-err":""}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.memberCount?C.error:C.border}`,fontSize:13}}
+                    value={ajoForm.memberCount} onChange={e=>setAjoForm({...ajoForm,memberCount:e.target.value})}/>
+                  {ajoErrors.memberCount&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.memberCount}</div>}
+                </div>
+                <div className="field">
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Contribution Amount (₦)</label>
+                  <input type="number" placeholder="e.g. 10000" className={ajoErrors.contributionAmount?"field-err":""}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.contributionAmount?C.error:C.border}`,fontSize:13}}
+                    value={ajoForm.contributionAmount} onChange={e=>setAjoForm({...ajoForm,contributionAmount:e.target.value})}/>
+                  {ajoErrors.contributionAmount&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.contributionAmount}</div>}
+                </div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+                <div className="field">
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Contribution Day of Month</label>
+                  <input type="number" min="1" max="31" placeholder="e.g. 25"
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.contributionDay?C.error:C.border}`,fontSize:13}}
+                    value={ajoForm.contributionDay} onChange={e=>setAjoForm({...ajoForm,contributionDay:e.target.value})}/>
+                  {ajoErrors.contributionDay&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.contributionDay}</div>}
+                </div>
+                <div className="field">
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Payout Frequency</label>
+                  <select style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13,background:C.white}}
+                    value={ajoForm.payoutFrequency} onChange={e=>setAjoForm({...ajoForm,payoutFrequency:e.target.value})}>
+                    {["Monthly","Bi-Monthly","Quarterly","Custom"].map(o=><option key={o}>{o}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14,marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:10}}>🏦 Group Payout Account</div>
+                {[
+                  ["bankName","Bank Name","text","e.g. Access Bank"],
+                  ["accountName","Account Name","text","e.g. Victoria Island Ladies Circle"],
+                  ["accountNumber","Account Number","text","10-digit account number"],
+                ].map(([k,l,t,p])=>(
+                  <div key={k} style={{marginBottom:10}}>
+                    <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+                    <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
+                      style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
+                      value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
+                    {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+                  </div>
+                ))}
+              </div>
+              <div style={{marginBottom:20}}>
+                <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Cycle Start Date (optional)</label>
+                <input type="date" style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13}}
+                  value={ajoForm.cycleStartDate} onChange={e=>setAjoForm({...ajoForm,cycleStartDate:e.target.value})}/>
+              </div>
+              <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}}
+                onClick={handleCreateAjo}>
+                ➕ Create Group Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ajo Join Form */}
+      {view==="ajo"&&ajoView==="join"&&(
+        <div style={{minHeight:"100vh",background:C.bg,padding:"40px 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <div style={{width:"100%",maxWidth:420}}>
+            <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}}
+              onClick={()=>setAjoView("landing")}>← Back</button>
+            <div className="card">
+              <h3 style={{color:C.navy,fontWeight:900,marginBottom:6}}>Join Your Group</h3>
+              <p style={{color:C.muted,fontSize:12,marginBottom:20}}>Enter the Group Code shared by your coordinator.</p>
+              {[
+                ["groupCode","Group Code","text","e.g. AJO-ABC123"],
+                ["name","Your Full Name","text",""],
+                ["phone","Phone Number","tel","+234..."],
+                ["email","Email Address","email","(gmail address preferably)"],
+              ].map(([k,l,t,p])=>(
+                <div key={k} style={{marginBottom:14}}>
+                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+                  <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
+                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
+                    value={ajoJoinForm[k]} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
+                  {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+                </div>
+              ))}
+              <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}}
+                onClick={handleJoinAjo}>
+                🔑 Enter Group Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ajo Portal */}
+      {view==="ajo"&&ajoView==="portal"&&currentAjo&&(()=>{
+        const grp = ajoGroups[currentAjo];
+        if(!grp) return null;
+        const grpMembers = ajoMembers.filter(m=>m.group_code===currentAjo);
+        const grpPayments = ajoPayments.filter(p=>p.group_code===currentAjo);
+        const currentMonth = new Date().toISOString().slice(0,7);
+        const isCoord = grpMembers.find(m=>m.role==="coordinator");
+        const getPaidStatus = (memberId, monthRef) =>
+          grpPayments.find(p=>p.member_id===memberId&&p.month_ref===monthRef&&p.status==="confirmed");
+        const getPayoutStatus = (memberId, monthRef) =>
+          grpPayments.find(p=>p.member_id===memberId&&p.month_ref==="PAYOUT-"+monthRef&&p.status==="payout_confirmed");
+
+        return(
+          <div style={{minHeight:"100vh",background:C.bg}}>
+            {/* Portal header */}
+            <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"20px 24px",color:C.white}}>
+              <div style={{maxWidth:860,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontWeight:900,fontSize:18}}>{grp.group_name}</div>
+                  <div style={{fontSize:12,opacity:.75,marginTop:2}}>
+                    Group Code: {currentAjo} · {grpMembers.length} members · {fmtNGN(grp.contribution_amount)}/month · Due: {grp.contribution_day}th
+                  </div>
+                </div>
+                <div style={{display:"flex",gap:8}}>
+                  <button style={{background:"rgba(255,255,255,.15)",border:"none",color:C.white,borderRadius:20,
+                    padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:600}}
+                    onClick={()=>sendAjoReminders(currentAjo)}>📧 Send Reminders</button>
+                  <button style={{background:"rgba(255,255,255,.15)",border:"none",color:C.white,borderRadius:20,
+                    padding:"6px 14px",fontSize:12,cursor:"pointer"}}
+                    onClick={()=>{setCurrentAjo(null);setAjoView("landing");}}>✕ Exit</button>
+                </div>
+              </div>
+            </div>
+
+            <div style={{maxWidth:860,margin:"0 auto",padding:"24px 16px"}}>
+              {/* Payment account card */}
+              <div style={{background:C.white,borderRadius:12,padding:14,marginBottom:20,
+                border:`1.5px solid ${C.border}`,display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>🏦 Group Contribution Account</div>
+                  <div style={{fontSize:13,color:C.dark,lineHeight:1.8}}>
+                    <strong>{grp.account_name}</strong><br/>
+                    {grp.bank_name} — <strong>{grp.account_number}</strong>
+                  </div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:11,color:C.muted}}>Monthly per member</div>
+                  <div style={{fontWeight:900,color:C.navy,fontSize:20}}>{fmtNGN(grp.contribution_amount)}</div>
+                </div>
+              </div>
+
+              {/* Members & payment status */}
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:12}}>
+                📋 Contribution Status — {new Date().toLocaleString("en-NG",{month:"long",year:"numeric"})}
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+                {grpMembers.map(mem=>{
+                  const paid = getPaidStatus(mem.id, currentMonth);
+                  const paidOut = getPayoutStatus(mem.id, currentMonth);
+                  return(
+                    <div key={mem.id} style={{background:C.white,borderRadius:12,padding:14,
+                      border:`1.5px solid ${paid?C.green:C.border}`,
+                      display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                      <div>
+                        <div style={{fontWeight:700,color:C.navy,fontSize:13}}>
+                          {mem.name}
+                          {mem.role==="coordinator"&&<span style={{background:C.gold,color:C.white,
+                            borderRadius:20,padding:"2px 8px",fontSize:10,marginLeft:8,fontWeight:700}}>Coordinator</span>}
+                        </div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>{mem.phone}</div>
+                      </div>
+                      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                        {paidOut&&<span style={{background:"#7C3AED",color:C.white,borderRadius:20,
+                          padding:"4px 12px",fontSize:11,fontWeight:700}}>💰 Payout Received</span>}
+                        {paid
+                          ?<span style={{background:C.green,color:C.white,borderRadius:20,
+                            padding:"4px 12px",fontSize:11,fontWeight:700}}>✅ Paid</span>
+                          :<span style={{background:"#FEE2E2",color:C.error,borderRadius:20,
+                            padding:"4px 12px",fontSize:11,fontWeight:700}}>⏳ Pending</span>
+                        }
+                        {!paid&&(
+                          <button style={{background:C.blue,color:C.white,border:"none",borderRadius:20,
+                            padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
+                            onClick={()=>handleAjoPayment(mem.id, currentMonth)}>
+                            Mark Paid
+                          </button>
+                        )}
+                        {paid&&!paidOut&&mem.role==="coordinator"&&(
+                          <button style={{background:"#7C3AED",color:C.white,border:"none",borderRadius:20,
+                            padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
+                            onClick={()=>handleAjoPayout(mem.id, currentMonth)}>
+                            Record Payout
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Add member */}
+              <div style={{background:C.white,borderRadius:12,padding:16,marginBottom:24,border:`1.5px solid ${C.border}`}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>➕ Add New Member</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
+                  {[["name","Full Name","text"],["phone","Phone","tel"],["email","Email","email"]].map(([k,l,t])=>(
+                    <div key={k}>
+                      <label style={{fontWeight:700,fontSize:11,color:C.navy,display:"block",marginBottom:3}}>{l}</label>
+                      <input type={t} style={{width:"100%",padding:"8px 10px",borderRadius:8,
+                        border:`1.5px solid ${C.border}`,fontSize:12}}
+                        value={ajoJoinForm[k]||""} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
+                    </div>
+                  ))}
+                </div>
+                <button className="btn btn-outline btn-sm" onClick={async()=>{
+                  if(!ajoJoinForm.name||!ajoJoinForm.phone){showToast("Name and phone required");return;}
+                  await supabase.from("cfb_ajo_members").insert({
+                    group_code:currentAjo, name:ajoJoinForm.name.trim(),
+                    phone:ajoJoinForm.phone.trim(), email:ajoJoinForm.email?.trim()||"",
+                    role:"member", status:"active",
+                  });
+                  setAjoJoinForm({groupCode:"",name:"",phone:"",email:""});
+                  await loadAjoGroup(currentAjo);
+                  showToast("Member added.");
+                }}>Add Member</button>
+              </div>
+
+              {/* CoFundBills CTA */}
+              <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,
+                padding:20,color:C.white,textAlign:"center"}}>
+                <div style={{fontSize:20,marginBottom:8}}>💡</div>
+                <div style={{fontWeight:900,fontSize:15,marginBottom:8}}>Want More From Your Savings?</div>
+                <div style={{fontSize:13,opacity:.85,lineHeight:1.8,marginBottom:16}}>
+                  CoFundBills Cooperative takes your thrift contribution further — with cooperative credit scores, loan access, essential bill support funds and structured cycle payouts up to ₦1,000,000. All governed by cooperative law.
+                </div>
+                <button className="btn btn-primary" style={{background:C.gold,color:C.navy,fontWeight:800}}
+                  onClick={()=>{setView("landing");setAjoView("landing");}}>
+                  Learn About CoFundBills Cooperative →
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Footer */}
       <div className="footer">
@@ -2420,6 +2850,8 @@ ${inviteLink}` ;
       {view==="landing"&&<Landing/>}
       {view==="portal"&&<Portal/>}
       {view==="admin"&&<Admin/>}
+      {view==="ajo-create"&&<AjoCreate/>}
+      {view==="ajo-portal"&&<AjoPortal/>}
 
       {/* Modals */}
       {renderModal()}
