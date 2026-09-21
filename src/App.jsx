@@ -1944,10 +1944,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   background:cat.c+"0D",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                   <div>
                     <div style={{fontWeight:800,color:cat.c,fontSize:12}}>{cat.l}</div>
-                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{cat.s>0?cat.s.toLocaleString()+"+ pts":"Below "+mTier.standardScore.toLocaleString()+" pts"}</div>
+                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{cat.s>0?cat.s.toLocaleString()+"+ pts"+(m.memberType==="founding"?" — Founding Member Benefit":""):"Below "+mTier.standardScore.toLocaleString()+" pts"+(m.memberType==="founding"?" — Founding Member Benefit":"")}</div>
                   </div>
                   <div style={{textAlign:"right"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:cat.r===0?C.green:C.navy}}>{cat.r===0?"0% — Founding Member Benefit":cat.r+"%/month"}</div>
+                    <div style={{fontSize:11,fontWeight:700,color:cat.r===0?C.green:C.navy}}>{cat.r===0?"Zero Interest Rate — Founding Member Benefit":cat.r+"%/month"}</div>
                     <div style={{fontSize:11,color:C.muted}}>Max: {fmtNGN(cat.limit)}</div>
                   </div>
                   {m.creditScore>=cat.s&&(m.creditScore<(cat.l.includes("Excellent")?Infinity:mTier.excellentScore))&&cat.s>0&&(
