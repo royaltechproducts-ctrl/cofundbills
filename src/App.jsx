@@ -686,16 +686,7 @@ export default function App() {
       await supabase.from("cfb_members").update({
         credit_score:Math.max(0,(m?.creditScore||0)+cellTier.pts.cycleContrib)
       }).eq("link_code",c.link_code);
-      // Award referral bonus cycle credit to inviter
-      if(m?.refCode){
-        const inviter = members[m.refCode];
-        await awardReferralBonus(
-          m.refCode,
-          inviter?.contributionTier||1,
-          "cycle",
-          m.contributionTier||1
-        );
-      }
+
     }
     await supabase.from("cfb_cells").update({
       status:"completed", completed_at:new Date().toISOString()
@@ -962,7 +953,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["4. Contribution Split","Every ₦10,000: Member Benefit Pool 50% (₦5,000), Bill Support Fund 25% (₦2,500), Loan Fund 12.5% (₦1,250), Administration 7.5% (₦750), Contingency Reserve 5% (₦500)."],
     ["5. Cycle Payout","₦50,000 cash is paid to each contributing member at cycle completion, plus credit points earned during the cycle. Payouts are processed within 7 business days of cycle completion."],
     ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
-    ["6. Network Positions","Members who invite others earn Referral Bonus points — on invitee activation and cycle completion. No member receives cash or guaranteed financial return for introducing another member."],
+    ["6. Referral Bonuses","Members who invite other members earn a one-time Referral Bonus credit point when their invited member activates their membership. Referral Bonus points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +10 pts per activated invitee. Tier 2: +50 pts per activated invitee. Tier 3: +100 pts per activated invitee. Tier 4: +200 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The credit score is an internal cooperative participation assessment. It is not a deposit, share, investment, cryptocurrency or guaranteed cash entitlement. It determines loan eligibility only."],
     ["8. Co-Fund Loan","Loans are subject to credit score assessment, available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
     ["9. Bill Support","Bill support applications are subject to available fund balance and admin approval. Bill support is not an entitlement."],
@@ -2481,7 +2472,7 @@ CoFundBills Cooperative
     if(!inviter || inviter.memberType==="admin") return;
     const effectiveTierNum = Math.min(inviterTier||1, inviteeTier||1);
     const t = getTier(effectiveTierNum);
-    const pts = eventType==="activation" ? t.pts.referralActivation : t.pts.referralCycle;
+    const pts = t.pts.referralActivation; // activation only — no cycle bonus
     if(!pts) return;
     await supabase.from("cfb_credit_events").insert({
       link_code:inviterCode, event_type:`referral_bonus_${eventType}`,
