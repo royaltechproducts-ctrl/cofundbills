@@ -1355,9 +1355,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     [`Cycle completed (contributing)`,`+${t.pts.cycleContrib.toLocaleString()} pts`,"Contributing Members"],
 
                     [`Referral Bonus — invited member activates`,`+${t.pts.referralActivation} pts`,"Credit bonus decided by the referral bonus tied to the lower of the two tiers where the Invited activates a different tier"],
-                    [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"All members"],
+                    [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"Members who took a Co-Fund Loan"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Contributing Members"],
-                    [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"All members"],
+                    [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"Members who defaulted on their own loan"],
                     [`Bill support claim`,`${t.pts.billClaim.toLocaleString()} pts`,"Score deduction on approval"],
                   ].map(([e,p,w])=>(
                     <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.bg}`,fontSize:11}}>
