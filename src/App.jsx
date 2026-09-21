@@ -1565,3 +1565,1192 @@ Answer warmly, concisely and accurately. Never invent information.`;
       </div>
 
 
+
+      {/* CTA */}
+      <div style={{background:C.bg,padding:"52px 24px",textAlign:"center"}}>
+        <div style={{maxWidth:560,margin:"0 auto"}}>
+          <h2 style={{color:C.navy,fontWeight:900,fontSize:28,marginBottom:12}}>Ready to Start?</h2>
+          <p style={{color:C.muted,fontSize:15,marginBottom:28,lineHeight:1.7}}>Join thousands of Nigerians building financial capacity together. Register free today — activation only when you are ready.</p>
+          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
+            <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join Free Today</button>
+            <button className="btn btn-outline btn-lg" onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{background:C.navy,padding:"32px 24px",color:"rgba(255,255,255,.6)",fontSize:12,textAlign:"center"}}>
+        <div style={{maxWidth:860,margin:"0 auto"}}>
+          <div style={{fontWeight:900,color:C.white,fontSize:16,marginBottom:4}}>CoFundBills Cooperative</div>
+          <div style={{marginBottom:8}}>2B, Olawale Cole, Onitiri Avenue, Lekki Phase 1, Lagos · cofundbills@gmail.com · +234 806 163 1222</div>
+          <div style={{marginBottom:12,opacity:.5}}>© {new Date().getFullYear()} CoFundBills Cooperative · RoyalTech Partnership & Investment Limited · All rights reserved</div>
+          <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap"}}>
+            <button style={{background:"none",border:"none",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:11}} onClick={()=>setTcOpen(true)}>Terms & Conditions</button>
+            <button style={{background:"none",border:"none",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:11}} onClick={()=>setFaqOpen(true)}>FAQs</button>
+            <button style={{background:"none",border:"none",color:"rgba(255,255,255,.5)",cursor:"pointer",fontSize:11}} onClick={()=>setModal({type:"register"})}>Register</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+
+  // ══════════════════════════════════════════════════════════════
+  // ── Member Portal ─────────────────────────────────────────────
+  const currentMember = member ? (members[member.linkCode]||member) : null;
+
+  const Portal = () => {
+    if(!currentMember) return null;
+    const m = currentMember;
+    const cat = scoreCategory(m.creditScore, m.contributionTier||1, m.memberType==="founding");
+    const mTier = getTier(m.contributionTier||1);
+    const myCells = cells.filter(c=>c.seats?.some(s=>s.link_code===m.linkCode));
+    const myActiveCell = cells.find(c=>c.status==="active"&&c.seats?.some(s=>s.link_code===m.linkCode));
+    const myLoans = loans.filter(l=>l.link_code===m.linkCode);
+    const myBills = billApps.filter(b=>b.link_code===m.linkCode);
+    const inviteLink = `${window.location.origin}?ref=${m.linkCode}`;
+    const pendingLoans = myLoans.filter(l=>l.status==="pending");
+
+    return (
+      <div style={{minHeight:"100vh",background:C.bg}}>
+        <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"20px 24px",color:C.white}} className="portal-header">
+          <div style={{maxWidth:860,margin:"0 auto"}}>
+            <div style={{fontWeight:900,fontSize:18,marginBottom:2}}>{m.fullName}</div>
+            <div style={{fontSize:12,opacity:.75,marginBottom:10}}>{m.linkCode} · {m.memberType==="founding"?"🎖️ Founding Member — Zero Interest Loans & Quarterly Interest Share":"Regular Member"}</div>
+            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap",fontSize:12}}>
+              <span style={{background:m.status==="active"?"#BBF7D0":"#FEE2E2",color:m.status==="active"?"#166534":C.error,borderRadius:20,padding:"3px 10px",fontWeight:700,fontSize:11}}>
+                {m.status==="active"?"✅ Active":"⏳ Pending"}
+              </span>
+              <span style={{opacity:.75}}>{cat.label} · {fmtPts(m.creditScore)}</span>
+              <button className="btn btn-outline btn-sm" style={{marginLeft:"auto"}} onClick={()=>{setMember(null);setView("landing");}}>🔒 Log Out</button>
+            </div>
+          </div>
+        </div>
+
+        <div style={{maxWidth:860,margin:"0 auto",padding:"0 16px 40px"}}>
+          <div className="portal-tabs" style={{padding:"16px 0 0"}}>
+            {[["dashboard","🏠 Dashboard"],["myCell","My Cell"],["credit","Credit Score"],
+              ["loan","Co-Fund Loan"],["bill","Bill Support"],["invite","📨 Invite"],["statement","Statement"]
+            ].map(([k,l])=>(
+              <button key={k} className={`portal-tab${portalTab===k?" active":""}`} onClick={()=>setPortalTab(k)}>{l}</button>
+            ))}
+          </div>
+
+          {/* Dashboard */}
+          {portalTab==="dashboard"&&(
+            <div>
+              {/* Countdown timer */}
+              {(()=>{
+                if(!myActiveCell||!myActiveCell.next_payment_deadline) return null;
+                const deadline = new Date(myActiveCell.next_payment_deadline);
+                deadline.setHours(23,59,59,999);
+                const now = new Date(); void tick;
+                const totalMs = deadline - now;
+                const isOverdue = totalMs <= 0;
+                const days = isOverdue ? 0 : Math.floor(totalMs/(1000*60*60*24));
+                const hours = isOverdue ? 0 : Math.floor((totalMs%(1000*60*60*24))/(1000*60*60));
+                const mins = isOverdue ? 0 : Math.floor((totalMs%(1000*60*60))/(1000*60));
+                const urgencyColor = isOverdue?C.error:days<=3?C.error:days<=7?C.amber:C.blue;
+                const cellTier = getTier(myActiveCell.contribution_tier||1);
+                return(
+                  <div style={{background:isOverdue?"#FEF2F2":days<=7?"#FEF3C7":"#EFF6FF",
+                    border:`2px solid ${urgencyColor}`,borderRadius:14,padding:18,marginBottom:16,marginTop:4}}>
+                    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8,marginBottom:12}}>
+                      <div>
+                        <div style={{fontWeight:800,color:urgencyColor,fontSize:13}}>
+                          {isOverdue?"⚠️ Payment Overdue":days<=3?"🔴 Payment Due Urgently":days<=7?"🟡 Payment Due This Week":"📅 Next Contribution Due"}
+                        </div>
+                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>Month {(myActiveCell.month_number||1)+1} of 10 · {fmtDate(deadline)} · {cellTier.label}</div>
+                      </div>
+                      <div style={{fontWeight:900,color:urgencyColor,fontSize:18}}>{fmtNGN(cellTier.monthly)}</div>
+                    </div>
+                    {!isOverdue&&(
+                      <div style={{display:"flex",gap:8,justifyContent:"center",marginBottom:12}}>
+                        {[["Days",days],["Hours",hours],["Minutes",mins]].map(([label,val])=>(
+                          <div key={label} style={{background:urgencyColor,borderRadius:10,padding:"10px 16px",textAlign:"center",minWidth:70,flex:1}}>
+                            <div style={{fontSize:28,fontWeight:900,color:C.white,lineHeight:1}}>{String(val).padStart(2,"0")}</div>
+                            <div style={{fontSize:10,color:"rgba(255,255,255,.8)",marginTop:3,textTransform:"uppercase",letterSpacing:.5}}>{label}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {isOverdue&&<div style={{background:C.error,borderRadius:10,padding:"10px 16px",textAlign:"center",marginBottom:12}}>
+                      <div style={{fontWeight:900,color:C.white,fontSize:14}}>Payment deadline has passed</div>
+                      <div style={{fontSize:11,color:"rgba(255,255,255,.8)",marginTop:2}}>Contact admin immediately — WhatsApp +234 909 999 4816</div>
+                    </div>}
+                    <div style={{background:C.white,border:`1px solid ${C.border}`,borderRadius:8,padding:10,fontSize:12,lineHeight:1.8}}>
+                      <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                      Zenith Bank — 1016621205 · Ref: <strong>{m.linkCode}</strong>
+                    </div>
+                    {!isOverdue&&<div style={{fontSize:11,color:C.muted,marginTop:8,textAlign:"center"}}>
+                      Pay before midnight on {fmtDate(deadline)} to protect and grow your CoFund Credit Score
+                    </div>}
+                  </div>
+                );
+              })()}
+
+              {/* Pending activation */}
+              {m.status==="pending"&&(
+                <div className="info-box">
+                  <strong>🔔 Activate Your Membership</strong><br/>
+                  Pay your first monthly contribution of <strong>{fmtNGN(mTier.monthly)}</strong> ({mTier.label}) to activate your membership and join the queue. This is the only payment required until your contribution cell activates.
+                  <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:8,padding:11,marginTop:10,lineHeight:1.9,fontSize:13}}>
+                    <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                    Zenith Bank — 1016621205<br/>
+                    Reference: <strong>{m.linkCode}</strong><br/>
+                    WhatsApp: <strong>+234 909 999 4816</strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Queue hold message */}
+              {m.status==="active"&&isInQueue(m,cells)&&(
+                <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14}}>
+                  <strong style={{color:"#166534"}}>✅ You are in the {mTier.label} Queue</strong><br/>
+                  <div style={{fontSize:12,color:"#166534",lineHeight:1.8,marginTop:6}}>
+                    Your first contribution has been received and you are now in the queue. <strong>No further payments are required until your contribution cell activates.</strong><br/>
+                    When 10 members are in the {mTier.label} queue, your cell will form automatically and you will receive an email with your Month 2 payment due date.
+                  </div>
+                </div>
+              )}
+
+              {/* Founding member banner */}
+              {m.memberType==="founding"&&(
+                <div style={{background:`linear-gradient(135deg,${C.burg},#9B2335)`,borderRadius:14,padding:16,marginBottom:14,color:C.white}}>
+                  <div style={{fontWeight:900,fontSize:14,marginBottom:8}}>🎖️ Founding Member Benefits</div>
+                  <div style={{fontSize:13,lineHeight:1.85,opacity:.92}}>
+                    As a Founding Member, you get <strong>loans at zero interest</strong>, and benefit from an <strong>exclusive quarterly share of loan interest revenue</strong> — 23 of every 25 quarterly slots distributed equally among all active Founding Members.
+                  </div>
+                </div>
+              )}
+
+              {/* Tier change (pre-cell) */}
+              {m.status==="active"&&isInQueue(m,cells)&&(
+                <div className="card" style={{marginBottom:14}}>
+                  <div style={{fontWeight:700,color:C.navy,fontSize:13,marginBottom:8}}>💱 Change Contribution Tier</div>
+                  <div style={{fontSize:12,color:C.muted,marginBottom:10}}>You can change your tier any time before your cell activates. You will move to the back of the new tier's queue.</div>
+                  <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                    {Object.values(TIERS).map(t=>(
+                      <button key={t.id} className={`btn btn-sm ${(m.contributionTier||1)===t.id?"btn-blue":"btn-ghost"}`}
+                        onClick={async()=>{
+                          if((m.contributionTier||1)===t.id) return;
+                          await supabase.from("cfb_members").update({contribution_tier:t.id}).eq("link_code",m.linkCode);
+                          const allM = await loadMembers();
+                          setMember(allM[m.linkCode]);
+                          showToast(`Tier changed to ${t.label}`);
+                        }}>
+                        {t.label} — {fmtNGN(t.monthly)}/mo
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="grid-3" style={{marginBottom:16}}>
+                {[
+                  {l:"Contribution Balance",v:fmtNGN(m.contributionBalance),c:C.blue},
+                  {l:"Credit Score",v:fmtPts(m.creditScore),c:C.gold},
+                  {l:"Cycles Completed",v:m.cyclesCompleted,c:C.green},
+                  {l:"Months Contributed",v:m.monthsContributed,c:C.purple},
+                  {l:"Active Cells",v:myCells.filter(c=>c.status==="active").length,c:C.amber},
+                  {l:"Pending Loans",v:pendingLoans.length,c:C.burg},
+                ].map(s=>(
+                  <div key={s.l} className="stat-card">
+                    <div className="stat-val" style={{color:s.c}}>{s.v}</div>
+                    <div className="stat-lbl">{s.l}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Invite link */}
+              <div className="card">
+                <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
+                <div style={{fontSize:12,color:C.muted,marginBottom:10,lineHeight:1.7}}>
+                  Members who activate through your link earn you Referral Bonus points automatically — scored at the lower of the two tiers between you and the invited member.
+                </div>
+                <div style={{background:C.bg,borderRadius:8,padding:10,fontSize:12,wordBreak:"break-all",marginBottom:10,border:`1px solid ${C.border}`}}>{inviteLink}</div>
+                <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                  <button className="btn btn-sm btn-blue" onClick={()=>{navigator.clipboard.writeText(inviteLink);showToast("Link copied!");}}>📋 Copy Link</button>
+                  <a className="btn btn-sm btn-green" href={`https://wa.me/?text=I would like to invite you to CoFundBills Cooperative. Use my link: ${encodeURIComponent(inviteLink)}`} target="_blank" rel="noopener noreferrer">💬 Share on WhatsApp</a>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* My Cell */}
+          {portalTab==="myCell"&&(
+            <div>
+              <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14,fontSize:13,color:"#166534",lineHeight:1.8}}>
+                <strong>🛡️ Your Payout is Protected</strong><br/>
+                If any cell member defaults, the cooperative's Contingency Reserve covers the shortfall. Your cycle payout is guaranteed regardless of fellow members' behaviour.
+              </div>
+              {myCells.length===0?(
+                <div className="card" style={{textAlign:"center",padding:36,color:C.muted}}>
+                  {isInQueue(m,cells)
+                    ? "You are in the queue. No further payments are due until your cell activates. You will receive an email when your cell is ready."
+                    : "You are not yet placed in a contribution cell. Activate your membership to join the queue."}
+                </div>
+              ):myCells.map(c=>{
+                const mySeat = c.seats?.find(s=>s.link_code===m.linkCode);
+                const seatInfo = SEAT[mySeat?.seat_type]||SEAT.contributing;
+                const cellTier = getTier(c.contribution_tier||1);
+                const nextDeadline = c.next_payment_deadline ? new Date(c.next_payment_deadline) : null;
+                const today = new Date();
+                const daysLeft = nextDeadline ? Math.ceil((nextDeadline-today)/(1000*60*60*24)) : null;
+                return(
+                  <div key={c.cell_code}>
+                    <div style={{marginBottom:6,display:"flex",alignItems:"center",gap:8,fontSize:12,flexWrap:"wrap"}}>
+                      <span style={{background:seatInfo.bg,color:C.white,borderRadius:20,padding:"3px 10px",fontWeight:700}}>{seatInfo.icon} {seatInfo.label}</span>
+                      <span style={{color:C.muted}}>Cycle payout: <strong>{fmtNGN(cellTier.cyclePayout)}</strong></span>
+                    </div>
+                    {nextDeadline&&(
+                      <div style={{background:daysLeft<=7?"#FEF2F2":daysLeft<=14?"#FEF3C7":"#EFF6FF",
+                        border:`1.5px solid ${daysLeft<=7?C.error:daysLeft<=14?C.amber:C.blue}`,
+                        borderRadius:10,padding:12,marginBottom:10,fontSize:12}}>
+                        <div style={{fontWeight:800,color:daysLeft<=7?C.error:daysLeft<=14?"#92400E":C.blue,marginBottom:4}}>
+                          {daysLeft<=0?"⚠️ Payment Overdue!":daysLeft<=7?"🔴 Payment Due This Week":daysLeft<=14?"🟡 Payment Due Soon":"📅 Next Payment Due"}
+                        </div>
+                        <div style={{color:C.navy,lineHeight:1.8}}>
+                          Month {(c.month_number||1)+1} of 10 — Due by: <strong>{fmtDate(nextDeadline)}</strong><br/>
+                          Amount: <strong>{fmtNGN(cellTier.monthly)}</strong><br/>
+                          {daysLeft>0?<span style={{color:C.muted}}>{daysLeft} day{daysLeft!==1?"s":""} remaining</span>:<span style={{color:C.error}}>Missing deadline costs you {Math.abs(cellTier.pts.missed)} credit points</span>}
+                        </div>
+                        <div style={{marginTop:8,background:C.white,border:`1px solid ${C.border}`,borderRadius:8,padding:10,fontSize:12,lineHeight:1.8}}>
+                          <strong>Royal Tech Partnership & Investment Limited</strong><br/>
+                          Zenith Bank — 1016621205<br/>
+                          Reference: <strong>{m.linkCode}</strong>
+                        </div>
+                      </div>
+                    )}
+                    <CellVisual cell={c}/>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Credit Score */}
+          {portalTab==="credit"&&(
+            <div>
+              <div className="card" style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontSize:11,color:C.muted}}>{mTier.label} · Score threshold: {mTier.excellentScore.toLocaleString()} pts for Excellent</div>
+                    <div style={{fontSize:36,fontWeight:900,color:C.navy,lineHeight:1}}>{m.creditScore.toLocaleString()}</div>
+                    <div style={{fontWeight:700,color:cat.color,fontSize:13,marginTop:4}}>{cat.label}</div>
+                    <div style={{fontSize:12,color:C.muted,marginTop:2}}>Loan rate: {cat.rate===0?"0% — Founding Member Benefit":cat.rate+"%/month"} · Max loan: {fmtNGN(cat.limit)}</div>
+                  </div>
+                  <div style={{width:100}}>
+                    <div className="score-bar"><div className="score-fill" style={{width:Math.min(100,(m.creditScore/mTier.excellentScore)*100)+"%",background:cat.color}}/></div>
+                  </div>
+                </div>
+              </div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:10}}>{mTier.label} — Score Thresholds & Loan Access</div>
+              {[
+                {l:"Excellent Performance (Lowest Risk)",s:mTier.excellentScore,r:m.memberType==="founding"?0:1,limit:mTier.loanLimits.excellent,c:C.green},
+                {l:"Strong Performance (Low Risk)",s:mTier.strongScore,r:m.memberType==="founding"?0:2,limit:mTier.loanLimits.strong,c:C.blue},
+                {l:"Standard Performance (Medium Risk)",s:mTier.standardScore,r:m.memberType==="founding"?0:3,limit:mTier.loanLimits.standard,c:C.amber},
+                {l:"Minimal Performance (Higher-Risk)",s:0,r:m.memberType==="founding"?0:4,limit:mTier.loanLimits.minimal,c:C.error},
+              ].map(cat=>(
+                <div key={cat.l} style={{borderRadius:10,border:`1.5px solid ${cat.c}44`,padding:12,marginBottom:8,
+                  background:cat.c+"0D",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                  <div>
+                    <div style={{fontWeight:800,color:cat.c,fontSize:12}}>{cat.l}</div>
+                    <div style={{fontSize:11,color:C.muted,marginTop:2}}>{cat.s>0?cat.s.toLocaleString()+"+ pts":"Below "+mTier.standardScore.toLocaleString()+" pts"}</div>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:cat.r===0?C.green:C.navy}}>{cat.r===0?"0% — Founding Member Benefit":cat.r+"%/month"}</div>
+                    <div style={{fontSize:11,color:C.muted}}>Max: {fmtNGN(cat.limit)}</div>
+                  </div>
+                  {m.creditScore>=cat.s&&(m.creditScore<(cat.l.includes("Excellent")?Infinity:mTier.excellentScore))&&cat.s>0&&(
+                    <span style={{background:cat.c,color:C.white,borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700}}>✓ Your current category</span>
+                  )}
+                </div>
+              ))}
+              <div className="card" style={{marginTop:16}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:10}}>How to Improve Your Score</div>
+                {[
+                  ["Contribute on time every month",`+${mTier.pts.contribution} pts`],
+                  ["Stay active in your contribution cell",`+${mTier.pts.cellActive} pts/month`],
+                  ["Complete a full 10-month cycle",`+${mTier.pts.cycleContrib.toLocaleString()} pts`],
+                  ["Repay loans on time",`+${mTier.pts.loanRepaid} pts per repayment`],
+                  ["Invite members through your link",`Referral Bonus: +${mTier.pts.referralActivation} pts per activated member (scored at lower of both tiers)`],
+                ].map(([a,b])=>(
+                  <div key={a} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.bg}`,fontSize:12}}>
+                    <span style={{color:C.dark}}>{a}</span>
+                    <span style={{fontWeight:700,color:C.green,flexShrink:0,marginLeft:8}}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Loan Tab */}
+          {portalTab==="loan"&&(
+            <div>
+              {m.creditScore < mTier.unlockScore ? (
+                <div className="warn-box">
+                  <strong>🔒 Co-Fund Loan is not yet accessible.</strong><br/>
+                  Required credit score: <strong>{mTier.unlockScore.toLocaleString()} pts minimum ({mTier.label})</strong><br/>
+                  Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {cat.label}<br/>
+                  You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock loan access.<br/>
+                  {m.memberType==="founding"&&<div style={{color:C.green,fontWeight:700,marginTop:6,fontSize:12}}>✅ Zero interest rate on approved loans — Founding Member benefit.</div>}
+                  <div style={{marginTop:8,fontSize:11,lineHeight:1.7}}>
+                    Build your score through consistent contributions (+{mTier.pts.contribution} pts/month), completing cycles (+{mTier.pts.cycleContrib.toLocaleString()} pts) and referral credit bonuses (+{mTier.pts.referralActivation} pts per activated invitee).
+                  </div>
+                </div>
+              ):(
+                <div>
+                  <div className="card" style={{marginBottom:14}}>
+                    <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:4}}>Apply for a Co-Fund Loan</div>
+                    <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {mTier.label}</div>
+                    {m.memberType==="founding"&&(
+                      <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:8,padding:10,marginBottom:12,fontSize:12,color:"#166534",fontWeight:700}}>
+                        🎖️ As a Founding Member, you get loans at zero interest, and benefit from exclusive quarterly share of loan interest revenue.
+                      </div>
+                    )}
+                    <div style={{display:"flex",gap:12,fontSize:13,marginBottom:16,flexWrap:"wrap"}}>
+                      <div style={{flex:1,textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
+                        <div style={{fontWeight:900,color:cat.color,fontSize:18}}>{cat.rate===0?"0%":cat.rate+"%"}/month</div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Your Interest Rate</div>
+                      </div>
+                      <div style={{flex:1,textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
+                        <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{fmtNGN(cat.limit)}</div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Max Loan Amount</div>
+                      </div>
+                    </div>
+                    <div className="field">
+                      <label>Loan Amount (₦)</label>
+                      <input type="number" placeholder={`Up to ${fmtNGN(cat.limit)}`} value={loanForm.amount} onChange={e=>setLoanForm({...loanForm,amount:e.target.value})}/>
+                    </div>
+                    <div className="field">
+                      <label>Purpose / Bill Type</label>
+                      <select value={loanForm.billType} onChange={e=>setLoanForm({...loanForm,billType:e.target.value})}>
+                        <option value="">Select purpose</option>
+                        {["House Rent","School Fees","Medical Bills","Electricity","Water Bills","Household Essentials","Business Capital","Other"].map(o=><option key={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    <div className="field">
+                      <label>Additional Details (optional)</label>
+                      <input type="text" placeholder="Any additional context" value={loanForm.purpose} onChange={e=>setLoanForm({...loanForm,purpose:e.target.value})}/>
+                    </div>
+                    <button className="btn btn-blue" style={{width:"100%"}} onClick={handleLoanApply}>Submit Loan Application</button>
+                  </div>
+                  {myLoans.length>0&&(
+                    <div className="table-wrap">
+                      <div className="table-head">Your Loan History</div>
+                      {myLoans.map(l=>(
+                        <div key={l.id} className="table-row" style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+                          <div><div style={{fontWeight:700}}>{fmtNGN(l.amount)}</div><div style={{fontSize:11,color:C.muted}}>{l.bill_type} · {l.credit_category}</div></div>
+                          <div style={{textAlign:"right"}}>
+                            <span className="pill" style={{background:l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":"#FEE2E2",color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":C.error}}>{l.status}</span>
+                            <div style={{fontSize:11,color:C.muted,marginTop:2}}>{cat.rate===0?"0%":l.interest_rate+"%"}/mo · {fmtNGN(l.total_repayable)} total</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Bill Support */}
+          {portalTab==="bill"&&(
+            <div>
+              {(()=>{
+                const bsFundKey = `bill_support_t${m.contributionTier||1}`;
+                const bsFundBalance = funds[bsFundKey]||funds.bill_support||0;
+                const tierCap = getBillCap(bsFundBalance, m.contributionTier||1);
+                return(
+                  <div>
+                    <div className="card" style={{marginBottom:14}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                        <div>
+                          <div style={{fontWeight:800,color:C.navy,fontSize:13}}>Bill Support Fund — {mTier.label}</div>
+                          <div style={{fontSize:11,color:C.muted,marginTop:2}}>Current fund balance</div>
+                          <div style={{fontSize:24,fontWeight:900,color:C.navy,marginTop:4}}>{fmtNGN(bsFundBalance)}</div>
+                        </div>
+                        <div style={{textAlign:"right",background:`${tierCap.color}15`,borderRadius:10,padding:"12px 16px",border:`1.5px solid ${tierCap.color}44`}}>
+                          <div style={{fontWeight:800,color:tierCap.color,fontSize:13}}>{tierCap.tier} Tier</div>
+                          <div style={{fontSize:11,color:C.muted,marginTop:2}}>Max claim</div>
+                          <div style={{fontWeight:900,color:C.navy,fontSize:18,marginTop:2}}>{tierCap.label}</div>
+                        </div>
+                      </div>
+                    </div>
+                    {m.creditScore < mTier.unlockScore ? (
+                      <div className="warn-box">
+                        <strong>🔒 Bill Support not yet accessible.</strong><br/>
+                        Required: <strong>{mTier.unlockScore.toLocaleString()} pts minimum</strong> · Your score: <strong>{m.creditScore.toLocaleString()} pts</strong><br/>
+                        You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock.
+                      </div>
+                    ):(
+                      <div className="card" style={{marginBottom:14}}>
+                        <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:12}}>Apply for Bill Support</div>
+                        <div className="field">
+                          <label>Bill Type</label>
+                          <select value={billForm.billType} onChange={e=>setBillForm({...billForm,billType:e.target.value})}>
+                            <option value="">Select bill type</option>
+                            {["House Rent","School Fees","Medical Bills","Electricity","Water Bills","Household Essentials"].map(o=><option key={o}>{o}</option>)}
+                          </select>
+                        </div>
+                        <div className="field">
+                          <label>Amount Requested (₦)</label>
+                          <input type="number" placeholder={`Up to ${tierCap.label}`} value={billForm.amount} onChange={e=>setBillForm({...billForm,amount:e.target.value})}/>
+                        </div>
+                        <div className="field">
+                          <label>Description</label>
+                          <input type="text" placeholder="Brief description of your bill" value={billForm.description} onChange={e=>setBillForm({...billForm,description:e.target.value})}/>
+                        </div>
+                        <div className="warn-box" style={{fontSize:11}}>
+                          ⚠️ Approving this application will deduct <strong>{Math.abs(mTier.pts.billClaim).toLocaleString()} credit points</strong> from your CoFund Credit Score. Bill support is once per 10-month cycle.
+                        </div>
+                        <button className="btn btn-green" style={{width:"100%"}} onClick={handleBillApply}>Submit Bill Support Application</button>
+                      </div>
+                    )}
+                    {myBills.length>0&&(
+                      <div className="table-wrap">
+                        <div className="table-head">Your Bill Support History</div>
+                        {myBills.map(b=>(
+                          <div key={b.id} className="table-row" style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
+                            <div><div style={{fontWeight:700}}>{fmtNGN(b.amount_requested)}</div><div style={{fontSize:11,color:C.muted}}>{b.bill_type}</div></div>
+                            <span className="pill" style={{background:b.status==="approved"?"#BBF7D0":b.status==="pending"?"#FEF3C7":"#FEE2E2",color:b.status==="approved"?"#166534":b.status==="pending"?"#92400E":C.error}}>{b.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+          )}
+
+          {/* Invite Tab */}
+          {portalTab==="invite"&&(
+            <div>
+              <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:16,padding:24,marginBottom:16,color:C.white}}>
+                <div style={{fontWeight:900,fontSize:16,marginBottom:8}}>📨 Your Personal Invite Link</div>
+                <div style={{fontSize:12,color:"rgba(255,255,255,.85)",lineHeight:1.85,marginBottom:14}}>
+                  Members who activate through your link earn you Referral Bonus points automatically — at the lower of the two tiers between you and the invited member.
+                </div>
+                <div style={{background:"rgba(255,255,255,.1)",borderRadius:8,padding:10,fontSize:12,wordBreak:"break-all",marginBottom:14,color:C.gold}}>{inviteLink}</div>
+                <div style={{marginBottom:14}}>
+                  {[
+                    {seat:"Referral Bonus — invited member activates",pts:`+${mTier.pts.referralActivation} pts`,c:C.green},
+                    {seat:"Each Additional Invitee",pts:"Same credits per person",c:C.amber},
+                    {seat:"No Limit",pts:"Invite as many as you want",c:C.burg},
+                  ].map(s=>(
+                    <div key={s.seat} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid rgba(255,255,255,.1)",fontSize:12}}>
+                      <span style={{opacity:.85}}>{s.seat}</span>
+                      <span style={{fontWeight:700,color:s.c,flexShrink:0,marginLeft:8}}>{s.pts}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:11,color:"rgba(255,255,255,.65)"}}>
+                  Referral Credits are a marginal score bonus for growing the cooperative. Your primary credit score growth comes from consistent contributions, completed cycles and timely loan repayments.
+                </div>
+              </div>
+
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:10}}>Your Personalised Invite Message</div>
+                {(()=>{
+                  const inviteText = `You are personally invited to join the CoFundBills Cooperative Membership and Monthly Contribution Scheme.
+
+Unlike the traditional thrift contribution and savings scheme where a few friends come together to form a single circle of contributors and one friend at a time gets to receive all the contributions — till everyone gets a turn to complete a cycle — CoFundBills Multipurpose Cooperative Society Limited is a digital version that offers a far more sophisticated and advanced thrift contribution and credit system with several groups of concurrently running contribution cells.
+
+Every contributing member of a cell contributes their tier's monthly amount for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions merges with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
+
+CoFundBills offers four contribution tiers to suit your financial capacity:
+
+— Tier 1: ₦10,000/month → ₦50,000 cycle payout
+— Tier 2: ₦50,000/month → ₦250,000 cycle payout
+— Tier 3: ₦100,000/month → ₦500,000 cycle payout
+— Tier 4: ₦200,000/month → ₦1,000,000 cycle payout
+
+Each tier has its own independent contribution cells — Tier 1 members form Tier 1 cells, Tier 2 members form Tier 2 cells, and so on. You choose the tier that works for you at registration and can change it any time before your cell activates.
+
+Membership is strictly by invitation. New contribution groups form automatically when 10 members of the same tier are in the queue — first registered, first placed.
+
+Join today at the tier that suits you best. Register now with my personal invite link and choose your preferred contribution tier:
+${inviteLink}`;
+
+                  const whatsappText = encodeURIComponent(inviteText);
+                  return(
+                    <div>
+                      <pre style={{background:C.bg,borderRadius:8,padding:12,fontSize:11,lineHeight:1.7,whiteSpace:"pre-wrap",marginBottom:12,maxHeight:200,overflowY:"auto",border:`1px solid ${C.border}`}}>{inviteText}</pre>
+                      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                        <button className="btn btn-sm btn-blue" onClick={()=>{navigator.clipboard.writeText(inviteText);showToast("Message copied!");}}>📋 Copy Message</button>
+                        <a className="btn btn-sm btn-green" href={`https://wa.me/?text=${whatsappText}`} target="_blank" rel="noopener noreferrer">💬 Send on WhatsApp</a>
+                        <a className="btn btn-sm btn-ghost" href={`mailto:?subject=Join CoFundBills Cooperative&body=${encodeURIComponent(inviteText)}`}>✉️ Send by Email</a>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          )}
+
+          {/* Statement */}
+          {portalTab==="statement"&&(
+            <div>
+              <div className="card">
+                <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:14}}>Account Statement</div>
+                <div className="grid-2" style={{marginBottom:16}}>
+                  {[
+                    {l:"Total Contributed",v:fmtNGN((m.monthsContributed||0)*(mTier.monthly))},
+                    {l:"Benefit Pool Balance",v:fmtNGN(m.contributionBalance)},
+                    {l:"Cycles Completed",v:m.cyclesCompleted},
+                    {l:"Total Paid Out",v:fmtNGN((m.cyclesCompleted||0)*mTier.cyclePayout)},
+                    {l:"Credit Score",v:fmtPts(m.creditScore)},
+                    {l:"Member Since",v:m.joinedAt?new Date(m.joinedAt).toLocaleDateString("en-NG"):"—"},
+                  ].map(s=>(
+                    <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8}}>
+                      <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
+                      <div style={{fontWeight:900,color:C.navy,fontSize:15}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontSize:12,color:C.muted,lineHeight:1.7}}>
+                  <strong>Member:</strong> {m.fullName} · {m.linkCode}<br/>
+                  <strong>Email:</strong> {m.email}<br/>
+                  <strong>Phone:</strong> {m.phone}<br/>
+                  <strong>Tier:</strong> {mTier.label} — {mTier.name}<br/>
+                  <strong>Status:</strong> {m.status} · {m.memberType}<br/>
+                  <strong>Bank:</strong> {m.bankName} · {m.accountName} · {m.accountNumber}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ══════════════════════════════════════════════════════════════
+  // ── Admin Dashboard ───────────────────────────────────────────
+  const Admin = () => {
+    const allMembersList = Object.values(members);
+    const pendingMembers = allMembersList.filter(m=>m.status==="pending");
+    const activeMembers = allMembersList.filter(m=>m.status==="active");
+    const activeCells = cells.filter(c=>c.status==="active");
+    const completedCells = cells.filter(c=>c.status==="completed");
+    const pendingLoans = loans.filter(l=>l.status==="pending");
+    const pendingBills = billApps.filter(b=>b.status==="pending");
+
+    const queueCount = (tierNum) => Object.values(members).filter(m=>
+      m.status==="active" && (m.contributionTier||1)===tierNum &&
+      !cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))
+    ).length;
+
+    return(
+      <div style={{minHeight:"100vh",background:C.bg}}>
+        <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"18px 24px",color:C.white,
+          display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+          <div style={{fontWeight:900,fontSize:18}}>🛡️ CoFundBills Admin Dashboard</div>
+          <div style={{display:"flex",gap:8}}>
+            <button className="btn btn-outline btn-sm" onClick={async()=>{
+              const today = new Date();
+              const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth()+1, 0);
+              const daysLeft = Math.ceil((lastDayOfMonth-today)/(1000*60*60*24));
+              let sent = 0;
+              for(const cell of cells.filter(c=>c.status==="active")){
+                const t = getTier(cell.contribution_tier||1);
+                for(const seat of (cell.seats||[]).filter(s=>s.seat_type==="contributing")){
+                  const mem = members[seat.link_code];
+                  if(mem?.email){
+                    await sendEmail({
+                      to_email:mem.email, to_name:mem.fullName,
+                      subject:`CoFundBills — Monthly Contribution Reminder`,
+                      message:`Dear ${mem.fullName},
+
+This is your monthly contribution reminder for your CoFundBills ${t.label} contribution cell (${cell.cell_code}).
+
+Month ${cell.month_number||1} of 10
+Amount Due: ${fmtNGN(t.monthly)}
+Deadline: Last day of this month (${fmtDate(lastDayOfMonth)})
+${daysLeft<=7?"⚠️ URGENT: Only "+daysLeft+" day(s) remaining!":""}
+
+Payment Details:
+Account Name: Royal Tech Partnership & Investment Limited
+Bank: Zenith Bank
+Account Number: 1016621205
+Reference: ${mem.linkCode}
+
+After payment, send proof via WhatsApp to +234 909 999 4816.
+
+Missing the deadline costs you ${Math.abs(t.pts.missed)} CoFund Credit Score points.
+
+CoFundBills Cooperative
++234 806 163 1222 | +234 909 999 4816`,
+                    });
+                    sent++;
+                  }
+                }
+              }
+              showToast(`Monthly reminders sent to ${sent} members.`);
+            }}>📧 Send Monthly Reminders</button>
+            <button className="btn btn-outline btn-sm" onClick={()=>setView("landing")}>🏠 Home</button>
+          </div>
+        </div>
+
+        <div style={{maxWidth:1000,margin:"0 auto",padding:"20px 16px"}}>
+          {/* Stats */}
+          <div className="grid-4" style={{marginBottom:20}}>
+            {[
+              ["Queue T1",queueCount(1)+" waiting"],
+              ["Queue T2",queueCount(2)+" waiting"],
+              ["Queue T3",queueCount(3)+" waiting"],
+              ["Queue T4",queueCount(4)+" waiting"],
+              ["Active Cells",activeCells.length],
+              ["Completed Cells",completedCells.length],["Pending Loans",pendingLoans.length],
+              ["Pending Bills",pendingBills.length],["Total Members",allMembersList.length],
+              ["Pending Activation",pendingMembers.length],
+            ].map(([l,v])=>(
+              <div key={l} className="stat-card"><div className="stat-val">{v}</div><div className="stat-lbl">{l}</div></div>
+            ))}
+          </div>
+
+          {/* Admin tabs */}
+          <div className="portal-tabs" style={{marginBottom:16}}>
+            {[["members","Members"],["pending","Pending"],["cells","Cells"],["loans","Loans"],["bills","Bills"],["analytics","Analytics"]].map(([k,l])=>(
+              <button key={k} className={`portal-tab${adminTab===k?" active":""}`} onClick={()=>setAdminTab(k)}>{l}</button>
+            ))}
+          </div>
+
+          {/* Members tab */}
+          {adminTab==="members"&&(
+            <div className="table-wrap">
+              <div className="table-head">All Members ({allMembersList.length})</div>
+              {allMembersList.map(m=>(
+                <div key={m.linkCode} className="table-row">
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:700,color:C.navy}}>{m.fullName}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{m.email}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{m.linkCode}</div>
+                    </div>
+                    <div style={{textAlign:"right",fontSize:12}}>
+                      <div>{m.memberType} · {getTier(m.contributionTier||1).label}</div>
+                      <div style={{color:C.muted}}>{m.creditScore} pts · {m.cyclesCompleted} cycles</div>
+                      <span className="pill" style={{background:m.status==="active"?"#BBF7D0":"#FEE2E2",color:m.status==="active"?"#166534":C.error}}>{m.status}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Pending tab */}
+          {adminTab==="pending"&&(
+            <div className="table-wrap">
+              <div className="table-head">Pending Activation ({pendingMembers.length})</div>
+              {pendingMembers.map(m=>(
+                <div key={m.linkCode} className="table-row">
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:700,color:C.navy}}>{m.fullName}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{m.email} · {m.phone}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{m.linkCode} · {getTier(m.contributionTier||1).label}</div>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      <button className="btn btn-sm btn-gold" onClick={()=>handleMakeFounding(m.linkCode)}>🎖️ Make Founding</button>
+                      <button className="btn btn-sm btn-green" onClick={()=>handleActivate(m.linkCode)}>✅ Activate</button>
+                      <button className="btn-danger" onClick={async()=>{await supabase.from("cfb_members").delete().eq("link_code",m.linkCode);await loadMembers();showToast("Member deleted.");}}>🗑</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {pendingMembers.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No pending members</div>}
+            </div>
+          )}
+
+          {/* Cells tab */}
+          {adminTab==="cells"&&(
+            <div>
+              {cells.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No cells yet</div>}
+              {cells.map(c=>(
+                <div key={c.cell_code} style={{marginBottom:16}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:8}}>
+                    <div>
+                      <span style={{fontWeight:800,color:C.navy}}>{c.cell_code}</span>
+                      <span style={{fontSize:11,color:C.muted,marginLeft:8}}>· {getTier(c.contribution_tier||1).label} · Month {c.month_number||0}/{CYCLE_MONTHS}</span>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {c.status==="active"&&(
+                        <button className="btn btn-sm btn-blue" onClick={async()=>{
+                          const newMonth = (c.month_number||0)+1;
+                          await supabase.from("cfb_cells").update({month_number:newMonth}).eq("cell_code",c.cell_code);
+                          await loadCells();showToast("Month advanced.");
+                        }}>Advance Month</button>
+                      )}
+                      {c.status==="active"&&(
+                        <button className="btn btn-sm btn-green" onClick={()=>completeCycle(c.cell_code,c.seats||[])}>Complete Cycle</button>
+                      )}
+                    </div>
+                  </div>
+                  <CellVisual cell={c}/>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Loans tab */}
+          {adminTab==="loans"&&(
+            <div className="table-wrap">
+              <div className="table-head">All Loans ({loans.length})</div>
+              {loans.map(l=>(
+                <div key={l.id} className="table-row">
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:700}}>{members[l.link_code]?.fullName||l.link_code}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{fmtNGN(l.amount)} · {l.bill_type} · {l.credit_category}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{l.interest_rate}%/mo · {fmtNGN(l.total_repayable)} repayable</div>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                      <span className="pill" style={{background:l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":"#FEE2E2",color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":C.error}}>{l.status}</span>
+                      {l.status==="pending"&&(
+                        <>
+                          <button className="btn btn-sm btn-green" onClick={async()=>{await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString()}).eq("id",l.id);await loadLoans();showToast("Loan approved.");}}>✅ Approve</button>
+                          <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{await supabase.from("cfb_loans").update({status:"rejected"}).eq("id",l.id);await loadLoans();showToast("Loan rejected.");}}>✗ Reject</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {loans.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No loans yet</div>}
+            </div>
+          )}
+
+          {/* Bills tab */}
+          {adminTab==="bills"&&(
+            <div className="table-wrap">
+              <div className="table-head">Bill Support Applications ({billApps.length})</div>
+              {billApps.map(b=>(
+                <div key={b.id} className="table-row">
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <div>
+                      <div style={{fontWeight:700}}>{members[b.link_code]?.fullName||b.link_code}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{fmtNGN(b.amount_requested)} · {b.bill_type}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{b.description}</div>
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
+                      <span className="pill" style={{background:b.status==="approved"?"#BBF7D0":b.status==="pending"?"#FEF3C7":"#FEE2E2",color:b.status==="approved"?"#166534":b.status==="pending"?"#92400E":C.error}}>{b.status}</span>
+                      {b.status==="pending"&&(
+                        <>
+                          <button className="btn btn-sm btn-green" onClick={async()=>{
+                            await supabase.from("cfb_bill_support").update({status:"approved",approved_at:new Date().toISOString()}).eq("id",b.id);
+                            const mem = members[b.link_code];
+                            if(mem){
+                              const mT = getTier(mem.contributionTier||1);
+                              await supabase.from("cfb_members").update({credit_score:Math.max(0,(mem.creditScore||0)+mT.pts.billClaim)}).eq("link_code",b.link_code);
+                            }
+                            await loadBillApps();await loadMembers();showToast("Bill support approved.");
+                          }}>✅ Approve</button>
+                          <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{await supabase.from("cfb_bill_support").update({status:"rejected"}).eq("id",b.id);await loadBillApps();showToast("Application rejected.");}}>✗ Reject</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {billApps.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No bill applications yet</div>}
+            </div>
+          )}
+
+          {/* Analytics */}
+          {adminTab==="analytics"&&(
+            <div className="card">
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:14}}>Platform Analytics</div>
+              <div className="grid-2">
+                {[
+                  {l:"Total Members",v:allMembersList.length},
+                  {l:"Active Members",v:activeMembers.length},
+                  {l:"Active Cells",v:activeCells.length},
+                  {l:"Completed Cycles",v:completedCells.length},
+                  {l:"Loan Fund Balance",v:fmtNGN(funds.loan_fund||0)},
+                  {l:"Bill Support Fund (T1)",v:fmtNGN(funds.bill_support_t1||funds.bill_support||0)},
+                  {l:"Administration Fund",v:fmtNGN(funds.administration||0)},
+                  {l:"Contingency Reserve",v:fmtNGN(funds.contingency||0)},
+                ].map(s=>(
+                  <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8}}>
+                    <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
+                    <div style={{fontWeight:900,color:C.navy,fontSize:15}}>{s.v}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Referral Bonus ──────────────────────────────────────────────
+  const awardReferralBonus = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
+    if(!inviterCode) return;
+    const inviter = members[inviterCode];
+    if(!inviter || inviter.memberType==="admin") return;
+    const effectiveTierNum = Math.min(inviterTier||1, inviteeTier||1);
+    const t = getTier(effectiveTierNum);
+    const pts = eventType==="activation" ? t.pts.referralActivation : t.pts.referralCycle;
+    if(!pts) return;
+    await supabase.from("cfb_credit_events").insert({
+      link_code:inviterCode, event_type:`referral_bonus_${eventType}`,
+      points:pts, description:`Referral Bonus — invitee ${eventType}`,
+    });
+    await supabase.from("cfb_members").update({
+      credit_score: Math.max(0,(inviter.creditScore||0)+pts)
+    }).eq("link_code",inviterCode);
+  };
+
+  // ── Try to form a cell ──────────────────────────────────────────
+  const tryFormCell = async (allMembers) => {
+    for(const tierNum of [1,2,3,4]) {
+      const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
+      const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
+      const queue = Object.values(allMembers).filter(m=>
+        m.status==="active" &&
+        m.memberType!=="admin" &&
+        (m.contributionTier||1)===tierNum &&
+        !seatedCodes.has(m.linkCode)
+      ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
+
+      if(queue.length>=10){
+        const ten = queue.slice(0,10);
+        const cellCode = genCode("CELL-");
+        const now = new Date();
+        const activationMonth = now.toISOString().slice(0,7);
+        const nextDeadline = new Date(now.getFullYear(), now.getMonth()+2, 0);
+        const nextDeadlineStr = nextDeadline.toISOString().slice(0,10);
+        await supabase.from("cfb_cells").insert({
+          cell_code:cellCode, status:"active",
+          contribution_tier:tierNum,
+          started_at:now.toISOString(), month_number:1,
+          activation_month:activationMonth,
+          next_payment_deadline:nextDeadlineStr,
+        });
+        for(const m of ten){
+          await supabase.from("cfb_cell_members").insert({
+            cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
+          });
+        }
+        const t = getTier(tierNum);
+        for(const m of ten){
+          if(m.email) {
+            await sendEmail({
+              to_email:m.email, to_name:m.fullName,
+              subject:`CoFundBills — Your Contribution Cell is Now Active!`,
+              message:`Dear ${m.fullName},
+
+Great news! Your CoFundBills ${t.label} contribution cell has been formed and is now active.
+
+Cell Code: ${cellCode}
+Tier: ${t.label} (${t.name})
+Cell Members: 10 contributing members
+
+YOUR PAYMENT SCHEDULE:
+Month 1 (your activation payment) — Already paid ✅
+Month 2 — Due by: ${fmtDate(nextDeadline)}
+
+Monthly contributions of ${fmtNGN(t.monthly)} are due by the last day of each month. The last week of each month is your reminder window. Missing the deadline costs you ${Math.abs(t.pts.missed)} credit score points.
+
+Your cycle payout of ${fmtNGN(t.cyclePayout)} will be disbursed at the end of Month 10.
+
+Log in to track your cell progress: cofundbills.vercel.app
+Questions? WhatsApp +234 909 999 4816
+
+Warm regards,
+CoFundBills Cooperative`,
+            });
+          }
+        }
+        await loadCells();
+        showToast(`Tier ${tierNum} cell ${cellCode} formed with 10 members!`);
+      }
+    }
+  };
+
+  // ── Modal renderer ────────────────────────────────────────────
+  const renderModal = () => {
+    if(!modal) return null;
+    const close = () => setModal(null);
+
+    if(modal.type==="register") return(
+      <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)close();}}>
+        <div className="modal">
+          <div className="modal-hdr">
+            <div className="modal-title">Join CoFundBills Cooperative</div>
+            <div className="modal-sub">Free registration · No commitment until your first payment</div>
+          </div>
+          <div className="modal-body">
+            <div className="field"><label>Contribution Tier</label>
+              <select value={regForm.contributionTier} onChange={e=>setRegForm({...regForm,contributionTier:Number(e.target.value)})}>
+                {Object.values(TIERS).map(t=><option key={t.id} value={t.id}>{t.label} — {t.name} (Cycle payout: {fmtNGN(t.cyclePayout)})</option>)}
+              </select>
+            </div>
+            <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:12,fontSize:12,lineHeight:1.9}}>
+              <strong style={{color:C.navy,display:"block",marginBottom:4}}>Where your contributions go:</strong>
+              💰 <strong>First Half — {fmtNGN(getTier(regForm.contributionTier||1).benefitPool)}/month</strong> stays in your cell → returned as <strong>{fmtNGN(getTier(regForm.contributionTier||1).cyclePayout)} cash</strong> at the end of your 10-month cycle<br/>
+              🌊 <strong>Second Half — {fmtNGN(getTier(regForm.contributionTier||1).monthly - getTier(regForm.contributionTier||1).benefitPool)}/month</strong> merges with all other cells into the cooperative pool → funds Bill Support requests, Loan requests, Operations and Reserve
+            </div>
+            <div className="sec-div">Personal Information</div>
+            {[["fullName","Full Name","text"],["email","Email Address (gmail address preferably)","email"],["phone","Phone Number","tel"],["occupation","Occupation","text"]].map(([k,l,t])=>(
+              <div className="field" key={k}>
+                <label>{l}</label>
+                <input type={t} className={regErrors[k]?"field-err":""} value={regForm[k]} onChange={e=>setRegForm({...regForm,[k]:e.target.value})}/>
+                {regErrors[k]&&<div className="err-msg">{regErrors[k]}</div>}
+              </div>
+            ))}
+            <div className="sec-div">Address</div>
+            {[["address","Street Address","text"],["state","State","text"],["country","Country","text"]].map(([k,l,t])=>(
+              <div className="field" key={k}>
+                <label>{l}</label>
+                <input type={t} className={regErrors[k]?"field-err":""} value={regForm[k]} onChange={e=>setRegForm({...regForm,[k]:e.target.value})}/>
+                {regErrors[k]&&<div className="err-msg">{regErrors[k]}</div>}
+              </div>
+            ))}
+            <div className="sec-div">Next of Kin</div>
+            {[["nokName","NOK Full Name","text"],["nokPhone","NOK Phone","tel"],["nokRelationship","Relationship","text"]].map(([k,l,t])=>(
+              <div className="field" key={k}>
+                <label>{l}</label>
+                <input type={t} className={regErrors[k]?"field-err":""} value={regForm[k]} onChange={e=>setRegForm({...regForm,[k]:e.target.value})}/>
+                {regErrors[k]&&<div className="err-msg">{regErrors[k]}</div>}
+              </div>
+            ))}
+            <div className="sec-div">Bank Account</div>
+            {[["bankName","Bank Name","text"],["accountName","Account Name","text"],["accountNumber","Account Number","text"]].map(([k,l,t])=>(
+              <div className="field" key={k}>
+                <label>{l}</label>
+                <input type={t} className={regErrors[k]?"field-err":""} value={regForm[k]} onChange={e=>setRegForm({...regForm,[k]:e.target.value})}/>
+                {regErrors[k]&&<div className="err-msg">{regErrors[k]}</div>}
+              </div>
+            ))}
+          </div>
+          <div className="modal-foot">
+            <button className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
+            <button className="btn btn-gold" onClick={handleRegister} disabled={loading}>{loading?"Registering...":"Register Free"}</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    if(modal.type==="regSuccess") return(
+      <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)close();}}>
+        <div className="modal">
+          <div className="modal-hdr" style={{background:`linear-gradient(135deg,${C.green},#0B6E4F)`}}>
+            <div className="modal-title">🎉 Registration Successful!</div>
+            <div className="modal-sub">Welcome to CoFundBills Cooperative</div>
+          </div>
+          <div className="modal-body">
+            <div className="success-box"><strong>Your Link Code: {modal.linkCode}</strong><br/>Save this — you will use it to log in and share your invite link.</div>
+            <div style={{fontWeight:700,color:C.navy,marginBottom:8,fontSize:13}}>Activate Your Membership</div>
+            <div style={{fontSize:13,color:C.muted,lineHeight:1.8,marginBottom:10}}>
+              Pay your first monthly contribution of <strong>{fmtNGN(getTier(modal.tier||1).monthly)}</strong> ({getTier(modal.tier||1).label}) to activate and join the queue. This is the only payment required until your contribution cell activates.
+            </div>
+            <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:12,fontSize:12,lineHeight:1.9}}>
+              <strong style={{color:C.navy,display:"block",marginBottom:4}}>Where your contributions go:</strong>
+              💰 <strong>First Half — {fmtNGN(getTier(modal.tier||1).benefitPool)}/month</strong> stays in your cell → returned as <strong>{fmtNGN(getTier(modal.tier||1).cyclePayout)} cash</strong> at the end of your 10-month cycle<br/>
+              🌊 <strong>Second Half — {fmtNGN(getTier(modal.tier||1).monthly - getTier(modal.tier||1).benefitPool)}/month</strong> merges with all other cells into the cooperative pool → funds Bill Support requests, Loan requests, Operations and Reserve
+            </div>
+            <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:10,padding:14,fontSize:13,lineHeight:1.9}}>
+              <strong style={{color:C.navy}}>Payment Details</strong><br/>
+              Royal Tech Partnership & Investment Limited<br/>
+              Zenith Bank — <strong>1016621205</strong><br/>
+              Reference: <strong>{modal.linkCode}</strong><br/>
+              WhatsApp: <strong>+234 909 999 4816</strong>
+            </div>
+          </div>
+          <div className="modal-foot">
+            <button className="btn btn-green" onClick={close}>Got it!</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    if(modal.type==="login") return(
+      <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)close();}}>
+        <div className="modal">
+          <div className="modal-hdr"><div className="modal-title">Log In to Your Portal</div></div>
+          <div className="modal-body">
+            <div className="field"><label>Email Address</label>
+              <input type="email" placeholder="your@email.com" value={loginForm.email} onChange={e=>setLoginForm({...loginForm,email:e.target.value})}/>
+            </div>
+            <div style={{textAlign:"center",color:C.muted,fontSize:12,margin:"4px 0"}}>— or —</div>
+            <div className="field"><label>Link Code</label>
+              <input type="text" placeholder="CFB-XXXXXX" value={loginForm.linkCode} onChange={e=>setLoginForm({...loginForm,linkCode:e.target.value.toUpperCase()})}/>
+            </div>
+          </div>
+          <div className="modal-foot">
+            <button className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
+            <button className="btn btn-blue" onClick={handleLogin} disabled={loading}>{loading?"Logging in...":"Log In"}</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    if(modal.type==="adminLogin") return(
+      <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)close();}}>
+        <div className="modal">
+          <div className="modal-hdr"><div className="modal-title">Admin Access</div></div>
+          <div className="modal-body">
+            <div className="field"><label>Admin Password</label>
+              <input type="password" placeholder="Enter admin password"
+                value={loginForm.linkCode} onChange={e=>setLoginForm({...loginForm,linkCode:e.target.value})}
+                onKeyDown={e=>{if(e.key==="Enter"){if(loginForm.linkCode===ADMIN_PASS){setIsAdmin(true);setView("admin");close();}else showToast("Incorrect password","error");}}}/>
+            </div>
+          </div>
+          <div className="modal-foot">
+            <button className="btn btn-ghost btn-sm" onClick={close}>Cancel</button>
+            <button className="btn btn-navy" onClick={()=>{
+              if(loginForm.linkCode===ADMIN_PASS){setIsAdmin(true);setView("admin");close();}
+              else showToast("Incorrect password","error");
+            }}>Enter</button>
+          </div>
+        </div>
+      </div>
+    );
+
+    return null;
+  };
+
+  // ── FAQ & T&C Overlays ────────────────────────────────────────
+  const FaqOverlay = () => !faqOpen ? null : (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setFaqOpen(false);}}>
+      <div className="modal">
+        <div className="modal-hdr"><div className="modal-title">Frequently Asked Questions</div></div>
+        <div className="modal-body">
+          {FAQS.map(([q,a])=>(
+            <div key={q} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
+              <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:6}}>{q}</div>
+              <div style={{fontSize:12,color:C.muted,lineHeight:1.75}}>{a}</div>
+            </div>
+          ))}
+        </div>
+        <div className="modal-foot"><button className="btn btn-ghost btn-sm" onClick={()=>setFaqOpen(false)}>Close</button></div>
+      </div>
+    </div>
+  );
+
+  const TcOverlay = () => !tcOpen ? null : (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setTcOpen(false);}}>
+      <div className="modal">
+        <div className="modal-hdr"><div className="modal-title">Terms & Conditions</div><div className="modal-sub">CoFundBills Cooperative · Last updated 2026</div></div>
+        <div className="modal-body">
+          {TCS.map(([t,c])=>(
+            <div key={t} style={{marginBottom:16,paddingBottom:16,borderBottom:`1px solid ${C.border}`}}>
+              <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:6}}>{t}</div>
+              <div style={{fontSize:12,color:C.muted,lineHeight:1.75}}>{c}</div>
+            </div>
+          ))}
+        </div>
+        <div className="modal-foot"><button className="btn btn-ghost btn-sm" onClick={()=>setTcOpen(false)}>Close</button></div>
+      </div>
+    </div>
+  );
+
+  // ── AI Chat Widget ────────────────────────────────────────────
+  const ChatWidget = () => (
+    <div style={{position:"fixed",bottom:20,right:20,zIndex:500}}>
+      {chatOpen&&(
+        <div style={{width:320,height:450,background:C.white,borderRadius:16,
+          boxShadow:"0 8px 40px rgba(13,33,55,.25)",display:"flex",flexDirection:"column",
+          marginBottom:10,border:`1px solid ${C.border}`}}>
+          <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"14px 16px",
+            borderRadius:"16px 16px 0 0",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{color:C.white,fontWeight:800,fontSize:14}}>🤖 CoFundBills Assistant</div>
+            <button style={{background:"none",border:"none",color:"rgba(255,255,255,.7)",cursor:"pointer",fontSize:18}} onClick={()=>setChatOpen(false)}>×</button>
+          </div>
+          <div style={{flex:1,overflowY:"auto",padding:12,display:"flex",flexDirection:"column",gap:8}}>
+            {chatMsgs.map((msg,i)=>(
+              <div key={i} style={{alignSelf:msg.role==="user"?"flex-end":"flex-start",
+                background:msg.role==="user"?C.blue:C.bg,color:msg.role==="user"?C.white:C.dark,
+                borderRadius:12,padding:"9px 13px",fontSize:12,maxWidth:"85%",lineHeight:1.6}}>
+                {msg.content}
+              </div>
+            ))}
+            {chatLoading&&<div style={{alignSelf:"flex-start",background:C.bg,borderRadius:12,padding:"9px 13px",fontSize:12,color:C.muted}}>Thinking...</div>}
+          </div>
+          <div style={{padding:10,borderTop:`1px solid ${C.border}`,display:"flex",gap:6}}>
+            <input style={{flex:1,padding:"8px 12px",borderRadius:20,border:`1.5px solid ${C.border}`,fontSize:12,outline:"none"}}
+              placeholder="Ask anything..." value={chatInput} onChange={e=>setChatInput(e.target.value)}
+              onKeyDown={e=>{if(e.key==="Enter")handleChat();}}/>
+            <button className="btn btn-blue btn-sm" onClick={handleChat} disabled={chatLoading}>→</button>
+          </div>
+        </div>
+      )}
+      <button onClick={()=>setChatOpen(!chatOpen)}
+        style={{width:52,height:52,borderRadius:"50%",background:`linear-gradient(135deg,${C.navy},${C.blue})`,
+          border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:22,boxShadow:"0 4px 20px rgba(13,33,55,.3)"}}>
+        {chatOpen?"×":"💬"}
+      </button>
+    </div>
+  );
+
+  // ── Main App Return ───────────────────────────────────────────
+  return (
+    <>
+      <style>{CSS}</style>
+
+      {/* Navbar */}
+      <nav className="nav">
+        <div className="nav-logo" onClick={()=>{setMember(null);setView("landing");}}>
+          <span>CFB</span>
+          <div><div style={{fontSize:12,lineHeight:1}}>CoFundBills</div><div style={{fontSize:9,opacity:.6,fontWeight:400}}>Cooperative</div></div>
+        </div>
+        <div className="nav-btns">
+          <button className="btn btn-outline btn-sm" onClick={()=>setFaqOpen(true)}>FAQs</button>
+          <button className="btn btn-outline btn-sm" onClick={()=>setTcOpen(true)}>T&C</button>
+          <button className="btn btn-outline btn-sm" style={{color:C.gold,borderColor:C.gold}}
+            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Import Ajo</button>
+          {member?(
+            <>
+              <button className="btn btn-outline btn-sm" onClick={()=>{setView("portal");setPortalTab("dashboard");}}>My Portal</button>
+              <button className="btn btn-outline btn-sm" onClick={()=>{setMember(null);setView("landing");}}>Log Out</button>
+            </>
+          ):(
+            <>
+              <button className="btn btn-outline btn-sm" onClick={()=>setModal({type:"login"})}>Log In</button>
+              <button className="btn btn-gold btn-sm" onClick={()=>setModal({type:"register"})}>Join Free</button>
+            </>
+          )}
+          <button style={{background:"transparent",border:"none",color:"rgba(255,255,255,.15)",cursor:"pointer",fontSize:10,padding:"2px 4px"}} onClick={()=>setModal({type:"adminLogin"})}>[ADM]</button>
+        </div>
+      </nav>
+
+      {/* Toast */}
+      {toast&&(
+        <div style={{position:"fixed",top:66,right:14,zIndex:9999,background:toast.type==="error"?C.error:C.green,color:C.white,padding:"11px 18px",borderRadius:10,fontWeight:700,fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.2)",maxWidth:300}}>
+          {toast.msg}
+        </div>
+      )}
+
+      {/* Views */}
+      {view==="landing"&&<Landing/>}
+      {view==="portal"&&<Portal/>}
+      {view==="admin"&&<Admin/>}
+      {view==="ajo"&&<AjoApp/>}
+
+      {/* Modals */}
+      {renderModal()}
+
+      {/* FAQ & T&C */}
+      <FaqOverlay/>
+      <TcOverlay/>
+
+      {/* Chat */}
+      <ChatWidget/>
+
+      {/* Powered by */}
+      <div style={{position:"fixed",bottom:80,right:20,zIndex:400,display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+        <div style={{fontSize:9,color:C.muted}}>Powered by Claude AI</div>
+        <a href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer"
+          style={{display:"flex",alignItems:"center",gap:3,background:"#25D366",color:C.white,borderRadius:9,padding:"2px 7px",fontSize:10,fontWeight:700,textDecoration:"none"}}>
+          💬 Admin
+        </a>
+      </div>
+    </>
+  );
+}
