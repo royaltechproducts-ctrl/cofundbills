@@ -2330,9 +2330,14 @@ CoFundBills Cooperative
                     <div>
                       <div style={{fontWeight:700,color:C.navy}}>{m.fullName}</div>
                       <div style={{fontSize:11,color:C.muted}}>{m.email} · {m.phone}</div>
-                      <div style={{fontSize:11,color:C.muted}}>{m.linkCode} · {getTier(m.contributionTier||1).label}</div>
+                      <div style={{fontSize:11,color:C.muted}}>{m.linkCode} · {getTier(m.contributionTier||1).label}{m.refCode==="CFB-FM-INVITE"&&<span style={{background:"#7B1D1D",color:"#fff",borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700,marginLeft:6}}>🎖️ FM Invite</span>}</div>
                     </div>
                     <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {m.refCode==="CFB-FM-INVITE"&&m.memberType!=="founding"&&(
+                        <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:"4px 10px",fontSize:11,color:"#92400E",fontWeight:700,marginBottom:4,width:"100%"}}>
+                          ⚠️ Founding Member Invite — upgrade before activating
+                        </div>
+                      )}
                       <button className="btn btn-sm btn-gold" onClick={()=>handleMakeFounding(m.linkCode)}>🎖️ Make Founding</button>
                       <button className="btn btn-sm btn-green" onClick={()=>handleActivate(m.linkCode)}>✅ Activate</button>
                       <button className="btn-danger" onClick={async()=>{await supabase.from("cfb_members").delete().eq("link_code",m.linkCode);await loadMembers();showToast("Member deleted.");}}>🗑</button>
