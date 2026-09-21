@@ -35,6 +35,7 @@ const TIERS = {
     loanFund:1250, admin:750, contingency:500, cyclePayout:50000,
     unlockScore:400, billScoreMin:1000, excellentScore:1000, strongScore:700, standardScore:500,
     loanLimits:{excellent:600000, strong:360000, standard:180000, minimal:60000},
+    loanTerm:3, loanRate:0.04,
     billCaps:[{min:0,max:2000000,cap:100000,tier:"Bronze"},{min:2000000,max:5000000,cap:250000,tier:"Silver"},
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
     pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:0,
@@ -47,6 +48,7 @@ const TIERS = {
     loanFund:6250, admin:3750, contingency:2500, cyclePayout:250000,
     unlockScore:2000, billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
     loanLimits:{excellent:3000000, strong:1800000, standard:900000, minimal:300000},
+    loanTerm:6, loanRate:0.03,
     billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
@@ -59,6 +61,7 @@ const TIERS = {
     loanFund:12500, admin:7500, contingency:5000, cyclePayout:500000,
     unlockScore:4000, billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
     loanLimits:{excellent:6000000, strong:3600000, standard:1800000, minimal:600000},
+    loanTerm:6, loanRate:0.025,
     billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
@@ -71,6 +74,7 @@ const TIERS = {
     loanFund:25000, admin:15000, contingency:10000, cyclePayout:1000000,
     unlockScore:8000, billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
     loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
+    loanTerm:8, loanRate:0.02,
     billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
@@ -166,10 +170,11 @@ const daysSince = dt => dt ? Math.floor((Date.now()-new Date(dt))/(1000*60*60*24
 const scoreCategory = (score, tierNum=1, isFounding=false) => {
   const t = getTier(tierNum);
   const rate = isFounding ? 0 : null; // founding members always 0%
-  if(score>=t.excellentScore) return {label:"Excellent Performance (Lowest Risk)", rate:rate??1, limit:t.loanLimits.excellent, color:C.green};
-  if(score>=t.strongScore)    return {label:"Strong Performance (Low Risk)",       rate:rate??2, limit:t.loanLimits.strong,    color:C.blue};
-  if(score>=t.standardScore)  return {label:"Standard Performance (Medium Risk)",  rate:rate??3, limit:t.loanLimits.standard,  color:C.amber};
-  return                             {label:"Minimal Performance (Higher-Risk)",   rate:rate??4, limit:t.loanLimits.minimal,   color:C.error};
+  const r = (pct) => isFounding ? 0 : Math.round(t.loanRate * pct * 1000) / 10;
+  if(score>=t.excellentScore) return {label:"Excellent Performance (Lowest Risk)", rate:isFounding?0:+(t.loanRate*100).toFixed(1), limit:t.loanLimits.excellent, color:C.green, term:t.loanTerm};
+  if(score>=t.strongScore)    return {label:"Strong Performance (Low Risk)",       rate:isFounding?0:+(t.loanRate*100).toFixed(1), limit:t.loanLimits.strong,    color:C.blue,  term:t.loanTerm};
+  if(score>=t.standardScore)  return {label:"Standard Performance (Medium Risk)",  rate:isFounding?0:+(t.loanRate*100).toFixed(1), limit:t.loanLimits.standard,  color:C.amber, term:t.loanTerm};
+  return                             {label:"Minimal Performance (Higher-Risk)",   rate:isFounding?0:+(t.loanRate*100).toFixed(1), limit:t.loanLimits.minimal,   color:C.error, term:t.loanTerm};
 };
 
 const mapMember = m => ({
@@ -814,13 +819,14 @@ Services unlock at minimum credit score per tier:
 - Tier 3: 4,000 pts minimum to unlock
 - Tier 4: 8,000 pts minimum to unlock
 
-Once unlocked, interest rate and loan limit by credit category (Tier 1 example):
-- Excellent Performance (Lowest Risk) 1000+: 1%/month, max loan NGN600,000
-- Strong Performance (Low Risk) 700-999: 2%/month, max loan NGN360,000
-- Standard Performance (Medium Risk) 500-699: 3%/month, max loan NGN180,000
-- Minimal Performance (Higher-Risk) below 500: 4%/month, max loan NGN60,000
-All limits scale proportionally with contribution tier.
-Loans subject to fund liquidity and admin approval. Credits improve eligibility — do not guarantee approval.
+Once unlocked, all members in the same tier get the SAME interest rate (rate is tier-based, not score-based — score only determines the loan LIMIT):
+- Tier 1: 4%/month flat, 3-month term. Limits: Excellent NGN600k, Strong NGN360k, Standard NGN180k, Minimal NGN60k
+- Tier 2: 3%/month flat, 6-month term. Limits: Excellent NGN3M, Strong NGN1.8M, Standard NGN900k, Minimal NGN300k
+- Tier 3: 2.5%/month flat, 6-month term. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
+- Tier 4: 2%/month flat, 8-month term. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
+- Founding Members: 0% across ALL tiers — same limits apply
+Repayment: Equal monthly instalments (principal + flat interest ÷ term months). Due last day of month. 7-day grace period. Default after Day 7.
+Loans subject to fund liquidity and admin approval.
 
 BILL SUPPORT — COOPERATIVE FUNDING CAPACITY TIER (CRITICAL):
 The funding capacity tier (Bronze/Silver/Gold/Platinum) is NOT determined by the member's own contribution tier. It is determined entirely by the COOPERATIVE'S ACTUAL BILL SUPPORT FUND BALANCE at the time the member submits their request. The fund is shared across all tiers and built from 25% of every monthly contribution platform-wide.
@@ -955,7 +961,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category or contribution tier. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
     ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +10 pts per activated invitee. Tier 2: +50 pts per activated invitee. Tier 3: +100 pts per activated invitee. Tier 4: +200 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
-    ["8. Co-Fund Loan","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Once unlocked, loan limits and interest rates are determined by credit score category. Loan limits scale with contribution tier. Loans are subject to fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval. Founding Members receive zero interest on all approved loans regardless of credit category."],
+    ["8. Co-Fund Loan & Repayment Schedule","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are calculated as equal monthly instalments (principal + flat interest divided equally across the term). Monthly instalments are due by the last day of every month. A grace period of 7 days applies after each due date. Failure to pay within the grace period constitutes a default on that instalment — triggering a credit score deduction and suspension of bill support access. Loans are subject to available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
     ["9. Bill Support","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier (same as loan access thresholds). Maximum claim amounts are determined by the cooperative's live fund balance at the time of request — not the member's tier alone. Applications are subject to available fund balance and admin approval. Bill support is not an entitlement and is limited to once per 10-month cycle."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights","Failure to contribute by the last day of any month suspends cycle payout eligibility for that period and triggers a credit score deduction proportional to the member's contribution tier. Sustained non-payment may result in removal from the active cell and forfeiture of accumulated benefit pool balance for that cycle."],
@@ -1369,10 +1375,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 <div style={{padding:18,borderRight:`1px solid ${t.color}22`,background:"#FAFBFF"}}>
                   <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>Credit Score → Loan Access</div>
                   {[
-                    {l:"Excellent Performance (Lowest Risk)",r:`${t.excellentScore.toLocaleString()}+`,rate:"1%/month",limit:t.loanLimits.excellent,c:C.green},
-                    {l:"Strong Performance (Low Risk)",r:`${t.strongScore.toLocaleString()}–${(t.excellentScore-1).toLocaleString()}`,rate:"2%/month",limit:t.loanLimits.strong,c:C.blue},
-                    {l:"Standard Performance (Medium Risk)",r:`${t.standardScore.toLocaleString()}–${(t.strongScore-1).toLocaleString()}`,rate:"3%/month",limit:t.loanLimits.standard,c:C.amber},
-                    {l:"Minimal Performance (Higher-Risk)",r:`Below ${t.standardScore.toLocaleString()}`,rate:"4%/month",limit:t.loanLimits.minimal,c:C.error},
+                    {l:"Excellent Performance (Lowest Risk)",r:`${t.excellentScore.toLocaleString()}+`,rate:`${(t.loanRate*100).toFixed(1)}%/month · ${t.loanTerm} months`,limit:t.loanLimits.excellent,c:C.green},
+                    {l:"Strong Performance (Low Risk)",r:`${t.strongScore.toLocaleString()}–${(t.excellentScore-1).toLocaleString()}`,rate:`${(t.loanRate*100).toFixed(1)}%/month · ${t.loanTerm} months`,limit:t.loanLimits.strong,c:C.blue},
+                    {l:"Standard Performance (Medium Risk)",r:`${t.standardScore.toLocaleString()}–${(t.strongScore-1).toLocaleString()}`,rate:`${(t.loanRate*100).toFixed(1)}%/month · ${t.loanTerm} months`,limit:t.loanLimits.standard,c:C.amber},
+                    {l:"Minimal Performance (Higher-Risk)",r:`Below ${t.standardScore.toLocaleString()}`,rate:`${(t.loanRate*100).toFixed(1)}%/month · ${t.loanTerm} months`,limit:t.loanLimits.minimal,c:C.error},
                   ].map(c=>(
                     <div key={c.l} style={{borderRadius:8,border:`1.5px solid ${c.c}33`,padding:9,marginBottom:7,background:c.c+"0D"}}>
                       <div style={{fontWeight:800,color:c.c,fontSize:11}}>{c.l}</div>
@@ -1927,10 +1933,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
               </div>
               <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:10}}>{mTier.label} — Score Thresholds & Loan Access</div>
               {[
-                {l:"Excellent Performance (Lowest Risk)",s:mTier.excellentScore,r:m.memberType==="founding"?0:1,limit:mTier.loanLimits.excellent,c:C.green},
-                {l:"Strong Performance (Low Risk)",s:mTier.strongScore,r:m.memberType==="founding"?0:2,limit:mTier.loanLimits.strong,c:C.blue},
-                {l:"Standard Performance (Medium Risk)",s:mTier.standardScore,r:m.memberType==="founding"?0:3,limit:mTier.loanLimits.standard,c:C.amber},
-                {l:"Minimal Performance (Higher-Risk)",s:0,r:m.memberType==="founding"?0:4,limit:mTier.loanLimits.minimal,c:C.error},
+                {l:"Excellent Performance (Lowest Risk)",s:mTier.excellentScore,r:m.memberType==="founding"?0:+(mTier.loanRate*100).toFixed(1),limit:mTier.loanLimits.excellent,c:C.green},
+                {l:"Strong Performance (Low Risk)",s:mTier.strongScore,r:m.memberType==="founding"?0:+(mTier.loanRate*100).toFixed(1),limit:mTier.loanLimits.strong,c:C.blue},
+                {l:"Standard Performance (Medium Risk)",s:mTier.standardScore,r:m.memberType==="founding"?0:+(mTier.loanRate*100).toFixed(1),limit:mTier.loanLimits.standard,c:C.amber},
+                {l:"Minimal Performance (Higher-Risk)",s:0,r:m.memberType==="founding"?0:+(mTier.loanRate*100).toFixed(1),limit:mTier.loanLimits.minimal,c:C.error},
               ].map(cat=>(
                 <div key={cat.l} style={{borderRadius:10,border:`1.5px solid ${cat.c}44`,padding:12,marginBottom:8,
                   background:cat.c+"0D",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
@@ -1989,16 +1995,57 @@ Answer warmly, concisely and accurately. Never invent information.`;
                         🎖️ As a Founding Member, you get loans at zero interest, and benefit from exclusive quarterly share of loan interest revenue.
                       </div>
                     )}
-                    <div style={{display:"flex",gap:12,fontSize:13,marginBottom:16,flexWrap:"wrap"}}>
-                      <div style={{flex:1,textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
-                        <div style={{fontWeight:900,color:cat.color,fontSize:18}}>{cat.rate===0?"0%":cat.rate+"%"}/month</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Your Interest Rate</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
+                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
+                        <div style={{fontWeight:900,color:cat.color,fontSize:18}}>{cat.rate===0?"0%":cat.rate+"%"}/mo</div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Interest Rate</div>
                       </div>
-                      <div style={{flex:1,textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
+                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
                         <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{fmtNGN(cat.limit)}</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Max Loan Amount</div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Max Loan</div>
+                      </div>
+                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
+                        <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{mTier.loanTerm} months</div>
+                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Repayment Term</div>
                       </div>
                     </div>
+                    {/* Repayment schedule preview */}
+                    {loanForm.amount&&Number(loanForm.amount)>0&&(()=>{
+                      const principal = Number(loanForm.amount);
+                      const term = mTier.loanTerm;
+                      const rate = m.memberType==="founding" ? 0 : mTier.loanRate;
+                      const totalRepayable = principal * (1 + rate * term);
+                      const monthlyPayment = totalRepayable / term;
+                      const today = new Date();
+                      return(
+                        <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14,marginBottom:14}}>
+                          <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:10}}>📅 Repayment Schedule</div>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:8,flexWrap:"wrap",gap:4}}>
+                            <span style={{color:C.muted}}>Total repayable:</span>
+                            <strong style={{color:C.navy}}>{fmtNGN(totalRepayable)}</strong>
+                          </div>
+                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:10,flexWrap:"wrap",gap:4}}>
+                            <span style={{color:C.muted}}>Monthly instalment:</span>
+                            <strong style={{color:C.navy}}>{fmtNGN(monthlyPayment)}</strong>
+                          </div>
+                          <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                            {Array.from({length:term},(_,i)=>{
+                              const dueDate = new Date(today.getFullYear(), today.getMonth()+i+1, 0);
+                              return(
+                                <div key={i} style={{display:"flex",justifyContent:"space-between",
+                                  padding:"5px 8px",background:C.white,borderRadius:6,fontSize:11}}>
+                                  <span style={{color:C.muted}}>Month {i+1} — Due {fmtDate(dueDate)}</span>
+                                  <strong style={{color:C.navy}}>{fmtNGN(monthlyPayment)}</strong>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div style={{marginTop:8,fontSize:10,color:C.muted,lineHeight:1.6}}>
+                            ⚠️ Grace period: 7 days after each due date. Missing a payment beyond the grace period triggers a {Math.abs(mTier.pts.missed).toLocaleString()} pt credit score deduction and default declaration.
+                          </div>
+                        </div>
+                      );
+                    })()}
                     <div className="field">
                       <label>Loan Amount (₦)</label>
                       <input type="number" placeholder={`Up to ${fmtNGN(cat.limit)}`} value={loanForm.amount} onChange={e=>setLoanForm({...loanForm,amount:e.target.value})}/>
