@@ -1559,6 +1559,56 @@ Answer warmly, concisely and accurately. Never invent information.`;
             Month 4 — Due by <strong>31st December 2026</strong><br/>
             <span style={{opacity:.7,fontSize:11}}>...continuing monthly through Month 10 → Cycle payout disbursed</span>
           </div>
+
+          {/* Loan repayment schedule */}
+          <div style={{marginTop:32}}>
+            <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Co-Fund Loan Repayment Schedule</span>
+            <h3 style={{color:C.navy,fontWeight:900,fontSize:16,margin:"8px 0 6px"}}>Equal Monthly Instalments — Aligned to the Calendar</h3>
+            <p style={{color:C.muted,fontSize:13,lineHeight:1.8,marginBottom:16}}>
+              Loan repayments follow the same monthly rhythm as contributions — due by the last day of every month. A 7-day grace period applies. Repayments are calculated as equal monthly instalments across the loan term.
+            </p>
+            <div style={{overflowX:"auto"}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead>
+                  <tr style={{background:C.navy,color:C.white}}>
+                    {["Tier","Rate","Term","Max Loan","Monthly Instalment (Max)","Total Repayable (Max)","Grace Period"].map(h=>(
+                      <th key={h} style={{padding:"10px 12px",textAlign:"left",fontWeight:700,fontSize:11,whiteSpace:"nowrap"}}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.values(TIERS).map((t,i)=>{
+                    const maxLoan = t.loanLimits.excellent;
+                    const totalRepayable = maxLoan * (1 + t.loanRate * t.loanTerm);
+                    const monthlyInstalment = totalRepayable / t.loanTerm;
+                    return(
+                      <tr key={t.id} style={{background:i%2===0?C.white:C.bg,borderBottom:`1px solid ${C.border}`}}>
+                        <td style={{padding:"10px 12px",fontWeight:800,color:t.color}}>{t.label}</td>
+                        <td style={{padding:"10px 12px",color:C.navy,fontWeight:700}}>{(t.loanRate*100).toFixed(1)}%/month</td>
+                        <td style={{padding:"10px 12px",color:C.muted}}>{t.loanTerm} months</td>
+                        <td style={{padding:"10px 12px",color:C.navy}}>{fmtNGN(maxLoan)}</td>
+                        <td style={{padding:"10px 12px",fontWeight:700,color:C.green}}>{fmtNGN(monthlyInstalment)}</td>
+                        <td style={{padding:"10px 12px",color:C.navy}}>{fmtNGN(totalRepayable)}</td>
+                        <td style={{padding:"10px 12px",color:C.muted}}>7 days</td>
+                      </tr>
+                    );
+                  })}
+                  <tr style={{background:"#FEF3C7",borderBottom:`1px solid ${C.border}`}}>
+                    <td style={{padding:"10px 12px",fontWeight:800,color:C.burg}}>🎖️ Founding</td>
+                    <td style={{padding:"10px 12px",fontWeight:700,color:C.green}}>0% — All Tiers</td>
+                    <td style={{padding:"10px 12px",color:C.muted}}>Same as tier</td>
+                    <td style={{padding:"10px 12px",color:C.navy}}>Same as tier</td>
+                    <td style={{padding:"10px 12px",fontWeight:700,color:C.green}}>Principal ÷ term</td>
+                    <td style={{padding:"10px 12px",color:C.navy}}>Principal only</td>
+                    <td style={{padding:"10px 12px",color:C.muted}}>7 days</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style={{marginTop:12,background:"#FEF2F2",border:`1.5px solid #FCA5A5`,borderRadius:10,padding:12,fontSize:12,color:C.error,lineHeight:1.7}}>
+              ⚠️ <strong>Default rule:</strong> Payment not received within 7 days after the last day of the month constitutes a default on that instalment — triggering a credit score deduction and suspension of bill support access until the instalment is cleared.
+            </div>
+          </div>
         </div>
       </div>
 
