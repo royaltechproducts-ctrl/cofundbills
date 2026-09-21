@@ -1420,7 +1420,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
           <h2 className="section-title">Collective Bill Financing</h2>
-          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative Bill Support Fund. Active members with a credit score of 1,000+ can apply for support for their self-selected essential bills — up to ₦500,000 per claim from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members with a credit score from 1,000 to 4,000 credit points can apply for support for their self-selected essential bills — up to ₦500,000 per claim for Tier 1 members and ₦10,000,000 per claim for Tier 4 members — from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's available fund tier at the point of request.</p>
           <div className="grid-3">
             {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
               <div key={l} className="card" style={{textAlign:"center",padding:14}}>
