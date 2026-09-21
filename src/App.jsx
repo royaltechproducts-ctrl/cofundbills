@@ -2700,6 +2700,8 @@ ${inviteLink}` ;
         <div className="nav-btns">
           <button className="btn btn-outline btn-sm" onClick={()=>setFaqOpen(true)}>FAQs</button>
           <button className="btn btn-outline btn-sm" onClick={()=>setTcOpen(true)}>T&amp;C</button>
+          <button className="btn btn-outline btn-sm" style={{color:C.gold,borderColor:C.gold}}
+            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Import Ajo</button>
           {member?(
             <>
               <button className="btn btn-outline btn-sm" onClick={()=>setView("portal")}>My Portal</button>
