@@ -974,6 +974,187 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
   // ══════════════════════════════════════════════════════════════
   // ── Landing Page ──────────────────────────────────────────────
+  const AjoApp = () => (
+    <div style={{minHeight:"100vh",background:C.bg}}>
+      <div style={{background:`linear-gradient(90deg,${C.navy},${C.blue})`,padding:"14px 24px",
+        display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{fontWeight:900,color:C.white,fontSize:16}}>🧺 CoFundBills — Import Ajo</div>
+        <button style={{background:"rgba(255,255,255,.15)",border:"none",color:C.white,
+          borderRadius:20,padding:"6px 16px",fontSize:12,cursor:"pointer",fontWeight:600}}
+          onClick={()=>{setView("landing");setAjoView("landing");}}>← Back to CoFundBills</button>
+      </div>
+      {ajoView==="landing"&&(<div style={{padding:"48px 24px"}}><div style={{maxWidth:860,margin:"0 auto"}}>
+        <div style={{textAlign:"center",marginBottom:40}}>
+          <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>Import Ajo — Free Service</span>
+          <h2 className="section-title">Bring Your Ajo Group Online</h2>
+          <p className="section-sub" style={{maxWidth:580,margin:"0 auto"}}>Keep your own rules, your own account, your own payout order. We handle reminders, transparency and record keeping — completely free.</p>
+        </div>
+        <div className="grid-2" style={{marginBottom:36}}>{[
+          {icon:"📅",title:"Automated Reminders",desc:"We email every member when their contribution date approaches.",c:C.blue},
+          {icon:"📊",title:"Full Transparency",desc:"Every member sees who has paid. Coordinator records proofs and payouts.",c:C.green},
+          {icon:"🏦",title:"Your Account, Your Rules",desc:"Contributions go to your group's own bank account. CoFundBills never touches your money.",c:C.amber},
+          {icon:"🆓",title:"Completely Free",desc:"No charges, no commissions, no catches. Just better tools for your Ajo circle.",c:C.burg},
+        ].map(f=>(<div key={f.title} className="card" style={{borderLeft:`3px solid ${f.c}`}}>
+          <div style={{fontSize:24,marginBottom:8}}>{f.icon}</div>
+          <div style={{fontWeight:800,color:f.c,marginBottom:6,fontSize:13}}>{f.title}</div>
+          <div style={{fontSize:12,color:C.muted,lineHeight:1.8}}>{f.desc}</div>
+        </div>))}</div>
+        <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap"}}>
+          <button className="btn btn-primary" style={{fontSize:15,padding:"14px 32px"}} onClick={()=>setAjoView("create")}>➕ Register Your Group</button>
+          <button className="btn btn-outline" style={{fontSize:15,padding:"14px 32px"}} onClick={()=>setAjoView("join")}>🔑 Join an Existing Group</button>
+        </div>
+      </div></div>)}
+      {ajoView==="create"&&(<div style={{padding:"40px 24px"}}><div style={{maxWidth:600,margin:"0 auto"}}>
+        <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}} onClick={()=>setAjoView("landing")}>← Back</button>
+        <h2 style={{color:C.navy,fontWeight:900,fontSize:22,marginBottom:6}}>Register Your Ajo Group</h2>
+        <p style={{color:C.muted,fontSize:13,marginBottom:24}}>You will receive a Group Code to share with your members.</p>
+        <div className="card">
+          {[["groupName","Group Name","text","e.g. Victoria Island Ladies Circle"],
+            ["coordinatorName","Coordinator Name","text","Your full name"],
+            ["coordinatorPhone","Phone","tel","+234..."],
+            ["coordinatorEmail","Email","email","(gmail address preferably)"]].map(([k,l,t,p])=>(
+            <div key={k} style={{marginBottom:14}}>
+              <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+              <input type={t} placeholder={p} style={{width:"100%",padding:"10px 12px",borderRadius:8,
+                border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13,boxSizing:"border-box"}}
+                value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
+              {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+            </div>))}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+            {[["memberCount","No. of Members","e.g. 10"],["contributionAmount","Contribution (₦)","e.g. 10000"],
+              ["contributionDay","Contribution Day (1–31)","e.g. 25"]].map(([k,l,p])=>(
+              <div key={k}>
+                <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+                <input type="number" placeholder={p} style={{width:"100%",padding:"10px 12px",borderRadius:8,
+                  border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13,boxSizing:"border-box"}}
+                  value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
+                {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+              </div>))}
+            <div>
+              <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Payout Frequency</label>
+              <select style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13,background:C.white,boxSizing:"border-box"}}
+                value={ajoForm.payoutFrequency} onChange={e=>setAjoForm({...ajoForm,payoutFrequency:e.target.value})}>
+                {["Monthly","Bi-Monthly","Quarterly","Custom"].map(o=><option key={o}>{o}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14,marginBottom:14}}>
+            <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:10}}>🏦 Group Payout Account</div>
+            {[["bankName","Bank Name","e.g. Access Bank"],["accountName","Account Name","e.g. Victoria Ladies Circle"],
+              ["accountNumber","Account Number","10-digit number"]].map(([k,l,p])=>(
+              <div key={k} style={{marginBottom:10}}>
+                <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+                <input type="text" placeholder={p} style={{width:"100%",padding:"10px 12px",borderRadius:8,
+                  border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13,boxSizing:"border-box"}}
+                  value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
+                {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+              </div>))}
+          </div>
+          <div style={{marginBottom:20}}>
+            <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Cycle Start Date (optional)</label>
+            <input type="date" style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13,boxSizing:"border-box"}}
+              value={ajoForm.cycleStartDate} onChange={e=>setAjoForm({...ajoForm,cycleStartDate:e.target.value})}/>
+          </div>
+          <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}} onClick={handleCreateAjo}>➕ Create Group Portal</button>
+        </div>
+      </div></div>)}
+      {ajoView==="join"&&(<div style={{padding:"40px 24px",display:"flex",alignItems:"center",justifyContent:"center",minHeight:"70vh"}}><div style={{width:"100%",maxWidth:420}}>
+        <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}} onClick={()=>setAjoView("landing")}>← Back</button>
+        <div className="card">
+          <h3 style={{color:C.navy,fontWeight:900,marginBottom:6}}>Join Your Group</h3>
+          <p style={{color:C.muted,fontSize:12,marginBottom:20}}>Enter the Group Code shared by your coordinator.</p>
+          {[["groupCode","Group Code","text","e.g. AJO-ABC123"],["name","Full Name","text",""],
+            ["phone","Phone","tel","+234..."],["email","Email","email","(gmail address preferably)"]].map(([k,l,t,p])=>(
+            <div key={k} style={{marginBottom:14}}>
+              <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
+              <input type={t} placeholder={p} style={{width:"100%",padding:"10px 12px",borderRadius:8,
+                border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13,boxSizing:"border-box"}}
+                value={ajoJoinForm[k]} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
+              {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
+            </div>))}
+          <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}} onClick={handleJoinAjo}>🔑 Enter Group Portal</button>
+        </div>
+      </div></div>)}
+      {ajoView==="portal"&&currentAjo&&(()=>{
+        const grp=ajoGroups[currentAjo];
+        if(!grp) return <div style={{padding:40,textAlign:"center",color:C.muted}}>Loading...</div>;
+        const grpMembers=ajoMembers.filter(m=>m.group_code===currentAjo);
+        const grpPayments=ajoPayments.filter(p=>p.group_code===currentAjo);
+        const currentMonth=new Date().toISOString().slice(0,7);
+        const getPaid=(id,ref)=>grpPayments.find(p=>p.member_id===id&&p.month_ref===ref&&p.status==="confirmed");
+        const getPayout=(id,ref)=>grpPayments.find(p=>p.member_id===id&&p.month_ref==="PAYOUT-"+ref&&p.status==="payout_confirmed");
+        return(<div style={{padding:"24px 16px",maxWidth:860,margin:"0 auto"}}>
+          <div style={{background:C.white,borderRadius:12,padding:16,marginBottom:20,border:`1.5px solid ${C.border}`,
+            display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+            <div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>🏦 Group Contribution Account</div>
+              <div style={{fontSize:13,color:C.dark,lineHeight:1.8}}><strong>{grp.account_name}</strong><br/>{grp.bank_name} — <strong>{grp.account_number}</strong></div>
+            </div>
+            <div style={{textAlign:"right"}}>
+              <div style={{fontSize:11,color:C.muted}}>Per member / month</div>
+              <div style={{fontWeight:900,color:C.navy,fontSize:22}}>{fmtNGN(grp.contribution_amount)}</div>
+              <div style={{fontSize:11,color:C.muted}}>Due: {grp.contribution_day}th of month</div>
+            </div>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12,flexWrap:"wrap",gap:8}}>
+            <div style={{fontWeight:800,color:C.navy,fontSize:14}}>📋 {new Date().toLocaleString("en-NG",{month:"long",year:"numeric"})} — Status</div>
+            <button className="btn btn-outline btn-sm" onClick={()=>sendAjoReminders(currentAjo)}>📧 Send Reminders</button>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
+            {grpMembers.map(mem=>{
+              const paid=getPaid(mem.id,currentMonth);
+              const paidOut=getPayout(mem.id,currentMonth);
+              return(<div key={mem.id} style={{background:C.white,borderRadius:12,padding:14,
+                border:`1.5px solid ${paid?"#BBF7D0":C.border}`,
+                display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontWeight:700,color:C.navy,fontSize:13}}>{mem.name}
+                    {mem.role==="coordinator"&&<span style={{background:C.gold,color:C.white,borderRadius:20,padding:"2px 8px",fontSize:10,marginLeft:8}}>Coordinator</span>}
+                  </div>
+                  <div style={{fontSize:11,color:C.muted}}>{mem.phone}</div>
+                </div>
+                <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+                  {paidOut&&<span style={{background:"#7C3AED",color:C.white,borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700}}>💰 Payout Received</span>}
+                  {paid?<span style={{background:C.green,color:C.white,borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700}}>✅ Paid</span>
+                    :<span style={{background:"#FEE2E2",color:C.error,borderRadius:20,padding:"4px 10px",fontSize:11,fontWeight:700}}>⏳ Pending</span>}
+                  {!paid&&<button style={{background:C.blue,color:C.white,border:"none",borderRadius:20,padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
+                    onClick={()=>handleAjoPayment(mem.id,currentMonth)}>Mark Paid</button>}
+                  {paid&&!paidOut&&<button style={{background:"#7C3AED",color:C.white,border:"none",borderRadius:20,padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
+                    onClick={()=>handleAjoPayout(mem.id,currentMonth)}>Record Payout</button>}
+                </div>
+              </div>);
+            })}
+          </div>
+          <div style={{background:C.white,borderRadius:12,padding:16,marginBottom:24,border:`1.5px solid ${C.border}`}}>
+            <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>➕ Add Member</div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:10}}>
+              {[["name","Full Name","text"],["phone","Phone","tel"],["email","Email","email"]].map(([k,l,t])=>(
+                <div key={k}>
+                  <label style={{fontWeight:700,fontSize:11,color:C.navy,display:"block",marginBottom:3}}>{l}</label>
+                  <input type={t} style={{width:"100%",padding:"8px 10px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:12,boxSizing:"border-box"}}
+                    value={ajoJoinForm[k]||""} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
+                </div>))}
+            </div>
+            <button className="btn btn-outline btn-sm" onClick={async()=>{
+              if(!ajoJoinForm.name||!ajoJoinForm.phone){showToast("Name and phone required");return;}
+              await supabase.from("cfb_ajo_members").insert({group_code:currentAjo,name:ajoJoinForm.name.trim(),
+                phone:ajoJoinForm.phone.trim(),email:ajoJoinForm.email?.trim()||"",role:"member",status:"active"});
+              setAjoJoinForm({groupCode:"",name:"",phone:"",email:""});
+              await loadAjoGroup(currentAjo);showToast("Member added.");
+            }}>Add Member</button>
+          </div>
+          <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:20,color:C.white,textAlign:"center"}}>
+            <div style={{fontSize:20,marginBottom:8}}>💡</div>
+            <div style={{fontWeight:900,fontSize:15,marginBottom:8}}>Want More From Your Savings?</div>
+            <div style={{fontSize:13,opacity:.85,lineHeight:1.8,marginBottom:16}}>CoFundBills Cooperative takes your thrift contribution further — with credit scores, loan access, bill support funds and cycle payouts up to ₦1,000,000. All governed by cooperative law.</div>
+            <button className="btn btn-primary" style={{background:C.gold,color:C.navy,fontWeight:800}}
+              onClick={()=>{setView("landing");setAjoView("landing");}}>Learn About CoFundBills Cooperative →</button>
+          </div>
+        </div>);
+      })()}
+    </div>
+  );
+
   const Landing = () => (
     <>
       {/* Hero */}
@@ -1491,311 +1672,6 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
-
-      {/* Import Ajo Landing */}
-      {view==="ajo"&&ajoView==="landing"&&(
-        <div style={{minHeight:"100vh",background:C.bg,padding:"48px 24px"}}>
-          <div style={{maxWidth:860,margin:"0 auto"}}>
-            <div style={{textAlign:"center",marginBottom:40}}>
-              <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>Import Ajo</span>
-              <h2 className="section-title">Bring Your Ajo Group Online — Free</h2>
-              <p className="section-sub" style={{maxWidth:620,margin:"0 auto"}}>
-                Already running a traditional Ajo, Esusu or thrift contribution circle? Move it onto CoFundBills — keep your own rules, keep your own account, and let us handle the reminders, transparency and record keeping. Completely free of charge.
-              </p>
-            </div>
-            <div className="grid-2" style={{marginBottom:40}}>
-              {[
-                {icon:"📅",title:"Automated Reminders",desc:"We send contribution reminders to every member when their payment date approaches — by email. No more chasing people.",c:C.blue},
-                {icon:"📊",title:"Full Transparency",desc:"Every member can see who has paid and who hasn't. The coordinator records proofs of payment and payout confirmations.",c:C.green},
-                {icon:"🏦",title:"Your Account, Your Rules",desc:"Contributions go directly into your group's own nominated bank account. CoFundBills never touches your money.",c:C.amber},
-                {icon:"🆓",title:"Completely Free",desc:"This is a free service from CoFundBills Cooperative — no charges, no commissions, no catches. Just better tools for your group.",c:C.burg},
-              ].map(f=>(
-                <div key={f.title} className="card" style={{borderLeft:`3px solid ${f.c}`}}>
-                  <div style={{fontSize:24,marginBottom:8}}>{f.icon}</div>
-                  <div style={{fontWeight:800,color:f.c,marginBottom:6,fontSize:13}}>{f.title}</div>
-                  <div style={{fontSize:12,color:C.muted,lineHeight:1.8}}>{f.desc}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{display:"flex",gap:16,justifyContent:"center",flexWrap:"wrap",marginBottom:40}}>
-              <button className="btn btn-primary" style={{fontSize:15,padding:"14px 32px"}}
-                onClick={()=>setAjoView("create")}>
-                ➕ Create a New Group Portal
-              </button>
-              <button className="btn btn-outline" style={{fontSize:15,padding:"14px 32px"}}
-                onClick={()=>setAjoView("join")}>
-                🔑 Join an Existing Group
-              </button>
-            </div>
-            <div style={{textAlign:"center",marginTop:16}}>
-              <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13}}
-                onClick={()=>setView("landing")}>← Back to CoFundBills</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ajo Create Form */}
-      {view==="ajo"&&ajoView==="create"&&(
-        <div style={{minHeight:"100vh",background:C.bg,padding:"40px 24px"}}>
-          <div style={{maxWidth:600,margin:"0 auto"}}>
-            <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}}
-              onClick={()=>setAjoView("landing")}>← Back</button>
-            <h2 style={{color:C.navy,fontWeight:900,fontSize:22,marginBottom:6}}>Create Your Group Portal</h2>
-            <p style={{color:C.muted,fontSize:13,marginBottom:24}}>Fill in your group details. You will receive a Group Code to share with your members.</p>
-            <div className="card">
-              {[
-                ["groupName","Group Name","text","e.g. Victoria Island Ladies Circle"],
-                ["coordinatorName","Coordinator Name","text","Your full name"],
-                ["coordinatorPhone","Coordinator Phone","tel","+234..."],
-                ["coordinatorEmail","Coordinator Email","email","(gmail address preferably)"],
-              ].map(([k,l,t,p])=>(
-                <div className="field" key={k} style={{marginBottom:14}}>
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
-                  <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
-                    value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
-                  {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
-                </div>
-              ))}
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                <div className="field">
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Number of Members</label>
-                  <input type="number" placeholder="e.g. 10" className={ajoErrors.memberCount?"field-err":""}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.memberCount?C.error:C.border}`,fontSize:13}}
-                    value={ajoForm.memberCount} onChange={e=>setAjoForm({...ajoForm,memberCount:e.target.value})}/>
-                  {ajoErrors.memberCount&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.memberCount}</div>}
-                </div>
-                <div className="field">
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Contribution Amount (₦)</label>
-                  <input type="number" placeholder="e.g. 10000" className={ajoErrors.contributionAmount?"field-err":""}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.contributionAmount?C.error:C.border}`,fontSize:13}}
-                    value={ajoForm.contributionAmount} onChange={e=>setAjoForm({...ajoForm,contributionAmount:e.target.value})}/>
-                  {ajoErrors.contributionAmount&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.contributionAmount}</div>}
-                </div>
-              </div>
-              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                <div className="field">
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Contribution Day of Month</label>
-                  <input type="number" min="1" max="31" placeholder="e.g. 25"
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors.contributionDay?C.error:C.border}`,fontSize:13}}
-                    value={ajoForm.contributionDay} onChange={e=>setAjoForm({...ajoForm,contributionDay:e.target.value})}/>
-                  {ajoErrors.contributionDay&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors.contributionDay}</div>}
-                </div>
-                <div className="field">
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Payout Frequency</label>
-                  <select style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13,background:C.white}}
-                    value={ajoForm.payoutFrequency} onChange={e=>setAjoForm({...ajoForm,payoutFrequency:e.target.value})}>
-                    {["Monthly","Bi-Monthly","Quarterly","Custom"].map(o=><option key={o}>{o}</option>)}
-                  </select>
-                </div>
-              </div>
-              <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14,marginBottom:14}}>
-                <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:10}}>🏦 Group Payout Account</div>
-                {[
-                  ["bankName","Bank Name","text","e.g. Access Bank"],
-                  ["accountName","Account Name","text","e.g. Victoria Island Ladies Circle"],
-                  ["accountNumber","Account Number","text","10-digit account number"],
-                ].map(([k,l,t,p])=>(
-                  <div key={k} style={{marginBottom:10}}>
-                    <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
-                    <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
-                      style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
-                      value={ajoForm[k]} onChange={e=>setAjoForm({...ajoForm,[k]:e.target.value})}/>
-                    {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
-                  </div>
-                ))}
-              </div>
-              <div style={{marginBottom:20}}>
-                <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>Cycle Start Date (optional)</label>
-                <input type="date" style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${C.border}`,fontSize:13}}
-                  value={ajoForm.cycleStartDate} onChange={e=>setAjoForm({...ajoForm,cycleStartDate:e.target.value})}/>
-              </div>
-              <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}}
-                onClick={handleCreateAjo}>
-                ➕ Create Group Portal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ajo Join Form */}
-      {view==="ajo"&&ajoView==="join"&&(
-        <div style={{minHeight:"100vh",background:C.bg,padding:"40px 24px",display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <div style={{width:"100%",maxWidth:420}}>
-            <button style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:13,marginBottom:20}}
-              onClick={()=>setAjoView("landing")}>← Back</button>
-            <div className="card">
-              <h3 style={{color:C.navy,fontWeight:900,marginBottom:6}}>Join Your Group</h3>
-              <p style={{color:C.muted,fontSize:12,marginBottom:20}}>Enter the Group Code shared by your coordinator.</p>
-              {[
-                ["groupCode","Group Code","text","e.g. AJO-ABC123"],
-                ["name","Your Full Name","text",""],
-                ["phone","Phone Number","tel","+234..."],
-                ["email","Email Address","email","(gmail address preferably)"],
-              ].map(([k,l,t,p])=>(
-                <div key={k} style={{marginBottom:14}}>
-                  <label style={{fontWeight:700,fontSize:12,color:C.navy,display:"block",marginBottom:4}}>{l}</label>
-                  <input type={t} placeholder={p} className={ajoErrors[k]?"field-err":""}
-                    style={{width:"100%",padding:"10px 12px",borderRadius:8,border:`1.5px solid ${ajoErrors[k]?C.error:C.border}`,fontSize:13}}
-                    value={ajoJoinForm[k]} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
-                  {ajoErrors[k]&&<div style={{color:C.error,fontSize:11,marginTop:3}}>{ajoErrors[k]}</div>}
-                </div>
-              ))}
-              <button className="btn btn-primary" style={{width:"100%",padding:14,fontSize:14}}
-                onClick={handleJoinAjo}>
-                🔑 Enter Group Portal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Ajo Portal */}
-      {view==="ajo"&&ajoView==="portal"&&currentAjo&&(()=>{
-        const grp = ajoGroups[currentAjo];
-        if(!grp) return null;
-        const grpMembers = ajoMembers.filter(m=>m.group_code===currentAjo);
-        const grpPayments = ajoPayments.filter(p=>p.group_code===currentAjo);
-        const currentMonth = new Date().toISOString().slice(0,7);
-        const isCoord = grpMembers.find(m=>m.role==="coordinator");
-        const getPaidStatus = (memberId, monthRef) =>
-          grpPayments.find(p=>p.member_id===memberId&&p.month_ref===monthRef&&p.status==="confirmed");
-        const getPayoutStatus = (memberId, monthRef) =>
-          grpPayments.find(p=>p.member_id===memberId&&p.month_ref==="PAYOUT-"+monthRef&&p.status==="payout_confirmed");
-
-        return(
-          <div style={{minHeight:"100vh",background:C.bg}}>
-            {/* Portal header */}
-            <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,padding:"20px 24px",color:C.white}}>
-              <div style={{maxWidth:860,margin:"0 auto",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                <div>
-                  <div style={{fontWeight:900,fontSize:18}}>{grp.group_name}</div>
-                  <div style={{fontSize:12,opacity:.75,marginTop:2}}>
-                    Group Code: {currentAjo} · {grpMembers.length} members · {fmtNGN(grp.contribution_amount)}/month · Due: {grp.contribution_day}th
-                  </div>
-                </div>
-                <div style={{display:"flex",gap:8}}>
-                  <button style={{background:"rgba(255,255,255,.15)",border:"none",color:C.white,borderRadius:20,
-                    padding:"6px 14px",fontSize:12,cursor:"pointer",fontWeight:600}}
-                    onClick={()=>sendAjoReminders(currentAjo)}>📧 Send Reminders</button>
-                  <button style={{background:"rgba(255,255,255,.15)",border:"none",color:C.white,borderRadius:20,
-                    padding:"6px 14px",fontSize:12,cursor:"pointer"}}
-                    onClick={()=>{setCurrentAjo(null);setAjoView("landing");}}>✕ Exit</button>
-                </div>
-              </div>
-            </div>
-
-            <div style={{maxWidth:860,margin:"0 auto",padding:"24px 16px"}}>
-              {/* Payment account card */}
-              <div style={{background:C.white,borderRadius:12,padding:14,marginBottom:20,
-                border:`1.5px solid ${C.border}`,display:"flex",gap:16,alignItems:"center",flexWrap:"wrap"}}>
-                <div style={{flex:1}}>
-                  <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:4}}>🏦 Group Contribution Account</div>
-                  <div style={{fontSize:13,color:C.dark,lineHeight:1.8}}>
-                    <strong>{grp.account_name}</strong><br/>
-                    {grp.bank_name} — <strong>{grp.account_number}</strong>
-                  </div>
-                </div>
-                <div style={{textAlign:"right"}}>
-                  <div style={{fontSize:11,color:C.muted}}>Monthly per member</div>
-                  <div style={{fontWeight:900,color:C.navy,fontSize:20}}>{fmtNGN(grp.contribution_amount)}</div>
-                </div>
-              </div>
-
-              {/* Members & payment status */}
-              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:12}}>
-                📋 Contribution Status — {new Date().toLocaleString("en-NG",{month:"long",year:"numeric"})}
-              </div>
-              <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:24}}>
-                {grpMembers.map(mem=>{
-                  const paid = getPaidStatus(mem.id, currentMonth);
-                  const paidOut = getPayoutStatus(mem.id, currentMonth);
-                  return(
-                    <div key={mem.id} style={{background:C.white,borderRadius:12,padding:14,
-                      border:`1.5px solid ${paid?C.green:C.border}`,
-                      display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                      <div>
-                        <div style={{fontWeight:700,color:C.navy,fontSize:13}}>
-                          {mem.name}
-                          {mem.role==="coordinator"&&<span style={{background:C.gold,color:C.white,
-                            borderRadius:20,padding:"2px 8px",fontSize:10,marginLeft:8,fontWeight:700}}>Coordinator</span>}
-                        </div>
-                        <div style={{fontSize:11,color:C.muted,marginTop:2}}>{mem.phone}</div>
-                      </div>
-                      <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
-                        {paidOut&&<span style={{background:"#7C3AED",color:C.white,borderRadius:20,
-                          padding:"4px 12px",fontSize:11,fontWeight:700}}>💰 Payout Received</span>}
-                        {paid
-                          ?<span style={{background:C.green,color:C.white,borderRadius:20,
-                            padding:"4px 12px",fontSize:11,fontWeight:700}}>✅ Paid</span>
-                          :<span style={{background:"#FEE2E2",color:C.error,borderRadius:20,
-                            padding:"4px 12px",fontSize:11,fontWeight:700}}>⏳ Pending</span>
-                        }
-                        {!paid&&(
-                          <button style={{background:C.blue,color:C.white,border:"none",borderRadius:20,
-                            padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
-                            onClick={()=>handleAjoPayment(mem.id, currentMonth)}>
-                            Mark Paid
-                          </button>
-                        )}
-                        {paid&&!paidOut&&mem.role==="coordinator"&&(
-                          <button style={{background:"#7C3AED",color:C.white,border:"none",borderRadius:20,
-                            padding:"5px 12px",fontSize:11,cursor:"pointer",fontWeight:700}}
-                            onClick={()=>handleAjoPayout(mem.id, currentMonth)}>
-                            Record Payout
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Add member */}
-              <div style={{background:C.white,borderRadius:12,padding:16,marginBottom:24,border:`1.5px solid ${C.border}`}}>
-                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>➕ Add New Member</div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-                  {[["name","Full Name","text"],["phone","Phone","tel"],["email","Email","email"]].map(([k,l,t])=>(
-                    <div key={k}>
-                      <label style={{fontWeight:700,fontSize:11,color:C.navy,display:"block",marginBottom:3}}>{l}</label>
-                      <input type={t} style={{width:"100%",padding:"8px 10px",borderRadius:8,
-                        border:`1.5px solid ${C.border}`,fontSize:12}}
-                        value={ajoJoinForm[k]||""} onChange={e=>setAjoJoinForm({...ajoJoinForm,[k]:e.target.value})}/>
-                    </div>
-                  ))}
-                </div>
-                <button className="btn btn-outline btn-sm" onClick={async()=>{
-                  if(!ajoJoinForm.name||!ajoJoinForm.phone){showToast("Name and phone required");return;}
-                  await supabase.from("cfb_ajo_members").insert({
-                    group_code:currentAjo, name:ajoJoinForm.name.trim(),
-                    phone:ajoJoinForm.phone.trim(), email:ajoJoinForm.email?.trim()||"",
-                    role:"member", status:"active",
-                  });
-                  setAjoJoinForm({groupCode:"",name:"",phone:"",email:""});
-                  await loadAjoGroup(currentAjo);
-                  showToast("Member added.");
-                }}>Add Member</button>
-              </div>
-
-              {/* CoFundBills CTA */}
-              <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,
-                padding:20,color:C.white,textAlign:"center"}}>
-                <div style={{fontSize:20,marginBottom:8}}>💡</div>
-                <div style={{fontWeight:900,fontSize:15,marginBottom:8}}>Want More From Your Savings?</div>
-                <div style={{fontSize:13,opacity:.85,lineHeight:1.8,marginBottom:16}}>
-                  CoFundBills Cooperative takes your thrift contribution further — with cooperative credit scores, loan access, essential bill support funds and structured cycle payouts up to ₦1,000,000. All governed by cooperative law.
-                </div>
-                <button className="btn btn-primary" style={{background:C.gold,color:C.navy,fontWeight:800}}
-                  onClick={()=>{setView("landing");setAjoView("landing");}}>
-                  Learn About CoFundBills Cooperative →
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
 
       {/* Footer */}
       <div className="footer">
@@ -2850,8 +2726,7 @@ ${inviteLink}` ;
       {view==="landing"&&<Landing/>}
       {view==="portal"&&<Portal/>}
       {view==="admin"&&<Admin/>}
-      {view==="ajo-create"&&<AjoCreate/>}
-      {view==="ajo-portal"&&<AjoPortal/>}
+      {view==="ajo"&&<AjoApp/>}
 
       {/* Modals */}
       {renderModal()}
