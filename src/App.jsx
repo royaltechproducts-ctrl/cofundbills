@@ -2577,6 +2577,9 @@ CoFundBills Cooperative
                                       const allM = await loadMembers();
                                       await loadFunds();
                                       await tryFormCell(allM);
+                                      // Reset tier to 4 after placement so they don't sit in any queue
+                                      await supabase.from("cfb_members").update({contribution_tier:4}).eq("link_code",f.linkCode);
+                                      await loadMembers();
                                       showToast(`${f.fullName} placed in Tier ${q.tierNum} queue — Admin Fund debited ${fmtNGN(t.monthly)}.`);
                                     }}>
                                     ➕ Place {f.fullName.split(" ")[1]||f.fullName} in Tier {q.tierNum}
