@@ -512,6 +512,75 @@ export default function App() {
     showToast(`Reminders sent to ${sent} members.`);
   };
 
+  // ── Admin Founding Member — Place in Cell ────────────────────
+  const handleAdminActivateFounder = async (code) => {
+    // Change from admin to founding, tier 1, activate
+    await supabase.from("cfb_members").update({
+      member_type:"founding", contribution_tier:1,
+      status:"active", activated_at:new Date().toISOString(),
+      credit_score:20, months_contributed:1,
+      contribution_balance:getTier(1).benefitPool,
+    }).eq("link_code",code);
+    // Record administrative contribution from admin fund
+    await supabase.from("cfb_credit_events").insert({
+      link_code:code, event_type:"contribution", points:20,
+      description:"Administrative founding contribution — recorded from Admin Fund",
+    });
+    // Deduct from admin fund
+    const adminBal = funds.administration||0;
+    await supabase.from("cfb_funds").update({
+      balance:Math.max(0, adminBal - getTier(1).monthly)
+    }).eq("fund_type","administration");
+    await loadMembers(); await loadFunds();
+    showToast(`${code} activated as Founding Member (Tier 1) — Admin Fund debited ₦10,000.`);
+  };
+
+  const handleAdminPlaceInCell = async (founderCode, cellCode) => {
+    // Check not already in this cell
+    const cell = cells.find(c=>c.cell_code===cellCode);
+    if(!cell) { showToast("Cell not found","error"); return; }
+    const alreadyIn = (cell.seats||[]).some(s=>s.link_code===founderCode);
+    if(alreadyIn) { showToast("Already in this cell","error"); return; }
+    const seats = (cell.seats||[]).filter(s=>s.seat_type==="contributing");
+    if(seats.length>=10) { showToast("Cell already has 10 contributing members","error"); return; }
+    // Insert into cell
+    await supabase.from("cfb_cell_members").insert({
+      cell_code:cellCode, link_code:founderCode, seat_type:"contributing"
+    });
+    // Record administrative contribution from admin fund
+    const adminBal = funds.administration||0;
+    await supabase.from("cfb_funds").update({
+      balance:Math.max(0, adminBal - getTier(1).monthly)
+    }).eq("fund_type","administration");
+    await supabase.from("cfb_contributions").insert({
+      cell_code:cellCode, link_code:founderCode,
+      month_number:cell.month_number||1,
+      amount:getTier(1).monthly,
+      benefit_pool:getTier(1).benefitPool,
+      bill_support:getTier(1).billSupport,
+      loan_fund:getTier(1).loanFund,
+      administration:getTier(1).admin,
+      contingency:getTier(1).contingency,
+      status:"confirmed",
+      confirmed_at:new Date().toISOString(),
+      notes:"Administrative founding arrangement — debited from Admin Fund",
+    });
+    await supabase.from("cfb_credit_events").insert({
+      link_code:founderCode, event_type:"cell_active", points:getTier(1).pts.cellActive,
+      cell_code:cellCode, description:"Admin founding placement — cell participation",
+    });
+    await loadCells(); await loadFunds(); await loadMembers();
+    // Check if cell now has 10 — auto-complete formation
+    const freshCells = await loadCells();
+    const freshCell = freshCells.find(c=>c.cell_code===cellCode);
+    const contribSeats = (freshCell?.seats||[]).filter(s=>s.seat_type==="contributing");
+    if(contribSeats.length>=10) {
+      showToast(`✅ Cell ${cellCode} now has 10 members — fully formed!`);
+    } else {
+      showToast(`${founderCode} placed in ${cellCode}. ${10-contribSeats.length} seat(s) remaining.`);
+    }
+  };
+
   // ── Registration ──────────────────────────────────────────────
   const handleRegister = async () => {
     const errs = {};
@@ -2420,6 +2489,68 @@ CoFundBills Cooperative
           {/* Pending tab */}
           {adminTab==="pending"&&(
             <div className="table-wrap">
+              {/* Admin Founding Member Controls */}
+              {(()=>{
+                const adminFounders = Object.values(members).filter(m=>
+                  (m.memberType==="admin"||m.linkCode==="CFB-FM-0001"||m.linkCode==="CFB-FM-0002")
+                  && m.status==="active" && m.memberType==="admin"
+                );
+                const activeCellsList = cells.filter(c=>c.status==="active");
+                if(adminFounders.length===0) return null;
+                return(
+                  <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:12,padding:16,marginBottom:16}}>
+                    <div style={{fontWeight:900,color:"#92400E",fontSize:14,marginBottom:12}}>🎖️ Admin Founding Member Controls</div>
+                    {adminFounders.map(af=>(
+                      <div key={af.linkCode} style={{background:C.white,borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.border}`}}>
+                        <div style={{fontWeight:700,color:C.navy,marginBottom:8}}>{af.fullName} — {af.linkCode} ({af.memberType} · {getTier(af.contributionTier||1).label})</div>
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                          <button className="btn btn-sm btn-gold" onClick={()=>handleAdminActivateFounder(af.linkCode)}>
+                            🎖️ Convert to Founding Member (Tier 1)
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {/* Place founding members in cells */}
+                    {(()=>{
+                      const founders = Object.values(members).filter(m=>
+                        (m.linkCode==="CFB-FM-0001"||m.linkCode==="CFB-FM-0002") && m.status==="active"
+                      );
+                      if(founders.length===0||activeCellsList.length===0) return null;
+                      return(
+                        <div style={{marginTop:8}}>
+                          <div style={{fontWeight:700,color:"#92400E",fontSize:12,marginBottom:8}}>Place Founding Members in Cells</div>
+                          {founders.map(f=>(
+                            <div key={f.linkCode} style={{background:C.white,borderRadius:10,padding:12,marginBottom:8,border:`1px solid ${C.border}`}}>
+                              <div style={{fontWeight:700,color:C.navy,fontSize:12,marginBottom:6}}>{f.fullName} ({f.linkCode}) — currently in {cells.filter(c=>(c.seats||[]).some(s=>s.link_code===f.linkCode)).length} cell(s)</div>
+                              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                                {activeCellsList.filter(c=>{
+                                  const seats = (c.seats||[]).filter(s=>s.seat_type==="contributing");
+                                  const alreadyIn = (c.seats||[]).some(s=>s.link_code===f.linkCode);
+                                  return !alreadyIn && seats.length<10;
+                                }).map(c=>{
+                                  const seats = (c.seats||[]).filter(s=>s.seat_type==="contributing");
+                                  return(
+                                    <button key={c.cell_code} className="btn btn-sm btn-blue"
+                                      onClick={()=>handleAdminPlaceInCell(f.linkCode,c.cell_code)}>
+                                      + {c.cell_code} ({seats.length}/10 seats)
+                                    </button>
+                                  );
+                                })}
+                                {activeCellsList.filter(c=>{
+                                  const seats=(c.seats||[]).filter(s=>s.seat_type==="contributing");
+                                  const alreadyIn=(c.seats||[]).some(s=>s.link_code===f.linkCode);
+                                  return !alreadyIn&&seats.length<10;
+                                }).length===0&&<span style={{fontSize:11,color:C.muted}}>No cells available for placement</span>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                );
+              })()}
+
               <div className="table-head">Pending Activation ({pendingMembers.length})</div>
               {pendingMembers.map(m=>(
                 <div key={m.linkCode} className="table-row">
