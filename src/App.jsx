@@ -2510,37 +2510,78 @@ CoFundBills Cooperative
                         </div>
                       </div>
                     ))}
-                    {/* Place founding members in cells */}
+                    {/* Place founding members in queues with 8 or 9 members */}
                     {(()=>{
                       const founders = Object.values(members).filter(m=>
-                        (m.linkCode==="CFB-FM-0001"||m.linkCode==="CFB-FM-0002") && m.status==="active"
+                        (m.linkCode==="CFB-FM-0001"||m.linkCode==="CFB-FM-0002") && m.status==="active" && m.memberType==="founding"
                       );
-                      if(founders.length===0||activeCellsList.length===0) return null;
+                      if(founders.length===0) return null;
+
+                      // Find queues with 8 or 9 members (not yet in a cell)
+                      const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
+                      const readyQueues = [1,2,3,4].map(tierNum=>{
+                        const queue = Object.values(members).filter(m=>
+                          m.status==="active" && m.memberType!=="admin" &&
+                          (m.contributionTier||1)===tierNum &&
+                          !seatedCodes.has(m.linkCode)
+                        );
+                        return {tierNum, count:queue.length};
+                      }).filter(q=>q.count>=8&&q.count<=9);
+
+                      if(readyQueues.length===0) return null;
+
                       return(
-                        <div style={{marginTop:8}}>
-                          <div style={{fontWeight:700,color:"#92400E",fontSize:12,marginBottom:8}}>Place Founding Members in Cells</div>
-                          {founders.map(f=>(
-                            <div key={f.linkCode} style={{background:C.white,borderRadius:10,padding:12,marginBottom:8,border:`1px solid ${C.border}`}}>
-                              <div style={{fontWeight:700,color:C.navy,fontSize:12,marginBottom:6}}>{f.fullName} ({f.linkCode}) — currently in {cells.filter(c=>(c.seats||[]).some(s=>s.link_code===f.linkCode)).length} cell(s)</div>
-                              <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                                {activeCellsList.filter(c=>{
-                                  const seats = (c.seats||[]).filter(s=>s.seat_type==="contributing");
-                                  const alreadyIn = (c.seats||[]).some(s=>s.link_code===f.linkCode);
-                                  return !alreadyIn && seats.length<10;
-                                }).map(c=>{
-                                  const seats = (c.seats||[]).filter(s=>s.seat_type==="contributing");
-                                  return(
-                                    <button key={c.cell_code} className="btn btn-sm btn-blue"
-                                      onClick={()=>handleAdminPlaceInCell(f.linkCode,c.cell_code)}>
-                                      + {c.cell_code} ({seats.length}/10 seats)
-                                    </button>
-                                  );
-                                })}
-                                {activeCellsList.filter(c=>{
-                                  const seats=(c.seats||[]).filter(s=>s.seat_type==="contributing");
-                                  const alreadyIn=(c.seats||[]).some(s=>s.link_code===f.linkCode);
-                                  return !alreadyIn&&seats.length<10;
-                                }).length===0&&<span style={{fontSize:11,color:C.muted}}>No cells available for placement</span>}
+                        <div style={{marginTop:12,background:"#FEF9EC",border:"1.5px solid #FCD34D",borderRadius:10,padding:14}}>
+                          <div style={{fontWeight:800,color:"#92400E",fontSize:13,marginBottom:4}}>⚡ Queue Ready for Acceleration</div>
+                          <div style={{fontSize:12,color:"#92400E",marginBottom:12,lineHeight:1.7}}>
+                            One or more tier queues have 8–9 members. You can place founding admin members to complete the cell of 10.
+                          </div>
+                          {readyQueues.map(q=>(
+                            <div key={q.tierNum} style={{background:C.white,borderRadius:10,padding:12,marginBottom:10,border:`1px solid ${C.border}`}}>
+                              <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:8}}>
+                                Tier {q.tierNum} Queue — {q.count}/10 members
+                                <span style={{marginLeft:8,background:q.count===9?C.green:C.amber,color:C.white,
+                                  borderRadius:20,padding:"2px 8px",fontSize:10,fontWeight:700}}>
+                                  {10-q.count} slot{10-q.count!==1?"s":""} remaining
+                                </span>
+                              </div>
+                              <div style={{fontSize:12,color:C.muted,marginBottom:10}}>
+                                {q.count===9
+                                  ? "Place Ernest (CFB-FM-0001) to complete this cell"
+                                  : "Place Ernest and Adeyinka to complete this cell"}
+                              </div>
+                              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                                {founders
+                                  .filter(f=>!(f.linkCode==="CFB-FM-0002"&&q.count===9))
+                                  .map(f=>(
+                                  <button key={f.linkCode} className="btn btn-sm btn-green"
+                                    onClick={async()=>{
+                                      // Place in queue by changing their tier and triggering cell formation
+                                      await supabase.from("cfb_members").update({contribution_tier:q.tierNum}).eq("link_code",f.linkCode);
+                                      // Record admin fund debit
+                                      const adminBal = funds.administration||0;
+                                      const t = getTier(q.tierNum);
+                                      await supabase.from("cfb_funds").update({
+                                        balance:Math.max(0,adminBal-t.monthly)
+                                      }).eq("fund_type","administration");
+                                      await supabase.from("cfb_credit_events").insert({
+                                        link_code:f.linkCode, event_type:"contribution",
+                                        points:t.pts.contribution,
+                                        description:`Admin founding placement — Tier ${q.tierNum} queue · Admin Fund debited ${fmtNGN(t.monthly)}`,
+                                      });
+                                      await supabase.from("cfb_members").update({
+                                        credit_score:(members[f.linkCode]?.creditScore||0)+t.pts.contribution,
+                                        months_contributed:(members[f.linkCode]?.monthsContributed||0)+1,
+                                        contribution_balance:(members[f.linkCode]?.contributionBalance||0)+t.benefitPool,
+                                      }).eq("link_code",f.linkCode);
+                                      const allM = await loadMembers();
+                                      await loadFunds();
+                                      await tryFormCell(allM);
+                                      showToast(`${f.fullName} placed in Tier ${q.tierNum} queue — Admin Fund debited ${fmtNGN(t.monthly)}.`);
+                                    }}>
+                                    ➕ Place {f.fullName.split(" ")[1]||f.fullName} in Tier {q.tierNum}
+                                  </button>
+                                ))}
                               </div>
                             </div>
                           ))}
