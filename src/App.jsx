@@ -2745,7 +2745,7 @@ CoFundBills Cooperative
                 <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>💰 Financial Summary</div>
                 <div className="grid-2">
                   {[
-                    {l:"Total Contributions Received",v:fmtNGN(Object.values(members).reduce((a,m)=>(a+(m.monthsContributed||0)*getTier(m.contributionTier||1).monthly),0)),c:C.blue},
+                    {l:"Total Contributions Received (confirmed)",v:fmtNGN(Object.values(members).reduce((a,m)=>(a+(m.monthsContributed||0)*getTier(m.contributionTier||1).monthly),0)),c:C.blue},
                     {l:"Total Cycle Payouts",v:fmtNGN(Object.values(members).reduce((a,m)=>(a+(m.cyclesCompleted||0)*getTier(m.contributionTier||1).cyclePayout),0)),c:C.green},
                     {l:"Total Loans Outstanding",v:fmtNGN(loans.filter(l=>l.status==="approved").reduce((a,l)=>(a+Number(l.amount)),0)),c:C.purple},
                     {l:"Total Loan Interest Revenue",v:fmtNGN(loans.filter(l=>l.status==="approved").reduce((a,l)=>(a+Number(l.total_repayable)-Number(l.amount)),0)),c:C.amber},
@@ -2781,6 +2781,9 @@ CoFundBills Cooperative
                       <div style={{fontWeight:900,color:s.c,fontSize:15}}>{s.v}</div>
                     </div>
                   ))}
+                </div>
+                <div style={{marginTop:12,background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:8,padding:12,fontSize:12,color:C.blue,lineHeight:1.7}}>
+                  ℹ️ <strong>Fund balance note:</strong> Cooperative funds are credited from the contribution split when monthly contributions are recorded against active cells (from Month 2 onwards). First activation payments join the queue and do not yet split into funds. Balances will grow once cells activate and monthly contributions begin.
                 </div>
               </div>
             </div>
