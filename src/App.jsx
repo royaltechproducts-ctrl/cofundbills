@@ -1586,7 +1586,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner">
           <span className="section-tag" style={{background:C.gold+"33",color:C.gold}}>CoFund Credit Score</span>
           <h2 className="section-title">Your Behaviour Builds Your Credit</h2>
-          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — not through who you invite to join the cooperative — even though there is a marginal score credit for referral bonuses. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
+          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — not through who you invite to join the cooperative — even though referral bonuses adds up to credit score. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
 
           {Object.values(TIERS).map(t=>(
             <div key={t.id} style={{marginBottom:32}}>
