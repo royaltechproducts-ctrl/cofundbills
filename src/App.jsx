@@ -581,6 +581,184 @@ export default function App() {
     }
   };
 
+  // ── Loan Recovery Functions ──────────────────────────────────
+  const sendLoanReminder = async (loan, dayNum) => {
+    const mem = members[loan.link_code];
+    if(!mem?.email) return;
+    const tone = dayNum<=1?"gentle":dayNum<=4?"firm":"urgent";
+    const subjects = {gentle:"CoFundBills — Loan Repayment Reminder",
+      firm:"CoFundBills — Loan Payment Overdue",
+      urgent:"CoFundBills — Final Grace Period Notice"};
+    const msgs = {
+      gentle:`Dear ${mem.fullName},
+
+This is a friendly reminder that your Co-Fund Loan instalment of ${fmtNGN(loan.amount/getTier(mem.contributionTier||1).loanTerm)} was due on the last day of this month.
+
+Please make payment at your earliest convenience to avoid a credit score deduction.
+
+Payment reference: ${loan.link_code}
+CoFundBills Cooperative
++234 909 999 4816`,
+      firm:`Dear ${mem.fullName},
+
+Your Co-Fund Loan instalment is now overdue. Please make payment immediately to avoid formal default declaration.
+
+Outstanding: ${fmtNGN(Number(loan.amount))}
+Loan ID: ${loan.id}
+
+Failure to pay within ${7-dayNum} day(s) will trigger a credit score deduction and suspension of your bill support access.
+
+CoFundBills Cooperative
++234 909 999 4816`,
+      urgent:`Dear ${mem.fullName},
+
+FINAL NOTICE — Your Co-Fund Loan repayment grace period expires tomorrow. If payment is not received by midnight tonight, your loan will be formally declared in default.
+
+Consequences of default:
+— Credit score deduction (${Math.abs(getTier(mem.contributionTier||1).pts.loanDefault).toLocaleString()} pts)
+— Bill support access suspended
+— Loan flagged as defaulted on your cooperative record
+— Your Next of Kin will be notified
+
+Please contact us immediately: +234 909 999 4816
+
+CoFundBills Cooperative`
+    };
+    await sendEmail({to_email:mem.email, to_name:mem.fullName,
+      subject:subjects[tone], message:msgs[tone]});
+    // Also notify admin
+    await sendEmail({to_email:ADMIN_EMAIL, to_name:ADMIN_NAME,
+      subject:`[Loan Recovery Day ${dayNum}] ${mem.fullName} — ${fmtNGN(loan.amount)}`,
+      message:`Loan recovery reminder sent to ${mem.fullName} (${loan.link_code}).
+Loan amount: ${fmtNGN(loan.amount)}
+Day ${dayNum} of grace period.
+NOK: ${mem.nokName} — ${mem.nokPhone}`});
+  };
+
+  const handleDeclareDefault = async (loanId) => {
+    const loan = loans.find(l=>l.id===loanId);
+    if(!loan) return;
+    const mem = members[loan.link_code];
+    const mTier = getTier(mem?.contributionTier||1);
+    // Update loan status
+    await supabase.from("cfb_loans").update({status:"defaulted",
+      defaulted_at:new Date().toISOString()}).eq("id",loanId);
+    // Deduct credit score
+    await supabase.from("cfb_credit_events").insert({
+      link_code:loan.link_code, event_type:"loan_default",
+      points:mTier.pts.loanDefault,
+      description:`Loan default declared — Loan ID ${loanId}`,
+    });
+    await supabase.from("cfb_members").update({
+      credit_score:Math.max(0,(mem?.creditScore||0)+mTier.pts.loanDefault)
+    }).eq("link_code",loan.link_code);
+    // Notify member
+    if(mem?.email) await sendEmail({
+      to_email:mem.email, to_name:mem.fullName,
+      subject:"CoFundBills — Loan Default Declared",
+      message:`Dear ${mem.fullName},
+
+Your Co-Fund Loan (ID: ${loanId}, Amount: ${fmtNGN(loan.amount)}) has been formally declared in default as of ${new Date().toLocaleDateString("en-NG")}.
+
+Consequences now in effect:
+— ${Math.abs(mTier.pts.loanDefault).toLocaleString()} credit score points deducted
+— Bill support access suspended until loan is cleared
+— Your Next of Kin (${mem.nokName}, ${mem.nokPhone}) has been notified
+
+To resolve this, contact us immediately:
+WhatsApp: +234 909 999 4816
+Email: cofundbills@gmail.com
+
+CoFundBills Cooperative`});
+    // Notify NOK
+    if(mem?.nokPhone) await sendEmail({
+      to_email:ADMIN_EMAIL, to_name:ADMIN_NAME,
+      subject:`NOK Alert — ${mem.fullName} Loan Default`,
+      message:`Please contact Next of Kin for ${mem.fullName} (${loan.link_code}):
+
+NOK Name: ${mem.nokName}
+NOK Phone: ${mem.nokPhone}
+NOK Relationship: ${mem.nokRelationship}
+
+Loan amount: ${fmtNGN(loan.amount)}
+Default declared: ${new Date().toLocaleDateString("en-NG")}`});
+    await loadLoans(); await loadMembers();
+    showToast(`Loan ${loanId} declared in default. Member notified.`);
+  };
+
+  const handleExtendLoanTerm = async (loanId, extraMonths) => {
+    const loan = loans.find(l=>l.id===loanId);
+    if(!loan) return;
+    const newTerm = (loan.months_term||3) + extraMonths;
+    const newTotal = Number(loan.amount) * (1 + Number(loan.interest_rate)/100 * newTerm);
+    await supabase.from("cfb_loans").update({
+      months_term:newTerm, total_repayable:newTotal,
+      status:"restructured", restructured_at:new Date().toISOString(),
+    }).eq("id",loanId);
+    const mem = members[loan.link_code];
+    if(mem?.email) await sendEmail({
+      to_email:mem.email, to_name:mem.fullName,
+      subject:"CoFundBills — Loan Term Restructured",
+      message:`Dear ${mem.fullName},
+
+Your Co-Fund Loan has been restructured.
+
+New term: ${newTerm} months
+New total repayable: ${fmtNGN(newTotal)}
+New monthly instalment: ${fmtNGN(newTotal/newTerm)}
+
+Please ensure payments are made by the last day of each month going forward.
+
+CoFundBills Cooperative
++234 909 999 4816`});
+    await loadLoans();
+    showToast(`Loan ${loanId} restructured to ${newTerm} months.`);
+  };
+
+  const handleOffsetPayout = async (loanId, cellCode, memberCode) => {
+    const loan = loans.find(l=>l.id===loanId);
+    if(!loan) return;
+    const outstanding = Number(loan.total_repayable) - Number(loan.amount_repaid||0);
+    const mem = members[memberCode];
+    const mTier = getTier(mem?.contributionTier||1);
+    // Mark loan as settled via offset
+    await supabase.from("cfb_loans").update({
+      status:"settled_by_offset", settled_at:new Date().toISOString(),
+      settlement_notes:`Offset against cycle payout from cell ${cellCode}`
+    }).eq("id",loanId);
+    // Record credit event — loan repaid
+    await supabase.from("cfb_credit_events").insert({
+      link_code:memberCode, event_type:"loan_repaid",
+      points:mTier.pts.loanRepaid,
+      description:`Loan settled by cycle payout offset — Cell ${cellCode}`,
+    });
+    await supabase.from("cfb_members").update({
+      credit_score:(mem?.creditScore||0)+mTier.pts.loanRepaid
+    }).eq("link_code",memberCode);
+    // Notify member
+    if(mem?.email) await sendEmail({
+      to_email:mem.email, to_name:mem.fullName,
+      subject:"CoFundBills — Loan Settled via Cycle Payout Offset",
+      message:`Dear ${mem.fullName},
+
+Your outstanding Co-Fund Loan balance of ${fmtNGN(outstanding)} has been offset against your cycle payout from cell ${cellCode}.
+
+Your loan is now fully settled.
++${mTier.pts.loanRepaid} credit score points have been awarded.
+
+CoFundBills Cooperative`});
+    await loadLoans(); await loadMembers();
+    showToast(`Loan offset against cycle payout. Loan settled.`);
+  };
+
+  const handleSuspendMember = async (code, suspend=true) => {
+    await supabase.from("cfb_members").update({
+      status: suspend?"suspended":"active"
+    }).eq("link_code",code);
+    await loadMembers();
+    showToast(`${code} ${suspend?"suspended":"reinstated"}.`);
+  };
+
   // ── Registration ──────────────────────────────────────────────
   const handleRegister = async () => {
     const errs = {};
@@ -894,7 +1072,7 @@ Once unlocked, all members in the same tier get the SAME interest rate (rate is 
 - Tier 3: 2.5%/month flat, 6-month term. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
 - Tier 4: 2%/month flat, 8-month term. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
 - Founding Members: 0% across ALL tiers — same limits apply
-Repayment: Equal monthly instalments (principal + flat interest ÷ term months). Due last day of month. 7-day grace period. Default after Day 7.
+Repayment: Equal monthly instalments (principal + flat interest ÷ term months). Due last day of month. 7-day grace period. Default declared Day 8. On default: credit score deduction, bill support suspended, NOK notified. Cooperative can offset outstanding loan against cycle payout at cell completion.
 Loans subject to fund liquidity and admin approval.
 
 BILL SUPPORT — COOPERATIVE FUNDING CAPACITY TIER (CRITICAL):
@@ -1030,7 +1208,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category or contribution tier. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
     ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +10 pts per activated invitee. Tier 2: +50 pts per activated invitee. Tier 3: +100 pts per activated invitee. Tier 4: +200 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
-    ["8. Co-Fund Loan & Repayment Schedule","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are calculated as equal monthly instalments (principal + flat interest divided equally across the term). Monthly instalments are due by the last day of every month. A grace period of 7 days applies after each due date. Failure to pay within the grace period constitutes a default on that instalment — triggering a credit score deduction and suspension of bill support access. Loans are subject to available fund liquidity and cooperative credit policy. Credit points improve eligibility but do not guarantee approval."],
+    ["8. Co-Fund Loan, Repayment Schedule & Recovery","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are equal monthly instalments due by the last day of every month. A 7-day grace period applies. Default is declared on Day 8. On default: credit score deduction fires, bill support access is suspended and the member's Next of Kin is notified. The cooperative reserves the right to offset any outstanding loan balance against the member's cycle payout at cell completion. Sustained non-payment may result in loan restructuring, membership suspension and referral to Lagos State Cooperative dispute resolution mechanisms. Loans are subject to available fund liquidity and cooperative credit policy."],
     ["9. Bill Support","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier (same as loan access thresholds). Maximum claim amounts are determined by the cooperative's live fund balance at the time of request — not the member's tier alone. Applications are subject to available fund balance and admin approval. Bill support is not an entitlement and is limited to once per 10-month cycle."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights","Failure to contribute by the last day of any month suspends cycle payout eligibility for that period and triggers a credit score deduction proportional to the member's contribution tier. Sustained non-payment may result in removal from the active cell and forfeiture of accumulated benefit pool balance for that cycle."],
@@ -2612,6 +2790,10 @@ CoFundBills Cooperative
                       )}
                       <button className="btn btn-sm btn-gold" onClick={()=>handleMakeFounding(m.linkCode)}>🎖️ Make Founding</button>
                       <button className="btn btn-sm btn-green" onClick={()=>handleActivate(m.linkCode)}>✅ Activate</button>
+                      {m.status==="suspended"
+                        ?<button className="btn btn-sm btn-green" onClick={()=>handleSuspendMember(m.linkCode,false)}>🔓 Reinstate</button>
+                        :m.status==="active"&&<button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={()=>handleSuspendMember(m.linkCode,true)}>🔒 Suspend</button>
+                      }
                       <button className="btn-danger" onClick={async()=>{await supabase.from("cfb_members").delete().eq("link_code",m.linkCode);await loadMembers();showToast("Member deleted.");}}>🗑</button>
                     </div>
                   </div>
@@ -2653,29 +2835,78 @@ CoFundBills Cooperative
 
           {/* Loans tab */}
           {adminTab==="loans"&&(
-            <div className="table-wrap">
-              <div className="table-head">All Loans ({loans.length})</div>
-              {loans.map(l=>(
-                <div key={l.id} className="table-row">
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-                    <div>
-                      <div style={{fontWeight:700}}>{members[l.link_code]?.fullName||l.link_code}</div>
-                      <div style={{fontSize:11,color:C.muted}}>{fmtNGN(l.amount)} · {l.bill_type} · {l.credit_category}</div>
-                      <div style={{fontSize:11,color:C.muted}}>{l.interest_rate}%/mo · {fmtNGN(l.total_repayable)} repayable</div>
+            <div>
+              <div className="table-wrap">
+                <div className="table-head">All Loans ({loans.length})</div>
+                {loans.map(l=>{
+                  const mem = members[l.link_code];
+                  const mTier = getTier(mem?.contributionTier||1);
+                  const monthlyInstalment = Number(l.total_repayable)/Number(l.months_term||mTier.loanTerm);
+                  const isOverdue = l.status==="approved"&&new Date(l.approved_at)<new Date(Date.now()-30*24*60*60*1000);
+                  const memberCells = cells.filter(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===l.link_code));
+                  return(
+                    <div key={l.id} className="table-row">
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8,flexWrap:"wrap"}}>
+                        <div style={{flex:1}}>
+                          <div style={{fontWeight:700,color:C.navy}}>{mem?.fullName||l.link_code}</div>
+                          <div style={{fontSize:11,color:C.muted}}>{l.link_code} · {l.bill_type} · {l.credit_category}</div>
+                          <div style={{fontSize:11,color:C.muted}}>{fmtNGN(l.amount)} principal · {l.interest_rate}%/mo · {fmtNGN(l.total_repayable)} total · {l.months_term||mTier.loanTerm} months</div>
+                          <div style={{fontSize:11,color:C.muted}}>Monthly instalment: <strong>{fmtNGN(monthlyInstalment)}</strong></div>
+                          {mem&&<div style={{fontSize:11,color:C.muted,marginTop:2}}>NOK: {mem.nokName} · {mem.nokPhone}</div>}
+                        </div>
+                        <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"flex-start",flexDirection:"column"}}>
+                          <span className="pill" style={{background:
+                            l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":
+                            l.status==="defaulted"?"#FEE2E2":l.status==="restructured"?"#EDE9FE":
+                            l.status==="settled_by_offset"?"#DCFCE7":"#F3F4F6",
+                            color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":
+                            l.status==="defaulted"?C.error:l.status==="restructured"?"#5B21B6":
+                            l.status==="settled_by_offset"?"#166534":C.muted}}>
+                            {l.status}
+                          </span>
+                          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                            {l.status==="pending"&&<>
+                              <button className="btn btn-sm btn-green" onClick={async()=>{
+                                await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString()}).eq("id",l.id);
+                                await loadLoans();showToast("Loan approved.");
+                              }}>✅ Approve</button>
+                              <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{
+                                await supabase.from("cfb_loans").update({status:"rejected"}).eq("id",l.id);
+                                await loadLoans();showToast("Loan rejected.");
+                              }}>✗ Reject</button>
+                            </>}
+                            {(l.status==="approved"||l.status==="restructured")&&<>
+                              <button className="btn btn-sm" style={{background:"#FEF3C7",color:"#92400E"}}
+                                onClick={()=>sendLoanReminder(l,1)}>📧 Day 1 Reminder</button>
+                              <button className="btn btn-sm" style={{background:"#FED7AA",color:"#92400E"}}
+                                onClick={()=>sendLoanReminder(l,4)}>📧 Day 4 Notice</button>
+                              <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}}
+                                onClick={()=>sendLoanReminder(l,7)}>📧 Final Notice</button>
+                              <button className="btn btn-sm" style={{background:C.error,color:C.white}}
+                                onClick={()=>handleDeclareDefault(l.id)}>⚠️ Declare Default</button>
+                              <button className="btn btn-sm" style={{background:"#EDE9FE",color:"#5B21B6"}}
+                                onClick={()=>handleExtendLoanTerm(l.id,2)}>🔄 Extend +2mo</button>
+                              {memberCells.length>0&&<button className="btn btn-sm btn-green"
+                                onClick={()=>handleOffsetPayout(l.id,memberCells[0].cell_code,l.link_code)}>
+                                💰 Offset Payout</button>}
+                            </>}
+                            {l.status==="defaulted"&&<>
+                              <button className="btn btn-sm" style={{background:"#EDE9FE",color:"#5B21B6"}}
+                                onClick={()=>handleExtendLoanTerm(l.id,2)}>🔄 Restructure</button>
+                              {memberCells.length>0&&<button className="btn btn-sm btn-green"
+                                onClick={()=>handleOffsetPayout(l.id,memberCells[0].cell_code,l.link_code)}>
+                                💰 Offset Payout</button>}
+                              <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}}
+                                onClick={()=>handleSuspendMember(l.link_code,true)}>🔒 Suspend Member</button>
+                            </>}
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}}>
-                      <span className="pill" style={{background:l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":"#FEE2E2",color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":C.error}}>{l.status}</span>
-                      {l.status==="pending"&&(
-                        <>
-                          <button className="btn btn-sm btn-green" onClick={async()=>{await supabase.from("cfb_loans").update({status:"approved",approved_at:new Date().toISOString()}).eq("id",l.id);await loadLoans();showToast("Loan approved.");}}>✅ Approve</button>
-                          <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{await supabase.from("cfb_loans").update({status:"rejected"}).eq("id",l.id);await loadLoans();showToast("Loan rejected.");}}>✗ Reject</button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {loans.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No loans yet</div>}
+                  );
+                })}
+                {loans.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No loans yet</div>}
+              </div>
             </div>
           )}
 
