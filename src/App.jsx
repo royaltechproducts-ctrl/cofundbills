@@ -2717,24 +2717,71 @@ CoFundBills Cooperative
 
           {/* Analytics */}
           {adminTab==="analytics"&&(
-            <div className="card">
-              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:14}}>Platform Analytics</div>
-              <div className="grid-2">
-                {[
-                  {l:"Total Members",v:allMembersList.length},
-                  {l:"Active Members",v:activeMembers.length},
-                  {l:"Active Cells",v:activeCells.length},
-                  {l:"Completed Cycles",v:completedCells.length},
-                  {l:"Loan Fund Balance",v:fmtNGN(funds.loan_fund||0)},
-                  {l:"Bill Support Fund (T1)",v:fmtNGN(funds.bill_support_t1||funds.bill_support||0)},
-                  {l:"Administration Fund",v:fmtNGN(funds.administration||0)},
-                  {l:"Contingency Reserve",v:fmtNGN(funds.contingency||0)},
-                ].map(s=>(
-                  <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8}}>
-                    <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
-                    <div style={{fontWeight:900,color:C.navy,fontSize:15}}>{s.v}</div>
-                  </div>
-                ))}
+            <div>
+              {/* Membership & Cells */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>📊 Membership & Cell Activity</div>
+                <div className="grid-4">
+                  {[
+                    {l:"Total Members",v:allMembersList.length,c:C.blue},
+                    {l:"Active Members",v:activeMembers.length,c:C.green},
+                    {l:"Pending Activation",v:pendingMembers.length,c:C.amber},
+                    {l:"Founding Members",v:allMembersList.filter(m=>m.memberType==="founding").length,c:C.burg},
+                    {l:"Active Cells",v:activeCells.length,c:C.blue},
+                    {l:"Completed Cycles",v:completedCells.length,c:C.green},
+                    {l:"Total Seats Filled",v:cells.reduce((a,c)=>(a+(c.seats||[]).filter(s=>s.seat_type==="contributing").length),0),c:C.purple},
+                    {l:"Queue T1",v:Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===1&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting",c:C.amber},
+                  ].map(s=>(
+                    <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`}}>
+                      <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
+                      <div style={{fontWeight:900,color:s.c,fontSize:16}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Financial Summary */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>💰 Financial Summary</div>
+                <div className="grid-2">
+                  {[
+                    {l:"Total Contributions Received",v:fmtNGN(Object.values(members).reduce((a,m)=>(a+(m.monthsContributed||0)*getTier(m.contributionTier||1).monthly),0)),c:C.blue},
+                    {l:"Total Cycle Payouts",v:fmtNGN(Object.values(members).reduce((a,m)=>(a+(m.cyclesCompleted||0)*getTier(m.contributionTier||1).cyclePayout),0)),c:C.green},
+                    {l:"Total Loans Outstanding",v:fmtNGN(loans.filter(l=>l.status==="approved").reduce((a,l)=>(a+Number(l.amount)),0)),c:C.purple},
+                    {l:"Total Loan Interest Revenue",v:fmtNGN(loans.filter(l=>l.status==="approved").reduce((a,l)=>(a+Number(l.total_repayable)-Number(l.amount)),0)),c:C.amber},
+                    {l:"Total Bill Support Paid Out",v:fmtNGN(billApps.filter(b=>b.status==="approved").reduce((a,b)=>(a+Number(b.amount_requested)),0)),c:C.burg},
+                    {l:"Pending Loan Applications",v:fmtNGN(loans.filter(l=>l.status==="pending").reduce((a,l)=>(a+Number(l.amount)),0)),c:C.muted},
+                  ].map(s=>(
+                    <div key={s.l} style={{padding:14,background:C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`}}>
+                      <div style={{fontSize:11,color:C.muted,marginBottom:4}}>{s.l}</div>
+                      <div style={{fontWeight:900,color:s.c,fontSize:17}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fund Balances — All Tiers */}
+              <div className="card">
+                <div style={{fontWeight:800,color:C.navy,fontSize:13,marginBottom:12}}>🏦 Cooperative Fund Balances</div>
+                <div className="grid-2">
+                  {[
+                    {l:"Bill Support Fund — Tier 1",v:fmtNGN(funds.bill_support_t1||funds.bill_support||0),c:C.green},
+                    {l:"Bill Support Fund — Tier 2",v:fmtNGN(funds.bill_support_t2||0),c:C.green},
+                    {l:"Bill Support Fund — Tier 3",v:fmtNGN(funds.bill_support_t3||0),c:C.green},
+                    {l:"Bill Support Fund — Tier 4",v:fmtNGN(funds.bill_support_t4||0),c:C.green},
+                    {l:"Loan Fund",v:fmtNGN(funds.loan_fund||0),c:C.blue},
+                    {l:"Loan Fund — Tier 2",v:fmtNGN(funds.loan_fund_t2||0),c:C.blue},
+                    {l:"Loan Fund — Tier 3",v:fmtNGN(funds.loan_fund_t3||0),c:C.blue},
+                    {l:"Loan Fund — Tier 4",v:fmtNGN(funds.loan_fund_t4||0),c:C.blue},
+                    {l:"Administration Fund",v:fmtNGN(funds.administration||0),c:C.amber},
+                    {l:"Contingency Reserve",v:fmtNGN(funds.contingency||0),c:C.burg},
+                  ].map(s=>(
+                    <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`}}>
+                      <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
+                      <div style={{fontWeight:900,color:s.c,fontSize:15}}>{s.v}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
