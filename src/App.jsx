@@ -1712,7 +1712,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 The Second Half — Amounting to Something Bigger
               </div>
               <div style={{color:"rgba(255,255,255,.85)",fontSize:13,lineHeight:1.85}}>
-                The other 50% — merges with the 50% from all other cells across the entire cooperative — into a massive cooperative pool of funds. Half of that pool is used to fund <strong style={{color:C.gold}}>Approved Bill Support Requests</strong>, and the other half caters for <strong style={{color:C.gold}}>Loan Requests, Operations and Reserve.</strong>
+                The other 50% — goes into a deeper layer of savings by merging with the 50% from all other cells across the entire cooperative — into a massive cooperative pool of funds. Half of that pool is used to fund <strong style={{color:C.gold}}>Approved Bill Support Requests</strong>, and the other half caters for <strong style={{color:C.gold}}>Loan Requests, Operations and Reserve.</strong>
               </div>
             </div>
           </div>
