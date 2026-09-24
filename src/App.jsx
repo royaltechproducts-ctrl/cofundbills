@@ -2482,7 +2482,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
 Unlike the traditional thrift contribution and savings scheme where a few friends come together to form a single circle of contributors and one friend at a time gets to receive all the contributions — till everyone gets a turn to complete a cycle — CoFundBills Multipurpose Cooperative Society Limited is a digital version that offers a far more sophisticated and advanced thrift contribution and credit system with several groups of concurrently running contribution cells.
 
-Every contributing member of a cell contributes their tier's monthly amount for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions merges with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
+Every contributing member of a cell contributes their tier's monthly amount for 10 months to cash out half their savings at the end of the cycle — while the other half of their joint contributions goes into a deeper layer of joint savings, merging with the halves from all other contribution cells on the platform to generate a massive cooperative pool of funds — half of which funds all Approved Bill Support Requests (house rents, children's school fees, medical bills, etc.) and the other half caters for Approved Loan Requests, Operations and Reserve.
 
 CoFundBills offers four contribution tiers to suit your financial capacity:
 
