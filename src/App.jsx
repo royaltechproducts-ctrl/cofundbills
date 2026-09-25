@@ -53,7 +53,7 @@ const TIERS = {
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
          loanRepaid:250,
-         referralActivation:400, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
+         referralActivation:100, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
     color:"#0B6E4F", name:"₦50,000 / month",
   },
   3: {
@@ -66,7 +66,7 @@ const TIERS = {
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
          loanRepaid:500,
-         referralActivation:400, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
+         referralActivation:200, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
     color:"#7C3AED", name:"₦100,000 / month",
   },
   4: {
