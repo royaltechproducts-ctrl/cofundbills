@@ -1877,7 +1877,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
               {[
-                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:"−30 / −150 / −300 / −600 pts",ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
+                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:"−30 pts (Tier 1) · −150 pts (Tier 2) · −300 pts (Tier 3) · −600 pts (Tier 4)",ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
                 {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:"Same deduction repeats",ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
                 {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:"Doubles every 14-day cycle",ext:"Escalates each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
                 {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
