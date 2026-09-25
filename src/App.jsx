@@ -40,7 +40,7 @@ const TIERS = {
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
     pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:0,
          loanRepaid:50,
-         referralActivation:10, referralCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
+         referralActivation:20, referralCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
     color:"#1A4F8A", name:"₦10,000 / month",
   },
   2: {
@@ -53,7 +53,7 @@ const TIERS = {
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
          loanRepaid:250,
-         referralActivation:50, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
+         referralActivation:400, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
     color:"#0B6E4F", name:"₦50,000 / month",
   },
   3: {
@@ -66,7 +66,7 @@ const TIERS = {
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
          loanRepaid:500,
-         referralActivation:100, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
+         referralActivation:400, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
     color:"#7C3AED", name:"₦100,000 / month",
   },
   4: {
@@ -79,7 +79,7 @@ const TIERS = {
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
          loanRepaid:1000,
-         referralActivation:200, referralCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
+         referralActivation:400, referralCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
     color:"#B45309", name:"₦200,000 / month",
   },
 };
@@ -1013,7 +1013,7 @@ CONTRIBUTION CELL STRUCTURE (always exactly 10 members):
 
 HOST CREDIT SYSTEM (replaces network positions):
 - When you invite someone and they activate: you earn Referral Bonus points at your tier rate
-  Tier 1: +10 pts | Tier 2: +50 pts | Tier 3: +100 pts | Tier 4: +200 pts
+  Tier 1: +20 pts | Tier 2: +100 pts | Tier 3: +200 pts | Tier 4: +400 pts
 
 - No seat required. No chain. No limit.
 - Credits earned at the LOWER of inviter tier or invitee tier (MIN rule)
@@ -1206,7 +1206,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["4. Contribution Split","Every contribution splits as follows across all tiers: Member Benefit Pool 50%, Bill Support Fund 25%, Loan Fund 12.5%, Administration 7.5%, Contingency Reserve 5%. Tier 1 (₦10,000): ₦5,000 / ₦2,500 / ₦1,250 / ₦750 / ₦500. Tier 2 (₦50,000): ₦25,000 / ₦12,500 / ₦6,250 / ₦3,750 / ₦2,500. Tier 3 (₦100,000): ₦50,000 / ₦25,000 / ₦12,500 / ₦7,500 / ₦5,000. Tier 4 (₦200,000): ₦100,000 / ₦50,000 / ₦25,000 / ₦15,000 / ₦10,000."],
     ["5. Cycle Payout","At cycle completion, each contributing member receives 50% of their total 10-month contributions as cash: Tier 1 — ₦50,000. Tier 2 — ₦250,000. Tier 3 — ₦500,000. Tier 4 — ₦1,000,000. Payouts are processed within 7 business days of cycle completion. The remaining 50% merges into the cooperative's shared pool to fund bill support, loans, operations and the contingency reserve."],
     ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category or contribution tier. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
-    ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +10 pts per activated invitee. Tier 2: +50 pts per activated invitee. Tier 3: +100 pts per activated invitee. Tier 4: +200 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
+    ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +20 pts per activated invitee. Tier 2: +100 pts per activated invitee. Tier 3: +200 pts per activated invitee. Tier 4: +400 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
     ["8. Co-Fund Loan, Repayment Schedule & Recovery","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are equal monthly instalments due by the last day of every month. A 7-day grace period applies. Default is declared on Day 8. On default: credit score deduction fires, bill support access is suspended and the member's Next of Kin is notified. The cooperative reserves the right to offset any outstanding loan balance against the member's cycle payout at cell completion. Sustained non-payment may result in loan restructuring, membership suspension and referral to Lagos State Cooperative dispute resolution mechanisms. Loans are subject to available fund liquidity and cooperative credit policy."],
     ["9. Bill Support","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier (same as loan access thresholds). Maximum claim amounts are determined by the cooperative's live fund balance at the time of request — not the member's tier alone. Applications are subject to available fund balance and admin approval. Bill support is not an entitlement and is limited to once per 10-month cycle."],
@@ -2146,6 +2146,49 @@ Answer warmly, concisely and accurately. Never invent information.`;
               </div>
 
               {/* Invite link */}
+              {/* Queue Status — all tiers */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>📊 Live Queue Status — All Tiers</div>
+                <div style={{fontSize:11,color:C.muted,marginBottom:12,lineHeight:1.6}}>
+                  Each tier queue forms a new contribution cell automatically when 10 members are waiting. Choose a tier that suits your financial capacity — a fuller queue means a faster cell activation.
+                </div>
+                {Object.values(TIERS).map(t=>{
+                  const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
+                  const queueCount = Object.values(members).filter(mx=>
+                    mx.status==="active" && (mx.contributionTier||1)===t.id &&
+                    !seatedCodes.has(mx.linkCode)
+                  ).length;
+                  const pct = Math.round((queueCount/10)*100);
+                  const barColor = queueCount>=8?C.green:queueCount>=5?C.amber:C.blue;
+                  const isMyTier = (m.contributionTier||1)===t.id;
+                  return(
+                    <div key={t.id} style={{marginBottom:12,padding:10,borderRadius:10,
+                      background:isMyTier?`${t.color}0D`:C.bg,
+                      border:`1.5px solid ${isMyTier?t.color:C.border}`}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:4}}>
+                        <div>
+                          <span style={{fontWeight:800,color:t.color,fontSize:12}}>{t.label}</span>
+                          {isMyTier&&<span style={{background:t.color,color:C.white,borderRadius:20,
+                            padding:"1px 7px",fontSize:9,fontWeight:700,marginLeft:6}}>YOUR TIER</span>}
+                          <span style={{color:C.muted,fontSize:11,marginLeft:6}}>{t.name} · {fmtNGN(t.cyclePayout)} payout</span>
+                        </div>
+                        <span style={{fontWeight:900,color:barColor,fontSize:13}}>{queueCount}/10</span>
+                      </div>
+                      <div className="score-bar">
+                        <div className="score-fill" style={{width:pct+"%",background:barColor}}/>
+                      </div>
+                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>
+                        {queueCount===0?"No members waiting yet"
+                          :queueCount<5?`${queueCount} member${queueCount!==1?"s":""} waiting — early stage`
+                          :queueCount<8?`${queueCount} members — growing queue`
+                          :queueCount<10?`${10-queueCount} more needed — cell forming soon!`
+                          :"Cell forming now!"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:10,lineHeight:1.7}}>
