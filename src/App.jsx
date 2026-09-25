@@ -1843,6 +1843,41 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>Payment Schedule</span>
           <h2 className="section-title">Simple. Structured. Predictable.</h2>
           <p className="section-sub">Your contribution schedule is clear from day one. One payment to activate. Then monthly contributions aligned to the calendar — with no surprises.</p>
+
+          {/* Missing the Deadline — full width with embedded stage columns */}
+          <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <span style={{fontSize:28}}>⚠️</span>
+              <div>
+                <div style={{fontWeight:900,color:C.burg,fontSize:16}}>Missing the Deadline</div>
+                <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework designed to protect collective financial discipline</div>
+              </div>
+            </div>
+            <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
+              A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+              {[
+                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:`−30 / −150 / −300 / −600 pts`,ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
+                {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:`Same deduction repeats`,ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
+                {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:`Doubles every 14-day cycle`,ext:"Doubles each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
+                {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
+              ].map(s=>(
+                <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
+                  <div style={{fontWeight:800,color:s.tc,fontSize:12,marginBottom:6}}>{s.title}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:13,marginBottom:4}}>{s.penalty}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
+              Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
+            </div>
+          </div>
+
           {/* Missing the Deadline — full width with embedded stage columns */}
           <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
             <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
