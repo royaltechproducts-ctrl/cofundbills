@@ -2192,7 +2192,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:10,lineHeight:1.7}}>
-                  Members who activate through your link earn you Referral Bonus points automatically — scored at the lower of the two tiers between you and the invited member.
+                  Members who activate through your link earn you Referral Bonus points automatically — score determined by the limit of the lower of the two tiers between you and the invited member.
                 </div>
                 <div style={{background:C.bg,borderRadius:8,padding:10,fontSize:12,wordBreak:"break-all",marginBottom:10,border:`1px solid ${C.border}`}}>{inviteLink}</div>
                 <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
