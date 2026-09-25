@@ -1704,12 +1704,6 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 </div>
               </div>
             </div>
-            {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
-              <div key={l} className="card" style={{textAlign:"center",padding:14}}>
-                <div style={{fontSize:26,marginBottom:5}}>{i}</div>
-                <div style={{fontSize:13,fontWeight:700,color:C.navy}}>{l}</div>
-              </div>
-            ))}
           </div>
         </div>
       </div>
