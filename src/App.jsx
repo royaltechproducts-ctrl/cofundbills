@@ -1843,44 +1843,41 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>Payment Schedule</span>
           <h2 className="section-title">Simple. Structured. Predictable.</h2>
           <p className="section-sub">Your contribution schedule is clear from day one. One payment to activate. Then monthly contributions aligned to the calendar — with no surprises.</p>
-          <div className="grid-2" style={{marginBottom:24}}>
-            <div className="card" style={{borderTop:`3px solid ${C.blue}`}}>
-              <div style={{fontSize:24,marginBottom:8}}>1️⃣</div>
-              <div style={{fontWeight:800,color:C.blue,fontSize:14,marginBottom:8}}>First Payment — Activation</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
-                Your first monthly contribution activates your membership and places you in your tier's queue. <strong>This is the only payment required until your contribution cell activates.</strong> No further payments are collected while you wait in the queue.
+          {/* Missing the Deadline — full width with embedded stage columns */}
+          <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <span style={{fontSize:28}}>⚠️</span>
+              <div>
+                <div style={{fontWeight:900,color:C.burg,fontSize:16}}>Missing the Deadline</div>
+                <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework designed to protect collective financial discipline</div>
               </div>
             </div>
-            <div className="card" style={{borderTop:`3px solid ${C.green}`}}>
-              <div style={{fontSize:24,marginBottom:8}}>2️⃣</div>
-              <div style={{fontWeight:800,color:C.green,fontSize:14,marginBottom:8}}>Cell Activates — Cycle Begins</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
-                When 10 members queue up, your cell activates instantly. All 10 members receive an email with their Month 2 due date — the <strong>last day of the following calendar month</strong>. From that point, monthly contributions follow the calendar.
-              </div>
+            <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
+              A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
             </div>
-            <div className="card" style={{borderTop:`3px solid ${C.amber}`}}>
-              <div style={{fontSize:24,marginBottom:8}}>📅</div>
-              <div style={{fontWeight:800,color:C.amber,fontSize:14,marginBottom:8}}>Monthly Rhythm — Last Week / Last Day</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
-                The <strong>last week of every month</strong> is your reminder window. The <strong>last day of every month</strong> is your contribution deadline. Pay before midnight on the last day to protect and grow your CoFund Credit Score.
-              </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+              {[
+                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:`−${getTier(m?.contributionTier||1).pts.missed} pts`,ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
+                {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:`−${getTier(m?.contributionTier||1).pts.missed} pts again`,ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
+                {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:`−${Math.abs(getTier(m?.contributionTier||1).pts.missed)*2} pts per 14-day cycle`,ext:"Doubles each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
+                {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
+              ].map(s=>(
+                <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
+                  <div style={{fontWeight:800,color:s.tc,fontSize:12,marginBottom:6}}>{s.title}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:13,marginBottom:4}}>{s.penalty}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
+                </div>
+              ))}
             </div>
-            <div className="card" style={{borderTop:`3px solid ${C.burg}`}}>
-              <div style={{fontSize:24,marginBottom:8}}>⚠️</div>
-              <div style={{fontWeight:800,color:C.burg,fontSize:14,marginBottom:8}}>Missing the Deadline</div>
-              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>
-                A missed monthly payment triggers an immediate credit score deduction (−30 pts for Tier 1, −150/−300/−600 pts for Tiers 2/3/4) and extends the deadline by <strong>14 days</strong> to allow the member to clear the arrears.
-                <br/><br/>
-                <strong>Escalating Penalty Framework:</strong><br/>
-                <strong>Stage 1 — 14-day extension:</strong> First missed deadline → credit score deduction + 14-day grace extension. Payment clears → no further action.<br/>
-                <strong>Stage 2 — Repeat deduction:</strong> Default persists at Day 14 → same deduction repeats + another 14-day extension.<br/>
-                <strong>Stage 3 — Double deduction:</strong> If a new monthly contribution deadline falls due while a previous default remains unpaid, the deduction rate doubles to <strong>−60 pts every 14 days</strong> (Tier 1 equivalent, scales with tier) for each 14-day cycle.<br/>
-                <strong>Stage 4 — Expulsion threshold:</strong> Should the member's credit score fall to <strong>−400 pts or below</strong>, membership is terminated and all previous contributions are forfeited in accordance with T&C Clause 11.<br/>
-                <br/>
-                Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. The escalating penalty framework exists solely to protect the cooperative's collective financial discipline.
-              </div>
+            <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
+              Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
             </div>
           </div>
+
+
           <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:20,color:C.white,fontSize:13,lineHeight:1.9}}>
             <strong style={{color:C.gold,fontSize:14}}>Example — Cell activates in September 2026:</strong><br/>
             Month 1 (Activation) — Paid ✅<br/>
