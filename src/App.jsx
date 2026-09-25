@@ -1877,6 +1877,25 @@ Answer warmly, concisely and accurately. Never invent information.`;
             </div>
           </div>
 
+          {/* Payment Schedule Cards */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:24}}>
+            <div className="card" style={{borderTop:`3px solid ${C.gold}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>1️⃣</div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:8}}>First Payment — Activation</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>Your first monthly contribution activates your membership and places you in your tier's queue. This is the only payment required until your contribution cell activates. No further payments are collected while you wait in the queue.</div>
+            </div>
+            <div className="card" style={{borderTop:`3px solid ${C.blue}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>2️⃣</div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:8}}>Cell Activates — Cycle Begins</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>When 10 members queue up, your cell activates instantly. All 10 members receive an email with their Month 2 due date — the last day of the following calendar month. From that point, monthly contributions follow the calendar.</div>
+            </div>
+            <div className="card" style={{borderTop:`3px solid ${C.green}`}}>
+              <div style={{fontSize:28,marginBottom:8}}>📅</div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:8}}>Monthly Rhythm — Last Week / Last Day</div>
+              <div style={{fontSize:13,color:C.muted,lineHeight:1.8}}>The last week of every month is your reminder window. The last day of every month is your contribution deadline. Pay before midnight on the last day to protect and grow your CoFund Credit Score.</div>
+            </div>
+          </div>
+
 
           <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:20,color:C.white,fontSize:13,lineHeight:1.9}}>
             <strong style={{color:C.gold,fontSize:14}}>Example — Cell activates in September 2026:</strong><br/>
