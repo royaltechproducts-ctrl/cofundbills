@@ -40,7 +40,7 @@ const TIERS = {
               {min:5000000,max:10000000,cap:350000,tier:"Gold"},{min:10000000,max:Infinity,cap:500000,tier:"Platinum"}],
     pts:{contribution:20, cellActive:5, cycleContrib:100, cycleNetwork:0,
          loanRepaid:50,
-         referralActivation:20, referralCycle:25, billClaim:-500, missed:-30, loanDefault:-100},
+         referralActivation:20, referralCycle:25, missed:-30, loanDefault:-100},
     color:"#1A4F8A", name:"₦10,000 / month",
   },
   2: {
@@ -53,7 +53,7 @@ const TIERS = {
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
          loanRepaid:250,
-         referralActivation:100, referralCycle:125, billClaim:-2500, missed:-150, loanDefault:-500},
+         referralActivation:100, referralCycle:125, missed:-150, loanDefault:-500},
     color:"#0B6E4F", name:"₦50,000 / month",
   },
   3: {
@@ -66,7 +66,7 @@ const TIERS = {
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
          loanRepaid:500,
-         referralActivation:200, referralCycle:250, billClaim:-5000, missed:-300, loanDefault:-1000},
+         referralActivation:200, referralCycle:250, missed:-300, loanDefault:-1000},
     color:"#7C3AED", name:"₦100,000 / month",
   },
   4: {
@@ -79,7 +79,7 @@ const TIERS = {
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
          loanRepaid:1000,
-         referralActivation:400, referralCycle:500, billClaim:-10000, missed:-600, loanDefault:-2000},
+         referralActivation:400, referralCycle:500, missed:-600, loanDefault:-2000},
     color:"#B45309", name:"₦200,000 / month",
   },
 };
@@ -1067,10 +1067,10 @@ Services unlock at minimum credit score per tier:
 - Tier 4: 8,000 pts minimum to unlock
 
 Once unlocked, all members in the same tier get the SAME interest rate (rate is tier-based, not score-based — score only determines the loan LIMIT):
-- Tier 1: 4%/month flat, 3-month term. Limits: Excellent NGN600k, Strong NGN360k, Standard NGN180k, Minimal NGN60k
-- Tier 2: 3%/month flat, 6-month term. Limits: Excellent NGN3M, Strong NGN1.8M, Standard NGN900k, Minimal NGN300k
-- Tier 3: 2.5%/month flat, 6-month term. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
-- Tier 4: 2%/month flat, 8-month term. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
+- Tier 1: 4% simple interest per month calculated on original principal, 3-month term. Limits: Excellent NGN600k, Strong NGN360k, Standard NGN180k, Minimal NGN60k
+- Tier 2: 3% simple interest per month calculated on original principal, 6-month term. Limits: Excellent NGN3M, Strong NGN1.8M, Standard NGN900k, Minimal NGN300k
+- Tier 3: 2.5% simple interest per month calculated on original principal, 6-month term. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
+- Tier 4: 2% simple interest per month calculated on original principal, 8-month term. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
 - Founding Members: 0% across ALL tiers — same limits apply
 Repayment: Equal monthly instalments (principal + flat interest ÷ term months). Due last day of month. 7-day grace period. Default declared Day 8. On default: credit score deduction, bill support suspended, NOK notified. Cooperative can offset outstanding loan against cycle payout at cell completion.
 Loans subject to fund liquidity and admin approval.
@@ -1209,7 +1209,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +20 pts per activated invitee. Tier 2: +100 pts per activated invitee. Tier 3: +200 pts per activated invitee. Tier 4: +400 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
     ["8. Co-Fund Loan, Repayment Schedule & Recovery","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are equal monthly instalments due by the last day of every month. A 7-day grace period applies. Default is declared on Day 8. On default: credit score deduction fires, bill support access is suspended and the member's Next of Kin is notified. The cooperative reserves the right to offset any outstanding loan balance against the member's cycle payout at cell completion. Sustained non-payment may result in loan restructuring, membership suspension and referral to Lagos State Cooperative dispute resolution mechanisms. Loans are subject to available fund liquidity and cooperative credit policy."],
-    ["9. Bill Support","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier (same as loan access thresholds). Maximum claim amounts are determined by the cooperative's live fund balance at the time of request — not the member's tier alone. Applications are subject to available fund balance and admin approval. Bill support is not an entitlement and is limited to once per 10-month cycle."],
+    ["9. Bill Support & Support Priority","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier. Eligibility to apply does not constitute an automatic entitlement. Actual approval depends on cooperative funding capacity, verification and the member's Support Priority position. Receiving bill support does not affect the member's Credit Score. After receiving support, the member's Support Priority is adjusted: Priority A — never received (highest). Priority B — received more than 10 months ago. Priority C — received within the last 10 months (lower priority). Bill support is limited to once per 10-month cycle. Maximum claim amounts depend on the cooperative's live funding capacity tier at the time of application."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights","Failure to contribute by the last day of any month suspends cycle payout eligibility for that period and triggers a credit score deduction proportional to the member's contribution tier. Sustained non-payment may result in removal from the active cell and forfeiture of accumulated benefit pool balance for that cycle."],
     ["12. No Guaranteed Returns","CoFundBills does not guarantee any return on contributions. Cycle payouts depend on the successful completion of a full 10-month contribution cycle by the member. The cooperative makes no investment promises, yield projections or fixed return commitments of any kind."],
@@ -1552,7 +1552,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               </div>
             ))}
             <div style={{fontSize:11,opacity:.65,lineHeight:1.7,marginTop:12}}>
-              * Each contributing member receives half of their 10 months contributions as cashback at the end of a cycle. The other half merges with the halves from all other contribution cells across the cooperative into a massive shared pool — half of which funds Approved Bill Support Requests (house rent, school fees, medical bills, etc.), and the other half caters for Approved Loan Requests, Operations and Reserve.
+              * Each member's 50% Member Benefit allocation accumulates independently throughout their 10-month cycle from their own qualifying contributions. At cycle end, each member receives the amount attributable to their own contributions — not a share of a communal pot. The illustration above shows the collective result when all 10 members contribute faithfully. Individual payouts reflect each member's own qualifying contributions. The other 50% of each contribution merges into the cooperative's shared pool to fund Bill Support, Loans, Operations and Reserve.
             </div>
           </div>
         </div>
@@ -1611,7 +1611,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     [`Loan repaid on time`,`+${t.pts.loanRepaid.toLocaleString()} pts`,"Members who repaid on time"],
                     [`Missed contribution`,`${t.pts.missed} pts`,"Defaulting Members"],
                     [`Loan default`,`${t.pts.loanDefault.toLocaleString()} pts`,"Members who defaulted on their own loan"],
-                    [`Bill support claim`,`${t.pts.billClaim.toLocaleString()} pts`,"Score deduction on approval"],
+
                   ].map(([e,p,w])=>(
                     <div key={e} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:`1px solid ${C.bg}`,fontSize:11}}>
                       <div><div style={{color:C.navy,fontWeight:600}}>{e}</div><div style={{fontSize:10,color:C.muted}}>{w}</div></div>
@@ -1673,8 +1673,15 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner" style={{textAlign:"center"}}>
           <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Essential Bill Support</span>
           <h2 className="section-title">Collective Bill Financing</h2>
-          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members with a credit score from 1,000 to 4,000 credit points can apply for support for their self-selected essential bills — up to ₦500,000 per claim for Tier 1 members and up to ₦10,000,000 per claim for Tier 4 members — from the Bill Support pool — once in every 10-month cycle — subject to CoFundBills Cooperative's funding capacity tier at the point of request.</p>
+          <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members with a qualifying Credit Score may apply for support on self-selected essential bills — up to ₦500,000 per claim for Tier 1 members and up to ₦10,000,000 per claim for Tier 4 members — once per 10-month cycle. Eligibility to apply is not automatic entitlement — actual approval depends on the cooperative's funding capacity tier, the member's Support Priority position and verification of the bill at the time of application.</p>
           <div className="grid-3">
+            <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:12,padding:16,marginBottom:20,fontSize:13}}>
+              <strong style={{color:"#166534"}}>🔄 Support Is Shared. Opportunity Rotates.</strong>
+              <div style={{color:"#166534",lineHeight:1.8,marginTop:6}}>
+                Receiving Bill Support does not affect your Credit Score. After benefiting, your Support Priority is temporarily adjusted so eligible members who have not recently received support get priority next.<br/>
+                <strong>Priority A</strong> — Never received (highest) &nbsp;·&nbsp; <strong>Priority B</strong> — Received &gt;10 months ago &nbsp;·&nbsp; <strong>Priority C</strong> — Received &lt;10 months ago
+              </div>
+            </div>
             {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
               <div key={l} className="card" style={{textAlign:"center",padding:14}}>
                 <div style={{fontSize:26,marginBottom:5}}>{i}</div>
@@ -1928,16 +1935,16 @@ Answer warmly, concisely and accurately. Never invent information.`;
       <div className="section" style={{background:C.bg}}>
         <div className="section-inner">
           <span className="section-tag" style={{background:"#FEF2F2",color:C.burg}}>Transparency & Legality</span>
-          <h2 className="section-title">Why CoFundBills is NOT a Pyramid Scheme</h2>
-          <p className="section-sub">CoFundBills is a registered cooperative — built on contribution discipline, not recruitment. Here is why:</p>
+          <h2 className="section-title">Why CoFundBills Is Structured as a Cooperative Contribution Model</h2>
+          <p className="section-sub">CoFundBills is being registered as a Multi-Purpose Cooperative Society — built on contribution discipline, not recruitment. Here is why:</p>
           <div className="grid-2">
             {[
-              ["✅ No cash from recruiting","Invite links earn Referral Bonus points only — never cash. No tiered positions, no chain structure, no multi-level commissions."],
-              ["✅ Works with zero new members","A cell of 10 can complete a full 10-month cycle with zero new recruitments after activation. Earnings come from contributions, not recruitment."],
-              ["✅ Every naira documented","50% benefit pool, 25% bill support, 12.5% loans, 7.5% admin, 5% reserve — transparent and automatic."],
-              ["✅ Behaviour-based credit","Credit score rewards contribution discipline and repayment history — not position or recruitment."],
-              ["✅ Payout is guaranteed","The Contingency Reserve protects every member's cycle payout from defaults by others."],
-              ["✅ Registered cooperative","Being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022."],
+              ["✅ No recruitment commissions","Referral links are used for cooperative growth and member recognition. No member receives cash for inviting others. Referral recognition is supplementary — not the principal route to credit qualification."],
+              ["✅ Contribution is the economic engine","A cell of 10 can complete a full 10-month cycle with zero new recruitments after activation. Every member's cycle benefit comes from their own qualifying contributions — not from recruiting others."],
+              ["✅ No rotation of contributions","CoFundBills does not rotate one member's payment to another. Your cycle benefit accumulates independently from your own contributions. Another member's default cannot reduce what you have earned."],
+              ["✅ Every naira documented","50% member benefit, 25% bill support, 12.5% loans, 7.5% administration, 5% contingency reserve — published, consistent and automatic across all tiers."],
+              ["✅ Behaviour-based creditworthiness","Your CoFund Credit Score is built through contribution discipline, cycle participation and loan repayment behaviour — not through who you recruit."],
+              ["✅ Cooperative registration in progress","CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022. Cooperative activities are subject to registration, supervision and audit by the Lagos State Department of Cooperative Services."],
             ].map(([t,d])=>(
               <div key={t} className="card" style={{borderLeft:`3px solid ${C.green}`}}>
                 <div style={{fontWeight:800,color:C.green,fontSize:13,marginBottom:6}}>{t}</div>
@@ -2207,8 +2214,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {portalTab==="myCell"&&(
             <div>
               <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14,fontSize:13,color:"#166534",lineHeight:1.8}}>
-                <strong>🛡️ Your Payout is Protected</strong><br/>
-                If any cell member defaults, the cooperative's Contingency Reserve covers the shortfall. Your cycle payout is guaranteed regardless of fellow members' behaviour.
+                <strong>🛡️ No Rotation — Your Cycle Benefit Is Yours</strong><br/>
+                Your cycle benefit is built from your own qualifying contributions — not another member's. CoFundBills does not operate a rotating savings system. If another member in your cell misses payments, their default cannot reduce or divert the benefit you have accumulated from your own contributions. You harvest what you have personally contributed to your Member Benefit Pool.
               </div>
               {myCells.length===0?(
                 <div className="card" style={{textAlign:"center",padding:36,color:C.muted}}>
@@ -2445,11 +2452,25 @@ Answer warmly, concisely and accurately. Never invent information.`;
                         </div>
                       </div>
                     </div>
+                    {(()=>{
+                      // Support Priority: A=never, B=>10mo ago, C=<10mo ago
+                      const lastApproved = billApps.filter(b=>b.link_code===m.linkCode&&b.status==="approved")
+                        .sort((a,b2)=>new Date(b2.approved_at)-new Date(a.approved_at))[0];
+                      const monthsSinceSupport = lastApproved
+                        ? Math.floor((Date.now()-new Date(lastApproved.approved_at))/(1000*60*60*24*30))
+                        : null;
+                      const priorityLabel = !lastApproved?"Priority A — Never Received (Highest)"
+                        :monthsSinceSupport>10?"Priority B — Received >10 months ago"
+                        :"Priority C — Received <10 months ago (Lower Priority)";
+                      const priorityColor = !lastApproved?C.green:monthsSinceSupport>10?C.blue:C.amber;
+                      return null; // just compute — render below
+                    })()}
                     {m.creditScore < mTier.unlockScore ? (
                       <div className="warn-box">
                         <strong>🔒 Bill Support not yet accessible.</strong><br/>
                         Required: <strong>{mTier.unlockScore.toLocaleString()} pts minimum</strong> · Your score: <strong>{m.creditScore.toLocaleString()} pts</strong><br/>
-                        You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock.
+                        You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock.<br/>
+                        <div style={{marginTop:6,fontSize:11,color:C.muted}}>Reaching the threshold allows you to apply — approval depends on cooperative capacity and your Support Priority position.</div>
                       </div>
                     ):(
                       <div className="card" style={{marginBottom:14}}>
@@ -2469,8 +2490,12 @@ Answer warmly, concisely and accurately. Never invent information.`;
                           <label>Description</label>
                           <input type="text" placeholder="Brief description of your bill" value={billForm.description} onChange={e=>setBillForm({...billForm,description:e.target.value})}/>
                         </div>
-                        <div className="warn-box" style={{fontSize:11}}>
-                          ⚠️ Approving this application will deduct <strong>{Math.abs(mTier.pts.billClaim).toLocaleString()} credit points</strong> from your CoFund Credit Score. Bill support is once per 10-month cycle.
+                        <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:8,padding:10,fontSize:11,color:C.blue,lineHeight:1.7,marginBottom:8}}>
+                          ℹ️ <strong>Support Is Shared. Opportunity Rotates.</strong><br/>
+                          Receiving Bill Support does not affect your Credit Score. After benefiting, your Support Priority is temporarily moved behind eligible members who have not recently received support — giving others fair access to the fund. Your priority is restored progressively over time.
+                        </div>
+                        <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:10,fontSize:11,color:"#92400E",lineHeight:1.7,marginBottom:8}}>
+                          ⚠️ <strong>Eligibility ≠ Automatic Entitlement.</strong> Reaching the credit threshold allows you to apply. Actual approval depends on cooperative funding capacity, your Support Priority position and verification of the bill. After receiving support, your priority is temporarily moved behind eligible members who have not recently benefited.
                         </div>
                         <button className="btn btn-green" style={{width:"100%"}} onClick={handleBillApply}>Submit Bill Support Application</button>
                       </div>
@@ -2970,13 +2995,14 @@ CoFundBills Cooperative
                       {b.status==="pending"&&(
                         <>
                           <button className="btn btn-sm btn-green" onClick={async()=>{
-                            await supabase.from("cfb_bill_support").update({status:"approved",approved_at:new Date().toISOString()}).eq("id",b.id);
-                            const mem = members[b.link_code];
-                            if(mem){
-                              const mT = getTier(mem.contributionTier||1);
-                              await supabase.from("cfb_members").update({credit_score:Math.max(0,(mem.creditScore||0)+mT.pts.billClaim)}).eq("link_code",b.link_code);
-                            }
-                            await loadBillApps();await loadMembers();showToast("Bill support approved.");
+                            await supabase.from("cfb_bill_support").update({
+                              status:"approved",
+                              approved_at:new Date().toISOString(),
+                              priority_reset_at:new Date().toISOString(),
+                            }).eq("id",b.id);
+                            // No credit score deduction — Support Priority system handles queue position
+                            await loadBillApps();await loadMembers();
+                            showToast("Bill support approved. Member's Support Priority reset.");
                           }}>✅ Approve</button>
                           <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{await supabase.from("cfb_bill_support").update({status:"rejected"}).eq("id",b.id);await loadBillApps();showToast("Application rejected.");}}>✗ Reject</button>
                         </>
