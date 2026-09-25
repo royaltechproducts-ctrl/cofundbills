@@ -308,6 +308,8 @@ export default function App() {
   const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:""});
   const [billForm,    setBillForm]    = useState({billType:"",amount:"",description:""});
   const [tick,        setTick]        = useState(0); // forces countdown re-render
+  const [installPrompt, setInstallPrompt] = useState(null);
+  const [showInstall,   setShowInstall]   = useState(false);
         const [ajoMemberForm, setAjoMemberForm] = useState({name:"", phone:"", email:""});
   const [ajoCode,     setAjoCode]     = useState("");
 
@@ -363,6 +365,21 @@ export default function App() {
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t+1), 60000);
     return () => clearInterval(interval);
+  }, []);
+
+  // PWA install prompt capture
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+      setShowInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    // Show iOS guide if on iOS Safari (no beforeinstallprompt support)
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInApp = window.matchMedia("(display-mode: standalone)").matches;
+    if(isIOS && !isInApp) setShowInstall(true);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   // ── Visitor tracking ─────────────────────────────────────────
@@ -1465,6 +1482,43 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <a className="wa-btn" href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer">💬 Chat with Admin</a>
         </div>
       </div>
+
+      {/* PWA Install Banner */}
+      {showInstall&&(
+        <div style={{background:`linear-gradient(135deg,${C.gold},#B8860B)`,padding:"12px 24px",
+          display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap",
+          position:"sticky",top:56,zIndex:200}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <img src="/icon-192.png" alt="CFB" style={{width:32,height:32,borderRadius:8}}/>
+            <div>
+              <div style={{fontWeight:800,color:C.navy,fontSize:13}}>📱 Add CoFundBills to Your Home Screen</div>
+              <div style={{fontSize:11,color:"rgba(13,33,55,.75)"}}>
+                {installPrompt?"One tap to install — access your portal like a native app"
+                  :"Tap Share → Add to Home Screen to install on your iPhone/iPad"}
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:8}}>
+            {installPrompt&&(
+              <button style={{background:C.navy,color:C.white,border:"none",borderRadius:20,
+                padding:"7px 18px",fontSize:12,fontWeight:700,cursor:"pointer"}}
+                onClick={async()=>{
+                  installPrompt.prompt();
+                  const result = await installPrompt.userChoice;
+                  if(result.outcome==="accepted") setShowInstall(false);
+                  setInstallPrompt(null);
+                }}>
+                ⬇️ Install App
+              </button>
+            )}
+            <button style={{background:"rgba(13,33,55,.15)",color:C.navy,border:"none",
+              borderRadius:20,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}
+              onClick={()=>setShowInstall(false)}>
+              ✕ Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Stats belt */}
       <div style={{background:C.navy,padding:"14px 24px 10px",display:"flex",justifyContent:"center",gap:10,flexWrap:"wrap",marginBottom:0}}>
