@@ -1461,7 +1461,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <p>A member-owned digital cooperative platform using disciplined contribution cells to build shared financial capacity — for bill support, cooperative credit and collective financial empowerment.</p>
         <div className="hero-btns">
           <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join Free Today</button>
-          <button className="btn btn-outline btn-lg" onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
+          <button className="btn btn-lg" style={{background:C.navy,color:C.white,border:`2px solid ${C.navy}`}} onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
           <a className="wa-btn" href="https://wa.me/2348061631222?text=Hello%2C%20I%20have%20a%20question%20about%20CoFundBills" target="_blank" rel="noopener noreferrer">💬 Chat with Admin</a>
         </div>
       </div>
@@ -1978,7 +1978,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <p style={{color:C.muted,fontSize:15,marginBottom:28,lineHeight:1.7}}>Join thousands of Nigerians building financial capacity together. Register free today — activation only when you are ready.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
             <button className="btn btn-gold btn-lg" onClick={()=>setModal({type:"register"})}>Join Free Today</button>
-            <button className="btn btn-outline btn-lg" onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
+            <button className="btn btn-lg" style={{background:C.navy,color:C.white,border:`2px solid ${C.navy}`}} onClick={()=>setModal({type:"login"})}>Log In to My Portal</button>
           </div>
         </div>
       </div>
