@@ -3483,17 +3483,8 @@ CoFundBills Cooperative`,
           <button className="btn btn-outline btn-sm nav-desktop nav-btn-sm" onClick={()=>setFaqOpen(true)}>FAQs</button>
           <button className="btn btn-outline btn-sm nav-desktop nav-btn-sm" onClick={()=>setTcOpen(true)}>T&amp;C</button>
           <button className="btn btn-outline btn-sm nav-btn-sm" style={{color:C.gold,borderColor:C.gold}}
-            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Ajo</button>
-          {showInstall&&installPrompt&&(
-            <button style={{background:C.gold,color:C.navy,border:"none",borderRadius:20,
-              padding:"5px 10px",fontSize:11,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}
-              onClick={async()=>{
-                installPrompt.prompt();
-                const result = await installPrompt.userChoice;
-                if(result.outcome==="accepted") setShowInstall(false);
-                setInstallPrompt(null);
-              }}>📲</button>
-          )}
+            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Import Ajo</button>
+
           {member?(
             <>
               <button className="btn btn-outline btn-sm nav-btn-sm" onClick={()=>{setView("portal");setPortalTab("dashboard");}}>Portal</button>
