@@ -376,9 +376,9 @@ export default function App() {
     };
     window.addEventListener("beforeinstallprompt", handler);
     // Show iOS guide if on iOS Safari (no beforeinstallprompt support)
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isMobile = /iphone|ipad|ipod|android/i.test(navigator.userAgent);
     const isInApp = window.matchMedia("(display-mode: standalone)").matches;
-    if(isIOS && !isInApp) setShowInstall(true);
+    if(isMobile && !isInApp) setShowInstall(true);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
@@ -1485,37 +1485,35 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
       {/* PWA Install Banner */}
       {showInstall&&(
-        <div style={{background:`linear-gradient(135deg,${C.gold},#B8860B)`,padding:"12px 24px",
-          display:"flex",alignItems:"center",justifyContent:"center",gap:12,flexWrap:"wrap",
-          position:"sticky",top:56,zIndex:200}}>
-          <div style={{display:"flex",alignItems:"center",gap:10}}>
-            <img src="/icon-192.png" alt="CFB" style={{width:32,height:32,borderRadius:8}}/>
-            <div>
-              <div style={{fontWeight:800,color:C.navy,fontSize:13}}>📱 Add CoFundBills to Your Home Screen</div>
-              <div style={{fontSize:11,color:"rgba(13,33,55,.75)"}}>
-                {installPrompt?"One tap to install — access your portal like a native app"
-                  :"Tap Share → Add to Home Screen to install on your iPhone/iPad"}
+        <div style={{background:`linear-gradient(135deg,${C.gold},#B8860B)`,padding:"10px 16px",
+          display:"flex",alignItems:"center",justifyContent:"space-between",gap:10,
+          position:"sticky",top:56,zIndex:200,flexWrap:"nowrap"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,flex:1,minWidth:0}}>
+            <img src="/icon-192.png" alt="CFB" style={{width:36,height:36,borderRadius:8,flexShrink:0}}/>
+            <div style={{minWidth:0}}>
+              <div style={{fontWeight:800,color:C.navy,fontSize:12,whiteSpace:"nowrap"}}>📲 Add CoFundBills to your phone</div>
+              <div style={{fontSize:10,color:"rgba(13,33,55,.7)",lineHeight:1.4}}>
+                {installPrompt?"Tap Install — works like a native app, no App Store needed"
+                  :"Tap the share icon ↗ then Add to Home Screen"}
               </div>
             </div>
           </div>
-          <div style={{display:"flex",gap:8}}>
+          <div style={{display:"flex",gap:6,flexShrink:0}}>
             {installPrompt&&(
               <button style={{background:C.navy,color:C.white,border:"none",borderRadius:20,
-                padding:"7px 18px",fontSize:12,fontWeight:700,cursor:"pointer"}}
+                padding:"7px 14px",fontSize:11,fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}
                 onClick={async()=>{
                   installPrompt.prompt();
                   const result = await installPrompt.userChoice;
                   if(result.outcome==="accepted") setShowInstall(false);
                   setInstallPrompt(null);
                 }}>
-                ⬇️ Install App
+                ⬇️ Install
               </button>
             )}
-            <button style={{background:"rgba(13,33,55,.15)",color:C.navy,border:"none",
-              borderRadius:20,padding:"7px 14px",fontSize:12,fontWeight:600,cursor:"pointer"}}
-              onClick={()=>setShowInstall(false)}>
-              ✕ Dismiss
-            </button>
+            <button style={{background:"rgba(13,33,55,.2)",color:C.navy,border:"none",
+              borderRadius:20,padding:"7px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}
+              onClick={()=>setShowInstall(false)}>✕</button>
           </div>
         </div>
       )}
@@ -3476,20 +3474,35 @@ CoFundBills Cooperative`,
           <span>CFB</span>
           <div><div style={{fontSize:12,lineHeight:1}}>CoFundBills</div><div style={{fontSize:9,opacity:.6,fontWeight:400}}>Cooperative</div></div>
         </div>
-        <div className="nav-btns">
-          <button className="btn btn-outline btn-sm" onClick={()=>setFaqOpen(true)}>FAQs</button>
-          <button className="btn btn-outline btn-sm" onClick={()=>setTcOpen(true)}>T&C</button>
-          <button className="btn btn-outline btn-sm" style={{color:C.gold,borderColor:C.gold}}
-            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Import Ajo</button>
+        <div className="nav-btns" style={{display:"flex",alignItems:"center",gap:4,flexWrap:"nowrap",overflow:"hidden"}}>
+          <style>{`
+            .nav-desktop{display:none}
+            @media(min-width:620px){.nav-desktop{display:inline-flex!important}}
+            .nav-btn-sm{font-size:11px!important;padding:5px 9px!important}
+          `}</style>
+          <button className="btn btn-outline btn-sm nav-desktop nav-btn-sm" onClick={()=>setFaqOpen(true)}>FAQs</button>
+          <button className="btn btn-outline btn-sm nav-desktop nav-btn-sm" onClick={()=>setTcOpen(true)}>T&amp;C</button>
+          <button className="btn btn-outline btn-sm nav-btn-sm" style={{color:C.gold,borderColor:C.gold}}
+            onClick={()=>{setView("ajo");setAjoView("landing");}}>🧺 Ajo</button>
+          {showInstall&&installPrompt&&(
+            <button style={{background:C.gold,color:C.navy,border:"none",borderRadius:20,
+              padding:"5px 10px",fontSize:11,fontWeight:800,cursor:"pointer",whiteSpace:"nowrap"}}
+              onClick={async()=>{
+                installPrompt.prompt();
+                const result = await installPrompt.userChoice;
+                if(result.outcome==="accepted") setShowInstall(false);
+                setInstallPrompt(null);
+              }}>📲</button>
+          )}
           {member?(
             <>
-              <button className="btn btn-outline btn-sm" onClick={()=>{setView("portal");setPortalTab("dashboard");}}>My Portal</button>
-              <button className="btn btn-outline btn-sm" onClick={()=>{setMember(null);setView("landing");}}>Log Out</button>
+              <button className="btn btn-outline btn-sm nav-btn-sm" onClick={()=>{setView("portal");setPortalTab("dashboard");}}>Portal</button>
+              <button className="btn btn-outline btn-sm nav-btn-sm" onClick={()=>{setMember(null);setView("landing");}}>Out</button>
             </>
           ):(
             <>
-              <button className="btn btn-outline btn-sm" onClick={()=>setModal({type:"login"})}>Log In</button>
-              <button className="btn btn-gold btn-sm" onClick={()=>setModal({type:"register"})}>Join Free</button>
+              <button className="btn btn-outline btn-sm nav-btn-sm" onClick={()=>setModal({type:"login"})}>Log In</button>
+              <button className="btn btn-gold btn-sm nav-btn-sm" onClick={()=>setModal({type:"register"})}>Join Free</button>
             </>
           )}
           <button style={{background:"transparent",border:"none",color:"rgba(255,255,255,.15)",cursor:"pointer",fontSize:10,padding:"2px 4px"}} onClick={()=>setModal({type:"adminLogin"})}>[ADM]</button>
