@@ -1530,9 +1530,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:12,padding:18,marginBottom:16,display:"flex",gap:14,alignItems:"flex-start"}}>
             <div style={{fontSize:28,flexShrink:0}}>🛡️</div>
             <div>
-              <div style={{fontWeight:800,color:"#166534",fontSize:14,marginBottom:6}}>Your Payout is Protected — Always</div>
+              <div style={{fontWeight:800,color:"#166534",fontSize:14,marginBottom:6}}>No Rotation — Your Cycle Benefit Is Yours</div>
               <div style={{fontSize:13,color:"#166534",lineHeight:1.8}}>
-                You may end up in a contribution cell with absolute strangers. That is by design — and it is safe. If any member in your cell defaults on a monthly payment, the cooperative's dedicated <strong>Contingency Reserve</strong> covers the shortfall immediately. Your cycle payout is guaranteed in full regardless of what fellow cell members do. Defaulters face credit score deductions and cooperative disciplinary action. You are never affected.
+                You may end up in a contribution cell with absolute strangers. That is by design — and it is safe. CoFundBills does not operate a rotating savings system. Your cycle benefit is built from your own qualifying contributions — not another member's. If a fellow cell member stops contributing, their failure cannot reduce, dilute or divert the benefit you have accumulated from your own contributions. You harvest what you have personally put in. Defaulters face credit score deductions and cooperative disciplinary action. Your earned benefit is never affected.
               </div>
             </div>
           </div>
