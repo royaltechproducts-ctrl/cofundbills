@@ -1675,11 +1675,33 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <h2 className="section-title">Collective Bill Financing</h2>
           <p className="section-sub" style={{margin:"0 auto 24px"}}>25% of every contribution funds the cooperative Bill Support Fund. Active members with a qualifying Credit Score may apply for support on self-selected essential bills — up to ₦500,000 per claim for Tier 1 members and up to ₦10,000,000 per claim for Tier 4 members — once per 10-month cycle. Eligibility to apply is not automatic entitlement — actual approval depends on the cooperative's funding capacity tier, the member's Support Priority position and verification of the bill at the time of application.</p>
           <div className="grid-3">
-            <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:12,padding:16,marginBottom:20,fontSize:13}}>
-              <strong style={{color:"#166534"}}>🔄 Support Is Shared. Opportunity Rotates.</strong>
-              <div style={{color:"#166534",lineHeight:1.8,marginTop:6}}>
-                Receiving Bill Support does not affect your Credit Score. After benefiting, your Support Priority is temporarily adjusted so eligible members who have not recently received support get priority next.<br/>
-                <strong>Highest Priority</strong> goes to members that have Never received Essential Bill Support Funds &nbsp;·&nbsp; <strong>Next in Priority</strong> are members that Received support &gt;10 months ago &nbsp;·&nbsp; <strong>Least on the Priority list</strong> are members that Received support &lt;10 months ago
+            <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:14,padding:22,marginBottom:20}}>
+              <div style={{fontWeight:900,color:"#166534",fontSize:15,marginBottom:10}}>🔄 Support Is Shared. Opportunity Rotates.</div>
+              <div style={{color:"#166534",fontSize:13,lineHeight:1.9,marginBottom:16}}>
+                Receiving Bill Support does not affect your Credit Score. After benefiting, your Support Priority is temporarily adjusted so eligible members who have not recently received support get priority next.
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:18}}>
+                {[
+                  {label:"Highest Priority",desc:"Members who have Never received Essential Bill Support Funds",color:"#166534",bg:"#DCFCE7"},
+                  {label:"Next in Priority",desc:"Members who received support more than 10 months ago",color:"#1D4ED8",bg:"#DBEAFE"},
+                  {label:"Least on Priority List",desc:"Members who received support within the last 10 months",color:"#92400E",bg:"#FEF3C7"},
+                ].map(p=>(
+                  <div key={p.label} style={{background:p.bg,borderRadius:10,padding:14,textAlign:"center"}}>
+                    <div style={{fontWeight:900,color:p.color,fontSize:12,marginBottom:6}}>{p.label}</div>
+                    <div style={{fontSize:11,color:p.color,lineHeight:1.7}}>{p.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{borderTop:"1.5px solid #BBF7D0",paddingTop:14}}>
+                <div style={{fontWeight:700,color:"#166534",fontSize:12,marginBottom:10}}>Eligible Bill Types</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8}}>
+                  {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
+                    <div key={l} style={{background:"rgba(255,255,255,.7)",borderRadius:8,padding:"8px 10px",
+                      display:"flex",alignItems:"center",gap:6,fontSize:12,color:"#166534",fontWeight:600}}>
+                      <span style={{fontSize:16}}>{i}</span>{l}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
             {[["🏠","House Rent"],["🎓","School Fees"],["🏥","Medical Bills"],["💡","Electricity"],["💧","Water Bills"],["🛒","Household Essentials"]].map(([i,l])=>(
