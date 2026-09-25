@@ -1840,79 +1840,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
       {/* Payment Schedule */}
       <div style={{background:C.bg,padding:"48px 24px"}}>
         <div style={{maxWidth:860,margin:"0 auto"}}>
-          <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>Payment Schedule</span>
+          <span className="section-tag">Payment Schedule</span>
           <h2 className="section-title">Simple. Structured. Predictable.</h2>
           <p className="section-sub">Your contribution schedule is clear from day one. One payment to activate. Then monthly contributions aligned to the calendar — with no surprises.</p>
 
-          {/* Missing the Deadline — full width with embedded stage columns */}
-          <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-              <span style={{fontSize:28}}>⚠️</span>
-              <div>
-                <div style={{fontWeight:900,color:C.burg,fontSize:16}}>Missing the Deadline</div>
-                <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework designed to protect collective financial discipline</div>
-              </div>
-            </div>
-            <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
-              A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
-              {[
-                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:`−30 / −150 / −300 / −600 pts`,ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
-                {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:`Same deduction repeats`,ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
-                {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:`Doubles every 14-day cycle`,ext:"Doubles each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
-                {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
-              ].map(s=>(
-                <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
-                  <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
-                  <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
-                  <div style={{fontWeight:800,color:s.tc,fontSize:12,marginBottom:6}}>{s.title}</div>
-                  <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
-                  <div style={{fontWeight:900,color:s.tc,fontSize:13,marginBottom:4}}>{s.penalty}</div>
-                  <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
-              Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
-            </div>
-          </div>
-
-          {/* Missing the Deadline — full width with embedded stage columns */}
-          <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
-            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-              <span style={{fontSize:28}}>⚠️</span>
-              <div>
-                <div style={{fontWeight:900,color:C.burg,fontSize:16}}>Missing the Deadline</div>
-                <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework designed to protect collective financial discipline</div>
-              </div>
-            </div>
-            <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
-              A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
-              {[
-                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:`−30 / −150 / −300 / −600 pts`,ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
-                {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:`Same deduction repeats`,ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
-                {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:`Doubles every 14-day cycle`,ext:"Doubles each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
-                {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
-              ].map(s=>(
-                <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
-                  <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
-                  <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
-                  <div style={{fontWeight:800,color:s.tc,fontSize:12,marginBottom:6}}>{s.title}</div>
-                  <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
-                  <div style={{fontWeight:900,color:s.tc,fontSize:13,marginBottom:4}}>{s.penalty}</div>
-                  <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
-                </div>
-              ))}
-            </div>
-            <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
-              Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
-            </div>
-          </div>
-
-          {/* Payment Schedule Cards */}
+          {/* Three schedule cards */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16,marginBottom:24}}>
             <div className="card" style={{borderTop:`3px solid ${C.gold}`}}>
               <div style={{fontSize:28,marginBottom:8}}>1️⃣</div>
@@ -1931,7 +1863,41 @@ Answer warmly, concisely and accurately. Never invent information.`;
             </div>
           </div>
 
+          {/* Missing the Deadline */}
+          <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,padding:22,marginBottom:24}}>
+            <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+              <span style={{fontSize:28}}>⚠️</span>
+              <div>
+                <div style={{fontWeight:900,color:C.burg,fontSize:16}}>Missing the Deadline</div>
+                <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework designed to protect collective financial discipline</div>
+              </div>
+            </div>
+            <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
+              A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
+              {[
+                {stage:"Stage 1",icon:"🟡",title:"First Miss",trigger:"Missed deadline",penalty:"−30 / −150 / −300 / −600 pts",ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
+                {stage:"Stage 2",icon:"🟠",title:"Persists at Day 14",trigger:"Default unpaid at Day 14",penalty:"Same deduction repeats",ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
+                {stage:"Stage 3",icon:"🔴",title:"New Month Clashes",trigger:"New deadline falls while default unpaid",penalty:"Doubles every 14-day cycle",ext:"Escalates each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
+                {stage:"Stage 4",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
+              ].map(s=>(
+                <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
+                  <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
+                  <div style={{fontWeight:800,color:s.tc,fontSize:12,marginBottom:6}}>{s.title}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
+                  <div style={{fontWeight:900,color:s.tc,fontSize:13,marginBottom:4}}>{s.penalty}</div>
+                  <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
+              Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
+            </div>
+          </div>
 
+          {/* Example timeline */}
           <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:14,padding:20,color:C.white,fontSize:13,lineHeight:1.9}}>
             <strong style={{color:C.gold,fontSize:14}}>Example — Cell activates in September 2026:</strong><br/>
             Month 1 (Activation) — Paid ✅<br/>
@@ -1941,7 +1907,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <span style={{opacity:.7,fontSize:11}}>...continuing monthly through Month 10 → Cycle payout disbursed</span>
           </div>
 
-          {/* Loan repayment schedule */}
+          {/* Loan Repayment Schedule */}
           <div style={{marginTop:32}}>
             <span className="section-tag" style={{background:"#F0FDF4",color:C.green}}>Co-Fund Loan Repayment Schedule</span>
             <h3 style={{color:C.navy,fontWeight:900,fontSize:16,margin:"8px 0 6px"}}>Equal Monthly Instalments — Aligned to the Calendar</h3>
@@ -1965,7 +1931,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     return(
                       <tr key={t.id} style={{background:i%2===0?C.white:C.bg,borderBottom:`1px solid ${C.border}`}}>
                         <td style={{padding:"10px 12px",fontWeight:800,color:t.color}}>{t.label}</td>
-                        <td style={{padding:"10px 12px",color:C.navy,fontWeight:700}}>{(t.loanRate*100).toFixed(1)}%/month</td>
+                        <td style={{padding:"10px 12px",color:C.navy,fontWeight:700}}>{(t.loanRate*100).toFixed(1)}% simple interest/month</td>
                         <td style={{padding:"10px 12px",color:C.muted}}>{t.loanTerm} months</td>
                         <td style={{padding:"10px 12px",color:C.navy}}>{fmtNGN(maxLoan)}</td>
                         <td style={{padding:"10px 12px",fontWeight:700,color:C.green}}>{fmtNGN(monthlyInstalment)}</td>
@@ -1992,9 +1958,6 @@ Answer warmly, concisely and accurately. Never invent information.`;
           </div>
         </div>
       </div>
-
-
-
 
       {/* Founder Bio */}
       <div style={{background:C.white,padding:"52px 24px"}}>
