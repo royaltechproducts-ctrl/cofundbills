@@ -51,6 +51,8 @@ const TIERS = {
     loanTerm:6, loanRate:0.03,
     billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
+    assetCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
+              {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     pts:{contribution:100, cellActive:25, cycleContrib:500, cycleNetwork:0,
          loanRepaid:250,
          referralActivation:100, referralCycle:125, missed:-150, loanDefault:-500},
@@ -64,6 +66,8 @@ const TIERS = {
     loanTerm:6, loanRate:0.025,
     billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
+    assetCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
+              {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     pts:{contribution:200, cellActive:50, cycleContrib:1000, cycleNetwork:0,
          loanRepaid:500,
          referralActivation:200, referralCycle:250, missed:-300, loanDefault:-1000},
@@ -76,6 +80,8 @@ const TIERS = {
     loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
     loanTerm:8, loanRate:0.02,
     billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
+              {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
+    assetCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     pts:{contribution:400, cellActive:100, cycleContrib:2000, cycleNetwork:0,
          loanRepaid:1000,
@@ -1227,6 +1233,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
     ["8. Co-Fund Loan, Repayment Schedule & Recovery","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are equal monthly instalments due by the last day of every month. A 7-day grace period applies. Default is declared on Day 8. On default: credit score deduction fires, bill support access is suspended and the member's Next of Kin is notified. The cooperative reserves the right to offset any outstanding loan balance against the member's cycle payout at cell completion. Sustained non-payment may result in loan restructuring, membership suspension and referral to Lagos State Cooperative dispute resolution mechanisms. Loans are subject to available fund liquidity and cooperative credit policy."],
     ["9. Bill Support & Support Priority","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier. Eligibility to apply does not constitute an automatic entitlement. Actual approval depends on cooperative funding capacity, verification and the member's Support Priority position. Receiving bill support does not affect the member's Credit Score. After receiving support, the member's Support Priority is adjusted: Highest Priority — members who have never received Essential Bill Support Funds. Next in Priority — members who received support more than 10 months ago. Least on the Priority list — members who received support within the last 10 months. Bill support is limited to once per 10-month cycle. Maximum claim amounts depend on the cooperative's live funding capacity tier at the time of application."],
+    ["9b. Asset Acquisition Request Support","Asset Acquisition Request Support is a CoFundBills cooperative benefit through which an eligible member may receive support toward the acquisition of an approved essential or productive asset. It is not a loan and does not create a repayment obligation to CoFundBills. Eligibility is restricted to Tier 2, Tier 3 and Tier 4 members who have achieved the Standard Performance credit score category or above. Asset Acquisition Support and Essential Bill Support are mutually exclusive — a member may access one or the other per 10-month cycle, never both. The support amount is determined by the member's contribution tier, credit score category and the cooperative's live Bill Support Fund capacity at the time of application. Eligibility to apply does not constitute automatic entitlement. Approval depends on cooperative funding capacity, the nature of the asset, intended use verification and administrative discretion. Where approved, CoFundBills pays the dealer or vendor directly — no cash is released to the member. The member is required to provide asset documentation for inclusion in the cooperative's asset register. Insurance is at the member's discretion. The same Support Priority system that governs Bill Support applies to Asset Acquisition Support: Highest Priority — never received support; Next in Priority — received support more than 10 months ago; Least on Priority — received support within the last 10 months."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights & Escalating Default Penalty","Failure to contribute by the last day of any month triggers an immediate credit score deduction (Tier 1: −30 pts · Tier 2: −150 pts · Tier 3: −300 pts · Tier 4: −600 pts) and a 14-day extension to clear the arrears. Should the default persist at the end of the 14-day extension, the same deduction repeats and a further 14-day extension is granted. Should a new monthly contribution deadline fall due while a prior default remains unpaid, the deduction rate doubles (Tier 1: −60 pts per 14-day cycle, scaling with tier) for every 14-day cycle thereafter. This escalating pattern continues until the member clears the arrears or their credit score reaches −400 pts or below. A credit score of −400 pts or below constitutes grounds for expulsion from the cooperative — the member's active cell participation is terminated and all accumulated contributions from that cycle are forfeited. The member's cycle benefit is never dependent on other members' contributions; the penalty framework applies solely to the defaulting member."],
     ["12. No Guaranteed Returns","CoFundBills does not guarantee any return on contributions. Cycle payouts depend on the successful completion of a full 10-month contribution cycle by the member. The cooperative makes no investment promises, yield projections or fixed return commitments of any kind."],
@@ -1959,6 +1966,111 @@ Answer warmly, concisely and accurately. Never invent information.`;
         </div>
       </div>
 
+      {/* Asset Acquisition Support */}
+      <div style={{background:C.white,padding:"52px 24px"}}>
+        <div style={{maxWidth:900,margin:"0 auto"}}>
+          <span className="section-tag" style={{background:"#EFF6FF",color:C.blue}}>Asset Acquisition Request Support</span>
+          <h2 className="section-title">Support That Builds Your Tomorrow</h2>
+          <p className="section-sub">Beyond paying today's bills, CoFundBills supports eligible members in acquiring approved essential and productive assets — at no repayment obligation to the cooperative. Some support pays your bills. This support helps you build an income-generating future.</p>
+
+          <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,borderRadius:16,padding:24,color:C.white,marginBottom:28}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:16}}>
+              {[
+                {icon:"🏍️",label:"Mobility & Transport",items:["Dispatch motorcycle","Keke NAPEP","Korope / Minibus","Other approved commercial transport"]},
+                {icon:"🔧",label:"Work & Trade Equipment",items:["Sewing machine","Welding equipment","Barbering equipment","Carpentry & professional tools"]},
+                {icon:"💻",label:"Technology & Education",items:["Laptop","Tablet","Printer","Approved work/educational devices"]},
+                {icon:"⚡",label:"Energy & Utilities",items:["Solar/inverter system","Battery storage","Water pump","Water storage system"]},
+                {icon:"🌾",label:"Agriculture",items:["Farm equipment","Irrigation equipment","Approved agricultural machinery"]},
+                {icon:"🏠",label:"Essential Household",items:["Selected essential appliances","Other cooperative-approved assets"]},
+              ].map(cat=>(
+                <div key={cat.label} style={{background:"rgba(255,255,255,.08)",borderRadius:10,padding:14}}>
+                  <div style={{fontSize:22,marginBottom:6}}>{cat.icon}</div>
+                  <div style={{fontWeight:800,color:C.gold,fontSize:12,marginBottom:8}}>{cat.label}</div>
+                  {cat.items.map(item=>(
+                    <div key={item} style={{fontSize:11,opacity:.85,lineHeight:1.8}}>· {item}</div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:24}}>
+            <div style={{background:"#EFF6FF",borderRadius:12,padding:20,border:`1.5px solid #BFDBFE`}}>
+              <div style={{fontWeight:900,color:C.blue,fontSize:14,marginBottom:10}}>📋 How It Works</div>
+              {[
+                ["1. Apply","Submit your Asset Acquisition Request with asset details, dealer information and intended use."],
+                ["2. Eligibility assessed","CoFundBills reviews your credit score, tier, participation record and available fund capacity."],
+                ["3. Asset approved","An approval amount is confirmed — partial or full — based on your tier and performance category."],
+                ["4. Dealer paid directly","You visit any dealer of your choice. CoFundBills pays the dealer directly on approval — you never handle the cash."],
+                ["5. Asset documented","Asset details are recorded in the CoFundBills cooperative asset register."],
+              ].map(([step,desc])=>(
+                <div key={step} style={{marginBottom:10}}>
+                  <div style={{fontWeight:800,color:C.navy,fontSize:12}}>{step}</div>
+                  <div style={{fontSize:12,color:C.muted,lineHeight:1.7}}>{desc}</div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{background:"#F0FDF4",borderRadius:12,padding:20,border:`1.5px solid #BBF7D0`,marginBottom:16}}>
+                <div style={{fontWeight:900,color:"#166534",fontSize:14,marginBottom:10}}>✅ Key Conditions</div>
+                {[
+                  "Available to Tier 2, 3 and 4 members only",
+                  "Standard Performance credit score and above",
+                  "Bill Support OR Asset Acquisition — never both",
+                  "Support amount determined by tier and credit score category",
+                  "Same Support Priority system as Bill Support applies",
+                  "Once per 10-month cycle — subject to fund availability",
+                  "No repayment obligation to CoFundBills",
+                  "Asset documentation required for cooperative register",
+                ].map(c=>(
+                  <div key={c} style={{fontSize:12,color:"#166534",lineHeight:1.8}}>✓ {c}</div>
+                ))}
+              </div>
+              <div style={{background:"#FEF3C7",borderRadius:12,padding:16,border:`1.5px solid #FCD34D`}}>
+                <div style={{fontWeight:900,color:"#92400E",fontSize:13,marginBottom:6}}>⚠️ Eligibility ≠ Entitlement</div>
+                <div style={{fontSize:12,color:"#92400E",lineHeight:1.7}}>Approval depends on cooperative funding capacity, your credit standing, the nature of the asset and verification at the time of application. The cooperative does not guarantee 100% coverage on all requests.</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Support limits table */}
+          <div style={{overflowX:"auto"}}>
+            <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+              <thead>
+                <tr style={{background:C.navy,color:C.white}}>
+                  {["Tier","Standard Performance","Strong Performance","Excellent Performance","Funding Source"].map(h=>(
+                    <th key={h} style={{padding:"10px 12px",textAlign:"left",fontWeight:700,fontSize:11}}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr style={{background:"#FEF2F2"}}>
+                  <td style={{padding:"10px 12px",fontWeight:800,color:C.muted}}>Tier 1</td>
+                  <td colSpan={3} style={{padding:"10px 12px",color:C.muted,fontStyle:"italic"}}>Not eligible — Tier 2 and above only</td>
+                  <td style={{padding:"10px 12px",color:C.muted}}>—</td>
+                </tr>
+                {[
+                  {tier:"Tier 2",std:"₦500,000",str:"₦1,250,000",exc:"₦2,500,000"},
+                  {tier:"Tier 3",std:"₦1,000,000",str:"₦2,500,000",exc:"₦5,000,000"},
+                  {tier:"Tier 4",std:"₦2,000,000",str:"₦5,000,000",exc:"₦10,000,000"},
+                ].map((r,i)=>(
+                  <tr key={r.tier} style={{background:i%2===0?C.white:C.bg,borderBottom:`1px solid ${C.border}`}}>
+                    <td style={{padding:"10px 12px",fontWeight:800,color:C.navy}}>{r.tier}</td>
+                    <td style={{padding:"10px 12px",color:C.navy}}>{r.std}</td>
+                    <td style={{padding:"10px 12px",color:C.blue,fontWeight:700}}>{r.str}</td>
+                    <td style={{padding:"10px 12px",color:C.green,fontWeight:700}}>{r.exc}</td>
+                    <td style={{padding:"10px 12px",color:C.muted,fontSize:11}}>25% Bill Support Pool</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{marginTop:10,fontSize:11,color:C.muted,lineHeight:1.7}}>
+            Support limits mirror the Bill Support Fund capacity tiers (Bronze/Silver/Gold/Platinum) and are subject to the cooperative's live fund balance at the time of application. Bill Support and Asset Acquisition Support are mutually exclusive — a member may access one or the other per cycle, not both.
+          </div>
+        </div>
+      </div>
+
       {/* Founder Bio */}
       <div style={{background:C.white,padding:"52px 24px"}}>
         <div style={{maxWidth:860,margin:"0 auto"}}>
@@ -2606,6 +2718,124 @@ Answer warmly, concisely and accurately. Never invent information.`;
               })()}
             </div>
           )}
+
+          {/* Assets Tab */}
+          {portalTab==="assets"&&(
+              <div>
+                {(m.contributionTier||1)===1?(
+                  <div className="warn-box">
+                    <strong>🔒 Asset Acquisition Support — Tier 2 and above only</strong><br/>
+                    This service is available to Tier 2, Tier 3 and Tier 4 members. Consider upgrading your contribution tier before your cell activates to access this benefit.
+                  </div>
+                ):(()=>{
+                  const assetBillFund = funds[`bill_support_t${mTier.id}`]||0;
+                  const assetCap = (mTier.assetCaps||[]).find(c=>assetBillFund>=c.min&&assetBillFund<c.max)||{cap:0,tier:"Bronze"};
+                  const cat = scoreCategory(m.creditScore||0, mTier, m.memberType==="founding");
+                  const scorePct = cat.label.includes("Excellent")?1:cat.label.includes("Strong")?0.5:cat.label.includes("Standard")?0.2:0;
+                  const assetLimit = scorePct>0?Math.min(assetCap.cap, assetCap.cap*scorePct*5):0;
+                  const hasBillSupport = billApps.some(b=>b.link_code===m.linkCode&&b.status==="approved"&&b.support_type!=="asset");
+                  const lastAsset = billApps.filter(b=>b.link_code===m.linkCode&&b.support_type==="asset"&&b.status==="approved")
+                    .sort((a,b2)=>new Date(b2.approved_at)-new Date(a.approved_at))[0];
+                  const monthsSince = lastAsset?Math.floor((Date.now()-new Date(lastAsset.approved_at))/(1000*60*60*24*30)):null;
+                  const priorityLabel = !lastAsset?"Highest Priority — Never received Asset Acquisition Support"
+                    :monthsSince>10?"Next in Priority — Received support >10 months ago"
+                    :"Least on Priority List — Received support <10 months ago";
+                  const priorityColor = !lastAsset?C.green:monthsSince>10?C.blue:C.amber;
+                  return(
+                    <div>
+                      <div className="card" style={{marginBottom:14}}>
+                        <div style={{fontWeight:800,color:C.navy,marginBottom:12}}>🏍️ Asset Acquisition Request Support</div>
+                        <div style={{fontSize:12,color:C.muted,lineHeight:1.8,marginBottom:14}}>
+                          Apply for cooperative support to acquire an approved essential or productive asset. CoFundBills pays the dealer directly upon approval. No repayment obligation to the cooperative.
+                        </div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:14}}>
+                          <div style={{background:C.bg,borderRadius:8,padding:12,textAlign:"center"}}>
+                            <div style={{fontWeight:900,color:C.blue,fontSize:15}}>{assetCap.tier}</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Fund Capacity</div>
+                          </div>
+                          <div style={{background:C.bg,borderRadius:8,padding:12,textAlign:"center"}}>
+                            <div style={{fontWeight:900,color:assetLimit>0?C.green:C.error,fontSize:15}}>{assetLimit>0?fmtNGN(assetLimit):"Not eligible"}</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Your Support Limit</div>
+                          </div>
+                          <div style={{background:C.bg,borderRadius:8,padding:12,textAlign:"center"}}>
+                            <div style={{fontWeight:900,color:priorityColor,fontSize:11,lineHeight:1.4}}>{priorityLabel.split("—")[0]}</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Your Priority</div>
+                          </div>
+                        </div>
+                        <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:8,padding:10,fontSize:11,color:C.blue,lineHeight:1.7,marginBottom:14}}>
+                          🔄 <strong>Support Is Shared. Opportunity Rotates.</strong><br/>
+                          {priorityLabel}<br/>
+                          Asset Acquisition and Bill Support share the same priority queue — you may access one or the other per cycle, never both.
+                        </div>
+                        {hasBillSupport&&(
+                          <div className="warn-box" style={{marginBottom:14}}>
+                            ⚠️ You have already received Bill Support this cycle. Asset Acquisition Support and Bill Support are mutually exclusive — one per cycle only.
+                          </div>
+                        )}
+                        {m.creditScore<mTier.unlockScore?(
+                          <div className="warn-box">🔒 Credit score too low. Required: {mTier.unlockScore.toLocaleString()} pts minimum.</div>
+                        ):assetLimit<=0?(
+                          <div className="warn-box">🔒 Asset Acquisition Support requires Standard Performance or above.</div>
+                        ):!hasBillSupport&&(
+                          <div>
+                            <div style={{fontWeight:700,color:C.navy,fontSize:13,marginBottom:10}}>Submit Asset Acquisition Request</div>
+                            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                              <select className="input" value={billForm.billType||""} onChange={e=>setBillForm(f=>({...f,billType:e.target.value}))}>
+                                <option value="">Select asset category</option>
+                                <option value="Mobility — Dispatch Motorcycle">🏍️ Mobility — Dispatch Motorcycle</option>
+                                <option value="Mobility — Keke NAPEP">🛺 Mobility — Keke NAPEP</option>
+                                <option value="Mobility — Korope / Minibus">🚌 Mobility — Korope / Minibus</option>
+                                <option value="Work & Trade Equipment">🔧 Work & Trade Equipment</option>
+                                <option value="Technology & Education">💻 Technology & Education</option>
+                                <option value="Energy & Utilities">⚡ Energy & Utilities</option>
+                                <option value="Agriculture">🌾 Agriculture</option>
+                                <option value="Essential Household Asset">🏠 Essential Household Asset</option>
+                              </select>
+                              <input className="input" placeholder="Asset description (make, model, specification)" value={billForm.description||""} onChange={e=>setBillForm(f=>({...f,description:e.target.value}))}/>
+                              <input className="input" placeholder="Dealer name and location" value={billForm.vendor||""} onChange={e=>setBillForm(f=>({...f,vendor:e.target.value}))}/>
+                              <input className="input" type="number" placeholder={`Amount requested (max ${fmtNGN(assetLimit)})`} value={billForm.amount||""} onChange={e=>setBillForm(f=>({...f,amount:e.target.value}))}/>
+                              <input className="input" placeholder="Intended use / business purpose" value={billForm.purpose||""} onChange={e=>setBillForm(f=>({...f,purpose:e.target.value}))}/>
+                              <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:10,fontSize:11,color:"#92400E",lineHeight:1.7}}>
+                                ⚠️ <strong>Eligibility ≠ Entitlement.</strong> Approval depends on fund capacity, asset verification and cooperative discretion. CoFundBills pays the dealer directly — no cash is released to the member.
+                              </div>
+                              <button className="btn btn-blue" onClick={async()=>{
+                                if(!billForm.billType||!billForm.amount||!billForm.description||!billForm.vendor||!billForm.purpose){showToast("Please complete all fields","error");return;}
+                                const amt=Number(billForm.amount);
+                                if(amt>assetLimit){showToast(`Max support: ${fmtNGN(assetLimit)}`,"error");return;}
+                                await supabase.from("cfb_bill_support").insert({
+                                  link_code:m.linkCode,support_type:"asset",
+                                  bill_type:billForm.billType,description:billForm.description,
+                                  vendor:billForm.vendor,purpose:billForm.purpose,
+                                  amount_requested:amt,status:"pending",
+                                  tier:mTier.id,credit_category:cat.label,
+                                });
+                                setBillForm({});await loadBillApps();
+                                showToast("Asset Acquisition Request submitted. Admin will review and contact you.");
+                              }}>Submit Asset Acquisition Request</button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      {billApps.filter(b=>b.link_code===m.linkCode&&b.support_type==="asset").length>0&&(
+                        <div className="table-wrap">
+                          <div className="table-head">Your Asset Requests</div>
+                          {billApps.filter(b=>b.link_code===m.linkCode&&b.support_type==="asset").map(b=>(
+                            <div key={b.id} className="table-row">
+                              <div style={{fontWeight:700}}>{b.bill_type}</div>
+                              <div style={{fontSize:12,color:C.muted}}>{b.description}</div>
+                              <div style={{fontSize:12,color:C.muted}}>Dealer: {b.vendor}</div>
+                              <div style={{fontSize:12,color:C.muted}}>Amount: {fmtNGN(b.amount_requested)}</div>
+                              <span className="pill" style={{background:b.status==="approved"?"#BBF7D0":b.status==="pending"?"#FEF3C7":"#FEE2E2",
+                                color:b.status==="approved"?"#166534":b.status==="pending"?"#92400E":C.error}}>{b.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
 
           {/* Invite Tab */}
           {portalTab==="invite"&&(
