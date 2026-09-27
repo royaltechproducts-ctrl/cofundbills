@@ -1582,7 +1582,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:12,padding:18,marginBottom:16,display:"flex",gap:14,alignItems:"flex-start"}}>
             <div style={{fontSize:28,flexShrink:0}}>🛡️</div>
             <div>
-              <div style={{fontWeight:800,color:"#166534",fontSize:14,marginBottom:6}}>No Rotation — Your Cycle Benefit Is Yours</div>
+              <div style={{fontWeight:800,color:"#166534",fontSize:14,marginBottom:6}}>No Rotation — Your Cycle Benefit Is Guaranteed</div>
               <div style={{fontSize:13,color:"#166534",lineHeight:1.8}}>
                 You may end up in a contribution cell with absolute strangers. That is by design — and it is safe. CoFundBills does not operate a rotating savings system. Your cycle benefit is built from your own qualifying contributions — not another member's. If a fellow cell member stops contributing, their failure cannot reduce, dilute or divert the benefit you have accumulated from your own contributions. You harvest what you have personally put in. Defaulters face credit score deductions and cooperative disciplinary action. Your earned benefit is never affected.
               </div>
@@ -1599,12 +1599,12 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <strong style={{color:C.gold}}>{t.label}:</strong> {fmtNGN(t.benefitPool)} × 10 months × 10 members = <strong style={{color:C.gold}}>{fmtNGN(t.benefitPool*100)} total benefit pool</strong>
                 </div>
                 <div style={{fontSize:13,opacity:.85}}>
-                  Divided equally → <strong style={{color:C.gold}}>{fmtNGN(t.cyclePayout)} per member</strong>
+                  100% compliant member benefit → <strong style={{color:C.gold}}>{fmtNGN(t.cyclePayout)}</strong>
                 </div>
               </div>
             ))}
             <div style={{fontSize:11,opacity:.65,lineHeight:1.7,marginTop:12}}>
-              * Each member's 50% Member Benefit allocation accumulates independently throughout their 10-month cycle from their own qualifying contributions. At cycle end, each member receives the amount attributable to their own contributions — not a share of a communal pot. The illustration above shows the collective result when all 10 members contribute faithfully. Individual payouts reflect each member's own qualifying contributions. The other 50% of each contribution merges into the cooperative's shared pool to fund Bill Support, Loans, Operations and Reserve.
+              * Each member's 50% Member Benefit allocation accumulates independently throughout their 10-month cycle from their own qualifying contributions. At cycle end, each member receives the amount attributable to their own contributions — not a share of a communal pot. The illustration above shows the collective result when all 10 members contribute faithfully. Individual payouts reflect each member's own qualifying contributions. The other 50% of each contribution goes into a deeper layer of savings from every contribution — for essential bills and credit facilities — by merging into a massive cooperative shared pool to fund Bill Support, Loans, Operations and Reserve.
             </div>
           </div>
         </div>
@@ -1621,7 +1621,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {icon:"🎯",title:"Four Independent Queues",desc:"One queue per contribution tier. Tier 1 members form Tier 1 cells. Tier 2 members form Tier 2 cells. Tiers never mix. You always contribute alongside members at the same level.",color:C.blue},
               {icon:"⚡",title:"Instant Cell Formation",desc:"The moment 10 activated members are in a tier's queue, a new contribution cell forms automatically — no waiting, no admin intervention, no complicated arrangements.",color:C.green},
               {icon:"🔄",title:"Tier Flexibility",desc:"You can change your contribution tier any time before your cell forms. Switch up or down — you simply move to the back of your new tier's queue.",color:C.amber},
-              {icon:"🛡️",title:"Your Payout is Protected",desc:"If any cell member defaults, the cooperative's Contingency Reserve covers the shortfall immediately. Your cycle payout is guaranteed regardless of fellow members' behaviour.",color:C.burg},
+              {icon:"🛡️",title:"Your Payout is Protected",desc:"If any cell member defaults, the effect affects only that cell member. No cycle payout rotation. No member's contribution dependencies. Your cycle payout is guaranteed regardless of fellow members' behaviour.",color:C.burg},
             ].map(c=>(
               <div key={c.title} className="card" style={{borderLeft:`3px solid ${c.color}`}}>
                 <div style={{fontSize:22,marginBottom:6}}>{c.icon}</div>
@@ -1638,7 +1638,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner">
           <span className="section-tag" style={{background:C.gold+"33",color:C.gold}}>CoFund Credit Score</span>
           <h2 className="section-title">Your Behaviour Builds Your Credit</h2>
-          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — not through who you invite to join the cooperative — even though referral bonuses adds up to your credit score. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
+          <p className="section-sub">Your CoFund Credit Score is earned through disciplined participation and measured behavioural performances — and partly through referral bonuses which also adds up to your credit score. Better behaviour means better loan rates, higher loan limits and access to essential bill support funds. Each contribution tier has its own credit score scale — proportional to your monthly commitment.</p>
 
           {Object.values(TIERS).map(t=>(
             <div key={t.id} style={{marginBottom:32}}>
@@ -2304,7 +2304,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {portalTab==="myCell"&&(
             <div>
               <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:10,padding:14,marginBottom:14,fontSize:13,color:"#166534",lineHeight:1.8}}>
-                <strong>🛡️ No Rotation — Your Cycle Benefit Is Yours</strong><br/>
+                <strong>🛡️ No Rotation — Your Cycle Benefit Is Guaranteed</strong><br/>
                 Your cycle benefit is built from your own qualifying contributions — not another member's. CoFundBills does not operate a rotating savings system. If another member in your cell misses payments, their default cannot reduce or divert the benefit you have accumulated from your own contributions. You harvest what you have personally contributed to your Member Benefit Pool.
               </div>
               {myCells.length===0?(
