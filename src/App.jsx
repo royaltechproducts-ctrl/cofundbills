@@ -2529,12 +2529,41 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <strong>CoFundBills does not disburse cash loans.</strong> Instead, the cooperative purchases your approved productive asset in its registered name and hands it to you for income-generating use. You repay monthly from the income the asset generates. On full repayment, ownership transfers to you.
                 </div>
                 {m.creditScore < mTier.unlockScore ? (
+                  <>
                   <div className="warn-box">
                     <strong>🔒 Co-Fund Asset Loan not yet accessible.</strong><br/>
                     Required: <strong>{mTier.unlockScore.toLocaleString()} pts minimum</strong> · Your score: <strong>{m.creditScore.toLocaleString()} pts</strong><br/>
                     You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock.
                     <div style={{marginTop:6,fontSize:11,color:C.muted}}>3 referrals OR 1 repaid loan closes the gap at every tier.</div>
                   </div>
+
+                  {/* Preview — visible to all members even before qualifying */}
+                  <div style={{marginTop:16}}>
+                    <div style={{fontWeight:700,color:C.navy,fontSize:13,marginBottom:10}}>What you can apply for once you qualify:</div>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                      {[
+                        {icon:"🏍️",label:"Mobility & Transport",desc:"Dispatch motorcycle, Keke NAPEP, Korope/Minibus"},
+                        {icon:"🔧",label:"Work & Trade Equipment",desc:"Sewing, welding, barbering, carpentry tools"},
+                        {icon:"💻",label:"Technology & Education",desc:"Laptop, tablet, printer, work devices"},
+                        {icon:"⚡",label:"Energy & Utilities",desc:"Solar/inverter, batteries, water pump"},
+                        {icon:"🌾",label:"Agriculture",desc:"Farm equipment, irrigation machinery"},
+                        {icon:"🏠",label:"Essential Household",desc:"Selected appliances and approved essentials"},
+                      ].map(cat=>(
+                        <div key={cat.label} style={{background:C.bg,borderRadius:8,padding:10,display:"flex",gap:8,alignItems:"flex-start"}}>
+                          <span style={{fontSize:20,flexShrink:0}}>{cat.icon}</span>
+                          <div>
+                            <div style={{fontWeight:700,color:C.navy,fontSize:11}}>{cat.label}</div>
+                            <div style={{fontSize:10,color:C.muted,lineHeight:1.6}}>{cat.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,fontSize:12,color:C.blue,lineHeight:1.8}}>
+                      <strong>Your tier loan terms:</strong> {mTier.loanRate*100}% simple interest/month · {mTier.loanTerm}-month repayment term · Max asset value {fmtNGN(mTier.loanLimits.excellent)} (Excellent Performance)<br/>
+                      {m.memberType==="founding"&&<span style={{color:C.green,fontWeight:700}}>🎖️ Founding Member: 0% interest across all tiers</span>}
+                    </div>
+                  </div>
+                  </>
                 ):(()=>{
                   const cat = scoreCategory(m.creditScore||0, mTier, m.memberType==="founding");
                   const isFounding = m.memberType==="founding";
