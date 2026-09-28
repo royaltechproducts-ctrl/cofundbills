@@ -2029,8 +2029,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {Object.values(TIERS).map(t=>{
             const assetsByTier = {
-              1:["Dispatch motorcycle","Sewing machine","Barbering equipment","Catering equipment","Basic carpentry tools","Smartphone for business use"],
-              2:["All Tier 1 assets","Keke NAPEP (commercial tricycle)","Welding equipment","Laptop and tablet","Printer and office equipment","Solar/inverter system (small scale)","Water pump","Basic agricultural equipment"],
+              1:["Sewing machine","Barbering equipment","Catering equipment","Basic carpentry tools","Tyre pumping and vulcanizing equipment","Smartphone for business use"],
+              2:["All Tier 1 assets","Dispatch motorcycle","Keke NAPEP (commercial tricycle)","Car wash setup equipment","Coin-operated pool/snooker board (4x7 marble top)","Welding equipment","Laptop and tablet","Printer and office equipment","Solar/inverter system (small scale)","Water pump","Basic agricultural equipment"],
               3:["All Tier 2 assets","Korope / mini-bus","Industrial sewing machine","Professional welding and fabrication equipment","Solar/inverter system (large scale)","Agricultural machinery","Water storage and distribution systems","Technology bundles (laptop + printer + accessories)"],
               4:["All Tier 3 assets","Full commercial bus / larger transport vehicles","Industrial/commercial kitchen equipment","Full agricultural machinery (tractors, harvesters)","Heavy-duty generator","Commercial cold storage equipment","Any other cooperative-approved productive asset"],
             };
