@@ -1603,7 +1603,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div key={t.id} style={{display:"flex",justifyContent:"space-between",alignItems:"center",
                 padding:"10px 0",borderBottom:"1px solid rgba(255,255,255,.1)",flexWrap:"wrap",gap:4}}>
                 <div style={{fontSize:13,opacity:.85}}>
-                  <strong style={{color:C.gold}}>{t.label}:</strong> {fmtNGN(t.benefitPool)} × 10 months × 10 members = <strong style={{color:C.gold}}>{fmtNGN(t.benefitPool*100)} total benefit pool</strong>
+                  <strong style={{color:C.gold}}>{t.label}:</strong> 50% of {fmtNGN(t.monthly)} × 10 months × 10 members = <strong style={{color:C.gold}}>{fmtNGN(t.benefitPool*100)} total benefit pool</strong>
                 </div>
                 <div style={{fontSize:13,opacity:.85}}>
                   100% compliant member benefit → <strong style={{color:C.gold}}>{fmtNGN(t.cyclePayout)}</strong>
