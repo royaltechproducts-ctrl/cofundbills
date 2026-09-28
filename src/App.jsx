@@ -316,6 +316,7 @@ export default function App() {
   const [tick,        setTick]        = useState(0); // forces countdown re-render
   const [installPrompt, setInstallPrompt] = useState(null);
   const [showInstall,   setShowInstall]   = useState(false);
+  const [expandedTier,  setExpandedTier]  = useState(null);
         const [ajoMemberForm, setAjoMemberForm] = useState({name:"", phone:"", email:""});
   const [ajoCode,     setAjoCode]     = useState("");
 
@@ -1649,15 +1650,20 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {Object.values(TIERS).map(t=>(
             <div key={t.id} style={{marginBottom:32}}>
-              <div style={{background:`linear-gradient(135deg,${t.color},${t.color}CC)`,borderRadius:"14px 14px 0 0",
+              <div onClick={()=>setExpandedTier(expandedTier===t.id?null:t.id)}
+                style={{background:`linear-gradient(135deg,${t.color},${t.color}CC)`,
+                borderRadius:expandedTier===t.id?"14px 14px 0 0":"14px",cursor:"pointer",
                 padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
                 <div>
                   <div style={{color:C.white,fontWeight:900,fontSize:16}}>{t.label} Contribution Group</div>
                   <div style={{color:"rgba(255,255,255,.75)",fontSize:12,marginTop:2}}>{t.name} · Cycle payout: {fmtNGN(t.cyclePayout)} · Unlock services at {t.unlockScore.toLocaleString()} pts</div>
                 </div>
-                <div style={{background:"rgba(255,255,255,.15)",borderRadius:20,padding:"6px 14px",color:C.white,fontSize:12,fontWeight:700}}>{fmtNGN(t.monthly)}/month</div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{background:"rgba(255,255,255,.15)",borderRadius:20,padding:"6px 14px",color:C.white,fontSize:12,fontWeight:700}}>{fmtNGN(t.monthly)}/month</div>
+                  <div style={{color:C.white,fontSize:16,fontWeight:900}}>{expandedTier===t.id?"▲":"▼"}</div>
+                </div>
               </div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
+              {expandedTier===t.id&&<div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",
                 border:`1px solid ${t.color}44`,borderTop:"none",borderRadius:"0 0 14px 14px",overflow:"hidden"}}>
                 <div style={{padding:18,borderRight:`1px solid ${t.color}22`,background:C.white}}>
                   <div style={{fontWeight:800,color:t.color,fontSize:12,marginBottom:12,textTransform:"uppercase",letterSpacing:.5}}>How You Earn Points</div>
@@ -1721,7 +1727,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     <span style={{color:C.muted,fontSize:10}}>Support received subject to cooperative funding capacity tier at the material time of your request.</span>
                   </div>
                 </div>
-              </div>
+              </div>}
             </div>
           ))}
         </div>
