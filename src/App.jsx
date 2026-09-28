@@ -1569,20 +1569,47 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {/* Split breakdown */}
           <div className="card" style={{textAlign:"left",marginBottom:20}}>
-            <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:14}}>Every ₦10,000 Contribution — Split 5 Ways</div>
-            <div className="grid-4" style={{gap:10}}>
-              {[
-                {l:"Member Benefit Pool",a:"₦5,000",p:"50%",c:C.blue},
-                {l:"Bill Support Fund",a:"₦2,500",p:"25%",c:C.green},
-                {l:"Loan Fund",a:"₦1,250",p:"12.5%",c:C.purple},
-                {l:"Administration",a:"₦750",p:"7.5%",c:C.amber},
-                {l:"Contingency Reserve",a:"₦500", p:"5%", c:C.burg},
-              ].map(s=>(
-                <div key={s.l} style={{background:C.bg,borderRadius:10,padding:12,borderLeft:`3px solid ${s.c}`}}>
-                  <div style={{fontSize:16,fontWeight:900,color:s.c}}>{s.a} <span style={{fontSize:11}}>{s.p}</span></div>
-                  <div style={{fontSize:11,fontWeight:700,color:C.navy,marginTop:3}}>{s.l}</div>
-                </div>
-              ))}
+            {/* Contribution Split — accordion by tier */}
+            <div style={{marginBottom:20}}>
+              <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:12}}>Contribution Split — All Four Tiers</div>
+              <p style={{fontSize:12,color:C.muted,marginBottom:12,lineHeight:1.7}}>Click any tier to see the exact naira split from every monthly contribution.</p>
+              {Object.values(TIERS).map(t=>{
+                const isOpen = expandedTier===`split-${t.id}`;
+                const splits = [
+                  {l:"Member Benefit Pool",   a:t.benefitPool,      p:"50%",   c:C.blue},
+                  {l:"Bill Support Fund",      a:t.billSupport,      p:"25%",   c:C.green},
+                  {l:"Asset Loan Fund",        a:t.assetLoanFund,    p:"15%",   c:C.purple},
+                  {l:"Administration",         a:t.admin,            p:"7.5%",  c:C.amber},
+                  {l:"Contingency Reserve",    a:t.contingency,      p:"2.5%",  c:C.burg},
+                ];
+                return(
+                  <div key={t.id} style={{marginBottom:8,borderRadius:10,overflow:"hidden",border:`1.5px solid ${t.color}33`}}>
+                    <div onClick={()=>setExpandedTier(isOpen?null:`split-${t.id}`)}
+                      style={{background:`linear-gradient(135deg,${t.color},${t.color}CC)`,
+                      padding:"12px 16px",display:"flex",justifyContent:"space-between",
+                      alignItems:"center",cursor:"pointer",gap:8}}>
+                      <div>
+                        <span style={{color:C.white,fontWeight:800,fontSize:13}}>{t.label} — {fmtNGN(t.monthly)}/month</span>
+                        <span style={{color:"rgba(255,255,255,.7)",fontSize:11,marginLeft:8}}>5-way split</span>
+                      </div>
+                      <span style={{color:C.white,fontWeight:900,fontSize:15}}>{isOpen?"▲":"▼"}</span>
+                    </div>
+                    {isOpen&&(
+                      <div style={{background:C.white,padding:14}}>
+                        <div className="grid-4" style={{gap:8}}>
+                          {splits.map(s=>(
+                            <div key={s.l} style={{background:C.bg,borderRadius:8,padding:10,borderLeft:`3px solid ${s.c}`}}>
+                              <div style={{fontWeight:900,color:s.c,fontSize:16}}>{fmtNGN(s.a)}</div>
+                              <div style={{fontSize:10,color:C.muted,fontWeight:700,marginTop:1}}>{s.p}</div>
+                              <div style={{fontSize:11,color:C.dark,marginTop:3}}>{s.l}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
