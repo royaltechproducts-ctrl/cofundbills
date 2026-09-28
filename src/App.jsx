@@ -2,12 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import emailjs from "@emailjs/browser";
 import { createClient } from "@supabase/supabase-js";
 
-// ── Supabase ──────────────────────────────────────────────────
+// = Supabase =
 const SB_URL = "https://rzivcbhjyxspfcuopjjb.supabase.co";
 const SB_KEY = "sb_publishable_hE_FRwUG_Z40IYclv6SFYA_DNfLWFQU";
 const supabase = createClient(SB_URL, SB_KEY);
 
-// ── EmailJS ───────────────────────────────────────────────────
+// = EmailJS =
 const EJS_SERVICE  = "service_f7cd7ma";
 const EJS_TEMPLATE = "template_prggu9e";
 const EJS_KEY      = "Jc6XKqOSgzxuJEs1G";
@@ -26,9 +26,9 @@ const sendEmail = async ({to_email, to_name, subject, message}) => {
   }
 };
 
-// ── Constants ─────────────────────────────────────────────────
+// = Constants =
 const ADMIN_PASS       = "CoFundBills2026@RoyalTech";
-// ── Contribution Tiers ───────────────────────────────────────
+// = Contribution Tiers =
 const TIERS = {
   1: {
     id:1, label:"Tier 1", monthly:10000, benefitPool:5000, billSupport:2500,
@@ -130,7 +130,7 @@ const CREDIT_PTS = {
   loan_default:   { all:-100 },
 };
 
-// ── Colours ───────────────────────────────────────────────────
+// = Colours =
 const C = {
   navy:"#0D2137", blue:"#1A4F8A", gold:"#C9A84C", green:"#0B6E4F",
   burg:"#7B1D1D", purple:"#7C3AED", amber:"#B45309", white:"#FFFFFF",
@@ -141,12 +141,12 @@ const SEAT = {
   contributing: { bg:C.blue, light:"#E8F0FA", label:"Contributing Member", icon:"💳" },
 };
 
-// ── Helpers ───────────────────────────────────────────────────
+// = Helpers =
 const fmtNGN = n => "₦" + Number(n||0).toLocaleString("en-NG");
 const fmtPts = n => Number(n||0).toLocaleString() + " pts";
 const genCode = pfx => pfx + Math.random().toString(36).substr(2,6).toUpperCase();
 
-// ── Payment schedule helpers ──────────────────────────────────
+// = Payment schedule helpers =
 const getMonthName = (date) => date.toLocaleString("en-NG",{month:"long",year:"numeric"});
 
 const getDeadline = (activationDate, monthNumber) => {
@@ -199,7 +199,7 @@ const mapMember = m => ({
   joinedAt:m.joined_at, activatedAt:m.activated_at,
 });
 
-// ── CSS ───────────────────────────────────────────────────────
+// = CSS =
 const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.dark};min-height:100vh}
@@ -273,7 +273,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.da
 @media(max-width:600px){.hero h1{font-size:24px}.hero-btns,.nav-btns{gap:6px}.btn-lg{padding:11px 22px;font-size:14px}}
 `;
 
-// ═══════════════════════════════════════════════════════════════
+// =
 export default function App() {
   const [view,        setView]        = useState("landing");
   const [ajoView,     setAjoView]     = useState("landing"); // landing | create | portal
@@ -311,7 +311,7 @@ export default function App() {
   const [regForm,     setRegForm]     = useState({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1});
   const [regErrors,   setRegErrors]   = useState({});
   const [loginForm,   setLoginForm]   = useState({email:"",linkCode:""});
-  const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:""});
+  const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:"",assetType:"",assetDesc:"",dealer:"",repayPlan:""});
   const [billForm,    setBillForm]    = useState({billType:"",amount:"",description:""});
   const [tick,        setTick]        = useState(0); // forces countdown re-render
   const [installPrompt, setInstallPrompt] = useState(null);
@@ -326,7 +326,7 @@ export default function App() {
     setTimeout(()=>setToast(null), 4000);
   };
 
-  // ── Data loaders ─────────────────────────────────────────────
+  // = Data loaders =
   const loadMembers = useCallback(async () => {
     const {data} = await supabase.from("cfb_members").select("*");
     const map = {};
@@ -367,7 +367,7 @@ export default function App() {
     loadMembers(); loadCells(); loadFunds(); loadLoans(); loadBillApps();
   }, []);
 
-  // Live countdown tick — updates every 60 seconds
+  // Live countdown tick -- updates every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => setTick(t => t+1), 60000);
     return () => clearInterval(interval);
@@ -388,7 +388,7 @@ export default function App() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  // ── Visitor tracking ─────────────────────────────────────────
+  // = Visitor tracking =
   useEffect(() => {
     supabase.from("cfb_visitors").insert({
       page:view, ref_code:urlRef||null,
@@ -398,7 +398,7 @@ export default function App() {
     }).then(()=>{});
   }, [view]);
 
-  // ── Credit event ──────────────────────────────────────────────
+  // = Credit event =
   const addCredit = async (linkCode, eventType, seatType, cellCode, desc) => {
     const map = CREDIT_PTS[eventType]||{};
     const pts = map[seatType] ?? map.all ?? 0;
@@ -413,8 +413,8 @@ export default function App() {
     }).eq("link_code", linkCode);
   };
 
-  // ── Determine network seats from ref chain ────────────────────
-  // ── Ajo Functions ────────────────────────────────────────────
+  // = Determine network seats from ref chain =
+  // = Ajo Functions =
   const loadAjoGroup = async (groupCode) => {
     const {data:grp} = await supabase.from("cfb_ajo_groups").select("*").eq("group_code",groupCode).single();
     const {data:mems} = await supabase.from("cfb_ajo_members").select("*").eq("group_code",groupCode);
@@ -535,7 +535,7 @@ export default function App() {
     showToast(`Reminders sent to ${sent} members.`);
   };
 
-  // ── Admin Founding Member — Place in Cell ────────────────────
+  // = Admin Founding Member -- Place in Cell =
   const handleAdminActivateFounder = async (code) => {
     // Change from admin to founding, tier 1, activate
     await supabase.from("cfb_members").update({
@@ -593,7 +593,7 @@ export default function App() {
       cell_code:cellCode, description:"Admin founding placement — cell participation",
     });
     await loadCells(); await loadFunds(); await loadMembers();
-    // Check if cell now has 10 — auto-complete formation
+    // Check if cell now has 10 -- auto-complete formation
     const freshCells = await loadCells();
     const freshCell = freshCells.find(c=>c.cell_code===cellCode);
     const contribSeats = (freshCell?.seats||[]).filter(s=>s.seat_type==="contributing");
@@ -604,7 +604,7 @@ export default function App() {
     }
   };
 
-  // ── Loan Recovery Functions ──────────────────────────────────
+  // = Loan Recovery Functions =
   const sendLoanReminder = async (loan, dayNum) => {
     const mem = members[loan.link_code];
     if(!mem?.email) return;
@@ -749,7 +749,7 @@ CoFundBills Cooperative
       status:"settled_by_offset", settled_at:new Date().toISOString(),
       settlement_notes:`Offset against cycle payout from cell ${cellCode}`
     }).eq("id",loanId);
-    // Record credit event — loan repaid
+    // Record credit event -- loan repaid
     await supabase.from("cfb_credit_events").insert({
       link_code:memberCode, event_type:"loan_repaid",
       points:mTier.pts.loanRepaid,
@@ -782,7 +782,7 @@ CoFundBills Cooperative`});
     showToast(`${code} ${suspend?"suspended":"reinstated"}.`);
   };
 
-  // ── Registration ──────────────────────────────────────────────
+  // = Registration =
   const handleRegister = async () => {
     const errs = {};
     ["fullName","email","phone","occupation","address","state",
@@ -828,7 +828,7 @@ CoFundBills Cooperative`});
     setModal({type:"regSuccess", ...saved});
   };
 
-  // ── Login ─────────────────────────────────────────────────────
+  // = Login =
   const handleLogin = async () => {
     if(!loginForm.email.trim()&&!loginForm.linkCode.trim()){
       showToast("Enter your email or link code","error"); return;
@@ -846,7 +846,7 @@ CoFundBills Cooperative`});
     setModal(null);
   };
 
-  // ── Admin activate ────────────────────────────────────────────
+  // = Admin activate =
   const handleActivate = async code => {
     await supabase.from("cfb_members").update({
       status:"active", activated_at:new Date().toISOString()
@@ -879,14 +879,14 @@ CoFundBills Cooperative`});
     showToast(`${allM[code]?.fullName||code} activated.`);
   };
 
-  // ── Make founding member ──────────────────────────────────────
+  // = Make founding member =
   const handleMakeFounding = async code => {
     await supabase.from("cfb_members").update({member_type:"founding"}).eq("link_code",code);
     await loadMembers();
     showToast("Upgraded to Founding Member.");
   };
 
-  // ── Record contribution ───────────────────────────────────────
+  // = Record contribution =
   const handleRecordContrib = async (cellCode, linkCode) => {
     const cell = cells.find(c=>c.cell_code===cellCode);
     if(!cell) return;
@@ -969,7 +969,7 @@ CoFundBills Cooperative`});
     showToast(`Cell ${cellCode} cycle completed! Payouts queued.`);
   };
 
-  // ── Loan application ──────────────────────────────────────────
+  // = Loan application =
   const handleLoanApply = async () => {
     if(!loanForm.amount||!loanForm.billType){ showToast("Fill all required fields","error"); return; }
     const m = member;
@@ -999,7 +999,7 @@ CoFundBills Cooperative`});
     setPortalTab("dashboard");
   };
 
-  // ── Bill support ──────────────────────────────────────────────
+  // = Bill support =
   const handleBillApply = async () => {
     if(!billForm.billType||!billForm.amount){ showToast("Fill all required fields","error"); return; }
     const mTierData = getTier(member.contributionTier||1);
@@ -1023,7 +1023,7 @@ CoFundBills Cooperative`});
     setPortalTab("dashboard");
   };
 
-  // ── AI Chat ───────────────────────────────────────────────────
+  // = AI Chat =
   const CHAT_SYSTEM = `You are the CoFundBills Cooperative Assistant. CoFundBills is a member-owned digital cooperative platform being registered under Lagos State Cooperative Societies Law 2022.
 
 CORE LEGAL PRINCIPLE: No member earns cash from another member's contributions. Network position seats earn cooperative credit points only — never cash.
@@ -1147,7 +1147,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     setChatLoading(false);
   };
 
-  // ── Cell Visual Component ─────────────────────────────────────
+  // = Cell Visual Component =
   const CellVisual = ({cell}) => {
     const seats = cell.seats||[];
     const contribs  = seats.filter(s=>s.seat_type==="contributing");
@@ -1203,7 +1203,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     );
   };
 
-  // ── FAQ data ──────────────────────────────────────────────────
+  // = FAQ data =
   const FAQS = [
     ["What is CoFundBills Cooperative?","CoFundBills is a member-owned digital cooperative platform that organises members into contribution cells. Ten members contribute ₦10,000 monthly for 10 months and share a ₦50,000 cash payout each at cycle end, plus 250 credit points. The cooperative also provides a loan facility, bill support fund and a behaviour-based credit scoring system."],
     ["What is a Contribution Cell?","A contribution cell is a group of 10 contributing members who each pay ₦10,000/month for 10 months, Cells form automatically when 10 activated members are in the same tier's queue. No network seats. No chains. First activated, first placed."],
@@ -1221,7 +1221,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["How do I activate my membership?","After registering, make your first monthly contribution of ₦10,000 to: Royal Tech Partnership & Investment Limited, Zenith Bank, Account 1016621205. Use your link code as reference. WhatsApp +234 909 999 4816. Admin activates your account and you are automatically placed in a forming cell."],
   ];
 
-  // ── T&C sections ──────────────────────────────────────────────
+  // = T&C sections =
   const TCS = [
     ["1. Membership","Membership is open to individuals who register through the platform and activate by paying their first monthly contribution at their chosen tier. CoFundBills offers four contribution tiers: Tier 1 (₦10,000/month), Tier 2 (₦50,000/month), Tier 3 (₦100,000/month) and Tier 4 (₦200,000/month). Members may change their tier any time before their contribution cell activates. Membership is personal and non-transferable."],
     ["2. Contribution Obligation","Contributing members must pay their tier's monthly contribution for the full 10-month cycle. Tier 1: ₦10,000/month. Tier 2: ₦50,000/month. Tier 3: ₦100,000/month. Tier 4: ₦200,000/month. The first payment activates membership and joins the tier queue. No further payments are collected until the contribution cell activates. Thereafter, contributions are due by the last day of every calendar month. Failure to contribute on time results in a credit score deduction and suspends cycle payout eligibility for the defaulting member only — until arrears are cleared."],
@@ -1231,9 +1231,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["5b. Founding Member Benefits","Founding Members enjoy two exclusive financial privileges: (1) Zero interest rate on all approved Co-Fund Loans — regardless of credit score category or contribution tier. (2) Exclusive quarterly share of the cooperative's loan interest revenue — 23 of every 25 quarterly slots distributed equally among all active Founding Members, and 2 slots to the cooperative's Admin. Both benefits are permanent and in addition to regular cycle payouts."],
     ["6. Referral Bonuses","Members who invite other members earn a Referral Bonus credit point when their invited member activates their membership. Points are earned at the lower of the two tiers between the inviting member and the invited member — a member cannot earn above their own contribution station. Tier 1: +20 pts per activated invitee. Tier 2: +100 pts per activated invitee. Tier 3: +200 pts per activated invitee. Tier 4: +400 pts per activated invitee. No member receives cash or guaranteed financial return for introducing another member to the cooperative."],
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
-    ["8. Co-Fund Loan, Repayment Schedule & Recovery","Co-Fund Loans unlock at minimum credit score thresholds per tier: Tier 1 — 400 pts. Tier 2 — 2,000 pts. Tier 3 — 4,000 pts. Tier 4 — 8,000 pts. Interest rates and repayment terms: Tier 1 — 4%/month, 3-month term. Tier 2 — 3%/month, 6-month term. Tier 3 — 2.5%/month, 6-month term. Tier 4 — 2%/month, 8-month term. Founding Members — 0% across all tiers. Repayments are equal monthly instalments due by the last day of every month. A 7-day grace period applies. Default is declared on Day 8. On default: credit score deduction fires, bill support access is suspended and the member's Next of Kin is notified. The cooperative reserves the right to offset any outstanding loan balance against the member's cycle payout at cell completion. Sustained non-payment may result in loan restructuring, membership suspension and referral to Lagos State Cooperative dispute resolution mechanisms. Loans are subject to available fund liquidity and cooperative credit policy."],
     ["9. Bill Support & Support Priority","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier. Eligibility to apply does not constitute an automatic entitlement. Actual approval depends on cooperative funding capacity, verification and the member's Support Priority position. Receiving bill support does not affect the member's Credit Score. After receiving support, the member's Support Priority is adjusted: Highest Priority — members who have never received Essential Bill Support Funds. Next in Priority — members who received support more than 10 months ago. Least on the Priority list — members who received support within the last 10 months. Bill support is limited to once per 10-month cycle. Maximum claim amounts depend on the cooperative's live funding capacity tier at the time of application."],
-    ["9b. Asset Acquisition Request Support","Asset Acquisition Request Support is a CoFundBills cooperative benefit through which an eligible member may receive support toward the acquisition of an approved essential or productive asset. It is not a loan and does not create a repayment obligation to CoFundBills. Eligibility is restricted to Tier 2, Tier 3 and Tier 4 members who have achieved the Standard Performance credit score category or above. Asset Acquisition Support and Essential Bill Support are mutually exclusive — a member may access one or the other per 10-month cycle, never both. The support amount is determined by the member's contribution tier, credit score category and the cooperative's live Bill Support Fund capacity at the time of application. Eligibility to apply does not constitute automatic entitlement. Approval depends on cooperative funding capacity, the nature of the asset, intended use verification and administrative discretion. Where approved, CoFundBills pays the dealer or vendor directly — no cash is released to the member. The member is required to provide asset documentation for inclusion in the cooperative's asset register. Insurance is at the member's discretion. The same Support Priority system that governs Bill Support applies to Asset Acquisition Support: Highest Priority — never received support; Next in Priority — received support more than 10 months ago; Least on Priority — received support within the last 10 months."],
+
+    ["8. Co-Fund Asset Loan -- Structure, Repayment and Recovery","CoFundBills operates an asset-based cooperative loan model. The cooperative does not disburse cash. Upon approval, CoFundBills purchases the approved productive asset in the cooperative registered name and hands it to the qualifying member for income-generating use. The member repays the asset value plus simple interest in equal monthly instalments over the approved term. On full repayment, legal ownership transfers from the cooperative to the member. Assets valued at 1000000 or above are formally registered in the cooperative name before handover. Assets below 1000000 are recorded in the cooperative asset register with a signed member agreement. Eligible assets include Mobility and Transport, Work and Trade Equipment, Technology and Education, Energy and Utilities, Agriculture, and Essential Household assets. Tier loan terms: Tier 1 at 4 percent simple interest per month over 3 months, Tier 2 at 3 percent over 6 months, Tier 3 at 2.5 percent over 6 months, Tier 4 at 2 percent over 8 months. Founding Members pay zero interest across all tiers. Monthly instalments are due by the last day of every month. A 7-day grace period applies. Default triggers a credit score deduction and the cooperative right to recall the asset. The cooperative may redeploy or sell a recalled asset to recover the outstanding balance."],    ["9b. Asset Acquisition Request Support","Asset Acquisition Request Support is a CoFundBills cooperative benefit through which an eligible member may receive support toward the acquisition of an approved essential or productive asset. It is not a loan and does not create a repayment obligation to CoFundBills. Eligibility is restricted to Tier 2, Tier 3 and Tier 4 members who have achieved the Standard Performance credit score category or above. Asset Acquisition Support and Essential Bill Support are mutually exclusive — a member may access one or the other per 10-month cycle, never both. The support amount is determined by the member's contribution tier, credit score category and the cooperative's live Bill Support Fund capacity at the time of application. Eligibility to apply does not constitute automatic entitlement. Approval depends on cooperative funding capacity, the nature of the asset, intended use verification and administrative discretion. Where approved, CoFundBills pays the dealer or vendor directly — no cash is released to the member. The member is required to provide asset documentation for inclusion in the cooperative's asset register. Insurance is at the member's discretion. The same Support Priority system that governs Bill Support applies to Asset Acquisition Support: Highest Priority — never received support; Next in Priority — received support more than 10 months ago; Least on Priority — received support within the last 10 months."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights & Escalating Default Penalty","Failure to contribute by the last day of any month triggers an immediate credit score deduction (Tier 1: −30 pts · Tier 2: −150 pts · Tier 3: −300 pts · Tier 4: −600 pts) and a 14-day extension to clear the arrears. Should the default persist at the end of the 14-day extension, the same deduction repeats and a further 14-day extension is granted. Should a new monthly contribution deadline fall due while a prior default remains unpaid, the deduction rate doubles (Tier 1: −60 pts per 14-day cycle, scaling with tier) for every 14-day cycle thereafter. This escalating pattern continues until the member clears the arrears or their credit score reaches −400 pts or below. A credit score of −400 pts or below constitutes grounds for expulsion from the cooperative — the member's active cell participation is terminated and all accumulated contributions from that cycle are forfeited. The member's cycle benefit is never dependent on other members' contributions; the penalty framework applies solely to the defaulting member."],
     ["12. No Guaranteed Returns","CoFundBills does not guarantee any return on contributions. Cycle payouts depend on the successful completion of a full 10-month contribution cycle by the member. The cooperative makes no investment promises, yield projections or fixed return commitments of any kind."],
@@ -1241,8 +1241,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["14. Import Ajo — Disclaimer","The Import Ajo service is a free transparency and reminder tool provided by CoFundBills Cooperative to traditional thrift contribution groups (Ajo, Esusu and similar circles) at no charge. CoFundBills Cooperative is not a party to any Import Ajo group's contribution arrangements. All contributions within an imported Ajo group are made directly between group members into the group's own nominated bank account. CoFundBills Cooperative does not collect, hold, manage, guarantee or bear any liability for funds contributed within any Import Ajo group. The platform provides administrative tools only — reminders, payment tracking and proof of payment uploads. Any disputes, defaults or losses arising within an Import Ajo group are strictly between the group's members and coordinator. CoFundBills Cooperative accepts no responsibility whatsoever for the conduct, solvency or integrity of any Import Ajo group or its members."],
   ];
 
-  // ══════════════════════════════════════════════════════════════
-  // ── Landing Page ──────────────────────────────────────────────
+  // =
+  // = Landing Page =
   const AjoApp = () => (
     <div style={{minHeight:"100vh",background:C.bg}}>
       <div style={{background:`linear-gradient(90deg,${C.navy},${C.blue})`,padding:"14px 24px",
@@ -2186,8 +2186,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
   );
 
 
-  // ══════════════════════════════════════════════════════════════
-  // ── Member Portal ─────────────────────────────────────────────
+  // =
+  // = Member Portal =
   const currentMember = member ? (members[member.linkCode]||member) : null;
 
   const Portal = () => {
@@ -2523,111 +2523,166 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {/* Loan Tab */}
           {portalTab==="loan"&&(
             <div>
-              {m.creditScore < mTier.unlockScore ? (
-                <div className="warn-box">
-                  <strong>🔒 Co-Fund Loan is not yet accessible.</strong><br/>
-                  Required credit score: <strong>{mTier.unlockScore.toLocaleString()} pts minimum ({mTier.label})</strong><br/>
-                  Your current score: <strong>{m.creditScore.toLocaleString()} pts</strong> — {cat.label}<br/>
-                  You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock loan access.<br/>
-                  {m.memberType==="founding"&&<div style={{color:C.green,fontWeight:700,marginTop:6,fontSize:12}}>✅ Zero interest rate on approved loans — Founding Member benefit.</div>}
-                  <div style={{marginTop:8,fontSize:11,lineHeight:1.7}}>
-                    Build your score through consistent contributions (+{mTier.pts.contribution} pts/month), completing cycles (+{mTier.pts.cycleContrib.toLocaleString()} pts) and referral credit bonuses (+{mTier.pts.referralActivation} pts per activated invitee).
-                  </div>
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:14}}>🏍️ Co-Fund Asset Loan</div>
+                <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:14,fontSize:12,color:C.blue,lineHeight:1.8}}>
+                  <strong>CoFundBills does not disburse cash loans.</strong> Instead, the cooperative purchases your approved productive asset in its registered name and hands it to you for income-generating use. You repay monthly from the income the asset generates. On full repayment, ownership transfers to you.
                 </div>
-              ):(
-                <div>
-                  <div className="card" style={{marginBottom:14}}>
-                    <div style={{fontWeight:800,color:C.navy,fontSize:14,marginBottom:4}}>Apply for a Co-Fund Loan</div>
-                    <div style={{fontSize:12,color:C.muted,marginBottom:12}}>Based on your CoFund Credit Score of {m.creditScore.toLocaleString()} pts ({cat.label}) · {mTier.label}</div>
-                    {m.memberType==="founding"&&(
-                      <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:8,padding:10,marginBottom:12,fontSize:12,color:"#166534",fontWeight:700}}>
-                        🎖️ As a Founding Member, you get loans at zero interest, and benefit from exclusive quarterly share of loan interest revenue.
-                      </div>
-                    )}
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:16}}>
-                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
-                        <div style={{fontWeight:900,color:cat.color,fontSize:18}}>{cat.rate===0?"0%":cat.rate+"%"}/mo</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Interest Rate</div>
-                      </div>
-                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
-                        <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{fmtNGN(cat.limit)}</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Max Loan</div>
-                      </div>
-                      <div style={{textAlign:"center",padding:10,background:C.bg,borderRadius:8}}>
-                        <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{mTier.loanTerm} months</div>
-                        <div style={{fontSize:10,color:C.muted,marginTop:2}}>Repayment Term</div>
-                      </div>
-                    </div>
-                    {/* Repayment schedule preview */}
-                    {loanForm.amount&&Number(loanForm.amount)>0&&(()=>{
-                      const principal = Number(loanForm.amount);
-                      const term = mTier.loanTerm;
-                      const rate = m.memberType==="founding" ? 0 : mTier.loanRate;
-                      const totalRepayable = principal * (1 + rate * term);
-                      const monthlyPayment = totalRepayable / term;
-                      const today = new Date();
-                      return(
-                        <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14,marginBottom:14}}>
-                          <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:10}}>📅 Repayment Schedule</div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:8,flexWrap:"wrap",gap:4}}>
-                            <span style={{color:C.muted}}>Total repayable:</span>
-                            <strong style={{color:C.navy}}>{fmtNGN(totalRepayable)}</strong>
+                {m.creditScore < mTier.unlockScore ? (
+                  <div className="warn-box">
+                    <strong>🔒 Co-Fund Asset Loan not yet accessible.</strong><br/>
+                    Required: <strong>{mTier.unlockScore.toLocaleString()} pts minimum</strong> · Your score: <strong>{m.creditScore.toLocaleString()} pts</strong><br/>
+                    You need <strong>{Math.max(0,mTier.unlockScore-m.creditScore).toLocaleString()} more points</strong> to unlock.
+                    <div style={{marginTop:6,fontSize:11,color:C.muted}}>3 referrals OR 1 repaid loan closes the gap at every tier.</div>
+                  </div>
+                ):(()=>{
+                  const cat = scoreCategory(m.creditScore||0, mTier, m.memberType==="founding");
+                  const isFounding = m.memberType==="founding";
+                  const principal = Number(loanForm.amount||0);
+                  const totalRepayable = principal*(1+(isFounding?0:mTier.loanRate)*mTier.loanTerm);
+                  const monthlyPayment = mTier.loanTerm>0?totalRepayable/mTier.loanTerm:0;
+                  return(
+                    <div>
+                      {/* Score category */}
+                      <div style={{background:cat.color+"22",border:`1.5px solid ${cat.color}`,borderRadius:10,padding:14,marginBottom:14}}>
+                        <div style={{fontWeight:800,color:cat.color,fontSize:13,marginBottom:10}}>{cat.label}</div>
+                        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
+                          <div style={{textAlign:"center",padding:10,background:C.white,borderRadius:8}}>
+                            <div style={{fontWeight:900,color:cat.color,fontSize:18}}>{cat.rate===0?"0%":cat.rate+"%"}/mo</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Simple Interest Rate</div>
                           </div>
-                          <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:10,flexWrap:"wrap",gap:4}}>
-                            <span style={{color:C.muted}}>Monthly instalment:</span>
-                            <strong style={{color:C.navy}}>{fmtNGN(monthlyPayment)}</strong>
+                          <div style={{textAlign:"center",padding:10,background:C.white,borderRadius:8}}>
+                            <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{fmtNGN(cat.limit)}</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Max Asset Value</div>
                           </div>
-                          <div style={{display:"flex",flexDirection:"column",gap:4}}>
-                            {Array.from({length:term},(_,i)=>{
-                              const dueDate = new Date(today.getFullYear(), today.getMonth()+i+1, 0);
-                              return(
-                                <div key={i} style={{display:"flex",justifyContent:"space-between",
-                                  padding:"5px 8px",background:C.white,borderRadius:6,fontSize:11}}>
-                                  <span style={{color:C.muted}}>Month {i+1} — Due {fmtDate(dueDate)}</span>
-                                  <strong style={{color:C.navy}}>{fmtNGN(monthlyPayment)}</strong>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div style={{marginTop:8,fontSize:10,color:C.muted,lineHeight:1.6}}>
-                            ⚠️ Grace period: 7 days after each due date. Missing a payment beyond the grace period triggers a {Math.abs(mTier.pts.missed).toLocaleString()} pt credit score deduction and default declaration.
+                          <div style={{textAlign:"center",padding:10,background:C.white,borderRadius:8}}>
+                            <div style={{fontWeight:900,color:C.navy,fontSize:18}}>{mTier.loanTerm} months</div>
+                            <div style={{fontSize:10,color:C.muted,marginTop:2}}>Repayment Term</div>
                           </div>
                         </div>
-                      );
-                    })()}
-                    <div className="field">
-                      <label>Loan Amount (₦)</label>
-                      <input type="number" placeholder={`Up to ${fmtNGN(cat.limit)}`} value={loanForm.amount} onChange={e=>setLoanForm({...loanForm,amount:e.target.value})}/>
-                    </div>
-                    <div className="field">
-                      <label>Purpose / Bill Type</label>
-                      <select value={loanForm.billType} onChange={e=>setLoanForm({...loanForm,billType:e.target.value})}>
-                        <option value="">Select purpose</option>
-                        {["House Rent","School Fees","Medical Bills","Electricity","Water Bills","Household Essentials","Business Capital","Other"].map(o=><option key={o}>{o}</option>)}
-                      </select>
-                    </div>
-                    <div className="field">
-                      <label>Additional Details (optional)</label>
-                      <input type="text" placeholder="Any additional context" value={loanForm.purpose} onChange={e=>setLoanForm({...loanForm,purpose:e.target.value})}/>
-                    </div>
-                    <button className="btn btn-blue" style={{width:"100%"}} onClick={handleLoanApply}>Submit Loan Application</button>
-                  </div>
-                  {myLoans.length>0&&(
-                    <div className="table-wrap">
-                      <div className="table-head">Your Loan History</div>
-                      {myLoans.map(l=>(
-                        <div key={l.id} className="table-row" style={{display:"flex",justifyContent:"space-between",gap:8,flexWrap:"wrap"}}>
-                          <div><div style={{fontWeight:700}}>{fmtNGN(l.amount)}</div><div style={{fontSize:11,color:C.muted}}>{l.bill_type} · {l.credit_category}</div></div>
-                          <div style={{textAlign:"right"}}>
-                            <span className="pill" style={{background:l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":"#FEE2E2",color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":C.error}}>{l.status}</span>
-                            <div style={{fontSize:11,color:C.muted,marginTop:2}}>{cat.rate===0?"0%":l.interest_rate+"%"}/mo · {fmtNGN(l.total_repayable)} total</div>
-                          </div>
+                        {isFounding&&<div style={{marginTop:8,fontSize:11,color:C.green,fontWeight:700}}>🎖️ Zero Interest Rate — Founding Member Benefit</div>}
+                      </div>
+
+                      {/* Application form */}
+                      <div style={{fontWeight:700,color:C.navy,fontSize:13,marginBottom:10}}>Apply for Co-Fund Asset Loan</div>
+                      <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
+                        <select className="input" value={loanForm.assetType||""} onChange={e=>setLoanForm(f=>({...f,assetType:e.target.value}))}>
+                          <option value="">Select asset category</option>
+                          <option value="Mobility - Dispatch Motorcycle">🏍️ Mobility - Dispatch Motorcycle</option>
+                          <option value="Mobility - Keke NAPEP">🛺 Mobility - Keke NAPEP</option>
+                          <option value="Mobility - Korope / Minibus">🚌 Mobility - Korope / Minibus</option>
+                          <option value="Work and Trade Equipment">🔧 Work and Trade Equipment</option>
+                          <option value="Technology and Education">💻 Technology and Education</option>
+                          <option value="Energy and Utilities">⚡ Energy and Utilities</option>
+                          <option value="Agriculture">🌾 Agriculture</option>
+                          <option value="Essential Household Asset">🏠 Essential Household Asset</option>
+                        </select>
+                        <input className="input" placeholder="Asset description (make, model, specification)" value={loanForm.assetDesc||""} onChange={e=>setLoanForm(f=>({...f,assetDesc:e.target.value}))}/>
+                        <input className="input" placeholder="Dealer name and location" value={loanForm.dealer||""} onChange={e=>setLoanForm(f=>({...f,dealer:e.target.value}))}/>
+                        <input className="input" type="number" placeholder={`Asset value / loan amount (max ${fmtNGN(cat.limit)})`} value={loanForm.amount||""} onChange={e=>setLoanForm(f=>({...f,amount:e.target.value}))}/>
+                        <input className="input" placeholder="How will this asset generate your repayment income?" value={loanForm.repayPlan||""} onChange={e=>setLoanForm(f=>({...f,repayPlan:e.target.value}))}/>
+
+                        {/* Live repayment schedule */}
+                        {loanForm.amount&&Number(loanForm.amount)>0&&Number(loanForm.amount)<=cat.limit&&(()=>{
+                          const p=Number(loanForm.amount);
+                          const term=mTier.loanTerm;
+                          const rate=isFounding?0:mTier.loanRate;
+                          const total=p*(1+rate*term);
+                          const monthly=total/term;
+                          const today=new Date();
+                          return(
+                            <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:14}}>
+                              <div style={{fontWeight:800,color:C.blue,fontSize:12,marginBottom:8}}>📅 Repayment Schedule — Asset value {fmtNGN(p)}</div>
+                              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:4,flexWrap:"wrap",gap:4}}>
+                                <span style={{color:C.muted}}>Total repayable:</span><strong>{fmtNGN(total)}</strong>
+                              </div>
+                              <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:10,flexWrap:"wrap",gap:4}}>
+                                <span style={{color:C.muted}}>Monthly instalment:</span><strong>{fmtNGN(monthly)}</strong>
+                              </div>
+                              <div style={{display:"flex",flexDirection:"column",gap:4}}>
+                                {Array.from({length:term},(_,i)=>{
+                                  const due=new Date(today.getFullYear(),today.getMonth()+i+1,0);
+                                  return(
+                                    <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"5px 8px",background:C.white,borderRadius:6,fontSize:11}}>
+                                      <span style={{color:C.muted}}>Month {i+1} — Due {fmtDate(due)}</span>
+                                      <strong>{fmtNGN(monthly)}</strong>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div style={{marginTop:8,fontSize:10,color:C.muted,lineHeight:1.6}}>
+                                {p>=1000000
+                                  ?"⚠️ Asset value >= N1,000,000 — formal registration in CoFundBills cooperative name required before handover."
+                                  :"Asset value below N1,000,000 — cooperative asset register entry and signed member agreement required."}
+                              </div>
+                              <div style={{marginTop:4,fontSize:10,color:C.green,lineHeight:1.6}}>
+                                Ownership transfers to you on full repayment. 7-day grace period per instalment. Default triggers cooperative asset recall.
+                              </div>
+                            </div>
+                          );
+                        })()}
+
+                        <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:10,fontSize:11,color:"#92400E",lineHeight:1.7}}>
+                          ⚠️ <strong>Important:</strong> CoFundBills purchases the asset in the cooperative registered name and pays the dealer directly. No cash is released to the member. Ownership transfers only on full repayment. Default triggers asset recall by the cooperative.
                         </div>
-                      ))}
+
+                        <button className="btn btn-green" onClick={async()=>{
+                          if(!loanForm.assetType||!loanForm.amount||!loanForm.assetDesc||!loanForm.dealer||!loanForm.repayPlan){
+                            showToast("Please complete all fields","error"); return;
+                          }
+                          const amt=Number(loanForm.amount);
+                          if(amt>cat.limit){showToast(`Max asset value: ${fmtNGN(cat.limit)}`,"error");return;}
+                          const total=amt*(1+(isFounding?0:mTier.loanRate)*mTier.loanTerm);
+                          await supabase.from("cfb_loans").insert({
+                            link_code:m.linkCode, amount:amt,
+                            bill_type:loanForm.assetType,
+                            description:loanForm.assetDesc,
+                            dealer:loanForm.dealer,
+                            repayment_plan:loanForm.repayPlan,
+                            interest_rate:isFounding?0:mTier.loanRate*100,
+                            months_term:mTier.loanTerm,
+                            total_repayable:total,
+                            credit_category:cat.label,
+                            status:"pending",
+                            loan_type:"asset_based",
+                            registration_required:amt>=1000000,
+                          });
+                          setLoanForm({});
+                          await loadLoans();
+                          showToast("Co-Fund Asset Loan application submitted. Admin will review within 24 hours.");
+                        }}>Submit Asset Loan Application</button>
+                      </div>
+
+                      {/* Existing loans */}
+                      {loans.filter(l=>l.link_code===m.linkCode).length>0&&(
+                        <div className="table-wrap">
+                          <div className="table-head">My Asset Loans</div>
+                          {loans.filter(l=>l.link_code===m.linkCode).map(l=>{
+                            const term=l.months_term||mTier.loanTerm;
+                            const monthly=Number(l.total_repayable)/term;
+                            return(
+                              <div key={l.id} className="table-row">
+                                <div style={{fontWeight:700,color:C.navy}}>{l.bill_type||"Asset Loan"}</div>
+                                <div style={{fontSize:12,color:C.muted}}>{l.description||""}</div>
+                                <div style={{fontSize:12,color:C.muted}}>Asset value: {fmtNGN(l.amount)} · Total repayable: {fmtNGN(l.total_repayable)}</div>
+                                <div style={{fontSize:12,color:C.muted}}>Monthly: {fmtNGN(monthly)} · {term} months · {l.interest_rate}%/mo simple interest</div>
+                                {l.registration_required&&<div style={{fontSize:11,color:C.amber,marginTop:2}}>⚠️ Formal cooperative registration required before handover</div>}
+                                <span className="pill" style={{background:
+                                  l.status==="approved"?"#BBF7D0":l.status==="pending"?"#FEF3C7":
+                                  l.status==="defaulted"?"#FEE2E2":"#F3F4F6",
+                                  color:l.status==="approved"?"#166534":l.status==="pending"?"#92400E":
+                                  l.status==="defaulted"?C.error:C.muted}}>
+                                  {l.status==="approved"?"Active — repaying":l.status}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  )}
-                </div>
-              )}
+                  );
+                })()}
+              </div>
             </div>
           )}
 
@@ -2782,9 +2837,9 @@ Answer warmly, concisely and accurately. Never invent information.`;
                             <div style={{display:"flex",flexDirection:"column",gap:8}}>
                               <select className="input" value={billForm.billType||""} onChange={e=>setBillForm(f=>({...f,billType:e.target.value}))}>
                                 <option value="">Select asset category</option>
-                                <option value="Mobility — Dispatch Motorcycle">🏍️ Mobility — Dispatch Motorcycle</option>
-                                <option value="Mobility — Keke NAPEP">🛺 Mobility — Keke NAPEP</option>
-                                <option value="Mobility — Korope / Minibus">🚌 Mobility — Korope / Minibus</option>
+                                <option value="Mobility — Dispatch Motorcycle">🏍️ Mobility - Dispatch Motorcycle</option>
+                                <option value="Mobility — Keke NAPEP">🛺 Mobility - Keke NAPEP</option>
+                                <option value="Mobility — Korope / Minibus">🚌 Mobility - Korope / Minibus</option>
                                 <option value="Work & Trade Equipment">🔧 Work & Trade Equipment</option>
                                 <option value="Technology & Education">💻 Technology & Education</option>
                                 <option value="Energy & Utilities">⚡ Energy & Utilities</option>
@@ -2938,8 +2993,8 @@ ${inviteLink}`;
     );
   };
 
-  // ══════════════════════════════════════════════════════════════
-  // ── Admin Dashboard ───────────────────────────────────────────
+  // =
+  // = Admin Dashboard =
   const Admin = () => {
     const allMembersList = Object.values(members);
     const pendingMembers = allMembersList.filter(m=>m.status==="pending");
@@ -3320,7 +3375,7 @@ CoFundBills Cooperative
                               approved_at:new Date().toISOString(),
                               priority_reset_at:new Date().toISOString(),
                             }).eq("id",b.id);
-                            // No credit score deduction — Support Priority system handles queue position
+                            // No credit score deduction -- Support Priority system handles queue position
                             await loadBillApps();await loadMembers();
                             showToast("Bill support approved. Member's Support Priority reset.");
                           }}>✅ Approve</button>
@@ -3413,7 +3468,7 @@ CoFundBills Cooperative
     );
   };
 
-  // ── Referral Bonus ──────────────────────────────────────────────
+  // = Referral Bonus =
   const awardReferralBonus = async (inviterCode, inviterTier, eventType, inviteeTier=1) => {
     if(!inviterCode) return;
     const inviter = members[inviterCode];
@@ -3431,7 +3486,7 @@ CoFundBills Cooperative
     }).eq("link_code",inviterCode);
   };
 
-  // ── Try to form a cell ──────────────────────────────────────────
+  // = Try to form a cell =
   const tryFormCell = async (allMembers) => {
     for(const tierNum of [1,2,3,4]) {
       const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
@@ -3498,7 +3553,7 @@ CoFundBills Cooperative`,
     }
   };
 
-  // ── Modal renderer ────────────────────────────────────────────
+  // = Modal renderer =
   const renderModal = () => {
     if(!modal) return null;
     const close = () => setModal(null);
@@ -3641,7 +3696,7 @@ CoFundBills Cooperative`,
     return null;
   };
 
-  // ── FAQ & T&C Overlays ────────────────────────────────────────
+  // = FAQ & T&C Overlays =
   const FaqOverlay = () => !faqOpen ? null : (
     <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setFaqOpen(false);}}>
       <div className="modal">
@@ -3676,7 +3731,7 @@ CoFundBills Cooperative`,
     </div>
   );
 
-  // ── AI Chat Widget ────────────────────────────────────────────
+  // = AI Chat Widget =
   const ChatWidget = () => (
     <div style={{position:"fixed",bottom:80,right:20,zIndex:600}}>
       {chatOpen&&(
@@ -3715,7 +3770,7 @@ CoFundBills Cooperative`,
     </div>
   );
 
-  // ── Main App Return ───────────────────────────────────────────
+  // = Main App Return =
   return (
     <>
       <style>{CSS}</style>
