@@ -48,7 +48,7 @@ const TIERS = {
     loanFund:0, assetLoanFund:7500, admin:3750, contingency:1250, cyclePayout:250000,
     unlockScore:2000, billScoreMin:5000, excellentScore:5000, strongScore:3500, standardScore:2500,
     loanLimits:{excellent:3000000, strong:1800000, standard:900000, minimal:300000},
-    loanTerm:6, loanRate:0.03,
+    loanTerm:6, loanTermMin:6, loanTermMax:10, loanRate:0.03, loanRates:[{maxTerm:6,rate:0.03},{maxTerm:10,rate:0.025}], assetBased:true,
     billCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
               {min:25000000,max:50000000,cap:1750000,tier:"Gold"},{min:50000000,max:Infinity,cap:2500000,tier:"Platinum"}],
     assetCaps:[{min:0,max:10000000,cap:500000,tier:"Bronze"},{min:10000000,max:25000000,cap:1250000,tier:"Silver"},
@@ -63,7 +63,7 @@ const TIERS = {
     loanFund:0, assetLoanFund:15000, admin:7500, contingency:2500, cyclePayout:500000,
     unlockScore:4000, billScoreMin:10000, excellentScore:10000, strongScore:7000, standardScore:5000,
     loanLimits:{excellent:6000000, strong:3600000, standard:1800000, minimal:600000},
-    loanTerm:6, loanRate:0.025,
+    loanTerm:9, loanTermMin:9, loanTermMax:20, loanRate:0.025, loanRates:[{maxTerm:9,rate:0.025},{maxTerm:12,rate:0.02},{maxTerm:20,rate:0.015}], assetBased:true,
     billCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
               {min:50000000,max:100000000,cap:3500000,tier:"Gold"},{min:100000000,max:Infinity,cap:5000000,tier:"Platinum"}],
     assetCaps:[{min:0,max:20000000,cap:1000000,tier:"Bronze"},{min:20000000,max:50000000,cap:2500000,tier:"Silver"},
@@ -78,7 +78,7 @@ const TIERS = {
     loanFund:0, assetLoanFund:30000, admin:15000, contingency:5000, cyclePayout:1000000,
     unlockScore:8000, billScoreMin:20000, excellentScore:20000, strongScore:14000, standardScore:10000,
     loanLimits:{excellent:12000000, strong:7200000, standard:3600000, minimal:1200000},
-    loanTerm:8, loanRate:0.02,
+    loanTerm:10, loanTermMin:10, loanTermMax:30, loanRate:0.02, loanRates:[{maxTerm:10,rate:0.02},{maxTerm:20,rate:0.015},{maxTerm:30,rate:0.01}], assetBased:true,
     billCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
               {min:100000000,max:200000000,cap:7000000,tier:"Gold"},{min:200000000,max:Infinity,cap:10000000,tier:"Platinum"}],
     assetCaps:[{min:0,max:40000000,cap:2000000,tier:"Bronze"},{min:40000000,max:100000000,cap:5000000,tier:"Silver"},
@@ -91,6 +91,11 @@ const TIERS = {
 };
 
 const getTier = (tierNum) => TIERS[tierNum] || TIERS[1];
+const getAssetLoanRate = (tier, termMonths) => {
+  if(!tier.loanRates) return tier.loanRate;
+  const bracket = tier.loanRates.find(r => termMonths <= r.maxTerm);
+  return bracket ? bracket.rate : tier.loanRates[tier.loanRates.length-1].rate;
+};
 const getEffectiveTier = (memberTierNum, cellTierNum) => Math.min(memberTierNum||1, cellTierNum||1);
 
 // Legacy constants (Tier 1 defaults)
@@ -1091,10 +1096,10 @@ Services unlock at minimum credit score per tier:
 - Tier 4: 8,000 pts minimum to unlock
 
 Once unlocked, all members in the same tier get the SAME interest rate (rate is tier-based, not score-based — score only determines the loan LIMIT):
-- Tier 1: 4% simple interest per month calculated on original principal, 3-month term. Limits: Excellent NGN600k, Strong NGN360k, Standard NGN180k, Minimal NGN60k
-- Tier 2: 3% simple interest per month calculated on original principal, 6-month term. Limits: Excellent NGN3M, Strong NGN1.8M, Standard NGN900k, Minimal NGN300k
-- Tier 3: 2.5% simple interest per month calculated on original principal, 6-month term. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
-- Tier 4: 2% simple interest per month calculated on original principal, 8-month term. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
+- Tier 1: 4%/month, 3-month term (fixed). Limits: Excellent NGN600k, Strong NGN360k, Standard NGN180k, Minimal NGN60k
+- Tier 2: 3%/month (6mo) or 2.5%/month (7-10mo), term range 6-10 months (member selects). Limits: Excellent NGN3M, Strong NGN1.8M, Standard NGN900k, Minimal NGN300k
+- Tier 3: 2.5%/month (9mo), 2%/month (10-12mo), 1.5%/month (13-20mo), term range 9-20 months. Limits: Excellent NGN6M, Strong NGN3.6M, Standard NGN1.8M, Minimal NGN600k
+- Tier 4: 2%/month (10mo), 1.5%/month (11-20mo), 1%/month (21-30mo), term range 10-30 months. Limits: Excellent NGN12M, Strong NGN7.2M, Standard NGN3.6M, Minimal NGN1.2M
 - Founding Members: 0% across ALL tiers — same limits apply
 Repayment: Equal monthly instalments (principal + flat interest ÷ term months). Due last day of month. 7-day grace period. Default declared Day 8. On default: credit score deduction, bill support suspended, NOK notified. Cooperative can offset outstanding loan against cycle payout at cell completion.
 Loans subject to fund liquidity and admin approval.
@@ -1234,7 +1239,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["7. CoFund Credit Score","The CoFund Credit Score is an internal cooperative participation assessment — not a deposit, share, investment or guaranteed cash entitlement. Credit scores are tier-proportional: earning rates, thresholds and loan access limits all scale with the member's contribution tier. Scores are built through timely contributions, completed cycles and referral bonuses. Deductions apply for missed contributions, loan defaults and bill support claims. The score determines loan eligibility and bill support access only."],
     ["9. Bill Support & Support Priority","25% of every contribution across all tiers funds the cooperative Bill Support Pool. Bill support access unlocks at minimum credit score thresholds per tier. Eligibility to apply does not constitute an automatic entitlement. Actual approval depends on cooperative funding capacity, verification and the member's Support Priority position. Receiving bill support does not affect the member's Credit Score. After receiving support, the member's Support Priority is adjusted: Highest Priority — members who have never received Essential Bill Support Funds. Next in Priority — members who received support more than 10 months ago. Least on the Priority list — members who received support within the last 10 months. Bill support is limited to once per 10-month cycle. Maximum claim amounts depend on the cooperative's live funding capacity tier at the time of application."],
 
-    ["8. Co-Fund Asset Loan -- Structure, Repayment and Recovery","CoFundBills operates an asset-based cooperative loan model. The cooperative does not disburse cash. Upon approval, CoFundBills purchases the approved productive asset in the cooperative registered name and hands it to the qualifying member for income-generating use. The member repays the asset value plus simple interest in equal monthly instalments over the approved term. On full repayment, legal ownership transfers from the cooperative to the member. Assets valued at 1000000 or above are formally registered in the cooperative name before handover. Assets below 1000000 are recorded in the cooperative asset register with a signed member agreement. Eligible assets include Mobility and Transport, Work and Trade Equipment, Technology and Education, Energy and Utilities, Agriculture, and Essential Household assets. Tier loan terms: Tier 1 at 4 percent simple interest per month over 3 months, Tier 2 at 3 percent over 6 months, Tier 3 at 2.5 percent over 6 months, Tier 4 at 2 percent over 8 months. Founding Members pay zero interest across all tiers. Monthly instalments are due by the last day of every month. A 7-day grace period applies. Default triggers a credit score deduction and the cooperative right to recall the asset. The cooperative may redeploy or sell a recalled asset to recover the outstanding balance."],    ["9b. Asset Acquisition Request Support","Asset Acquisition Request Support is a CoFundBills cooperative benefit through which an eligible member may receive support toward the acquisition of an approved essential or productive asset. It is not a loan and does not create a repayment obligation to CoFundBills. Eligibility is restricted to Tier 2, Tier 3 and Tier 4 members who have achieved the Standard Performance credit score category or above. Asset Acquisition Support and Essential Bill Support are mutually exclusive — a member may access one or the other per 10-month cycle, never both. The support amount is determined by the member's contribution tier, credit score category and the cooperative's live Bill Support Fund capacity at the time of application. Eligibility to apply does not constitute automatic entitlement. Approval depends on cooperative funding capacity, the nature of the asset, intended use verification and administrative discretion. Where approved, CoFundBills pays the dealer or vendor directly — no cash is released to the member. The member is required to provide asset documentation for inclusion in the cooperative's asset register. Insurance is at the member's discretion. The same Support Priority system that governs Bill Support applies to Asset Acquisition Support: Highest Priority — never received support; Next in Priority — received support more than 10 months ago; Least on Priority — received support within the last 10 months."],
+    ["8. Co-Fund Asset Loan -- Structure, Repayment and Recovery","CoFundBills operates an asset-based cooperative loan model. The cooperative does not disburse cash. Upon approval, CoFundBills purchases the approved productive asset in the cooperative registered name and hands it to the qualifying member for income-generating use. The member repays the asset value plus simple interest in equal monthly instalments over the approved term, from the income the asset generates plus their continued cooperative savings. Members on an active asset loan are required to remain in their contribution cell throughout the repayment period. The member's end-of-cycle benefit is automatically committed as a mandatory partial repayment toward the outstanding loan balance at each cycle completion. On full repayment, legal ownership transfers from the cooperative to the member. Assets valued at 1000000 or above are formally registered in the cooperative name before handover. Assets below 1000000 are recorded in the cooperative asset register with a signed member agreement. Eligible assets include Mobility and Transport, Work and Trade Equipment, Technology and Education, Energy and Utilities, Agriculture, and Essential Household assets. Tier loan terms: Tier 1: 4%/month, 3-month term. Tier 2: 3%/month (1-6 months) or 2.5%/month (7-10 months), term 6-10 months. Tier 3: 2.5%/month (1-9 months), 2%/month (10-12 months), or 1.5%/month (13-20 months), term 9-20 months. Tier 4: 2%/month (1-10 months), 1.5%/month (11-20 months), or 1%/month (21-30 months), term 10-30 months. Rates reduce for longer terms to reflect the productive nature of asset-based lending. Founding Members pay zero interest across all tiers. Monthly instalments are due by the last day of every month. A 7-day grace period applies. Default triggers a credit score deduction and the cooperative right to recall the asset. The cooperative may redeploy or sell a recalled asset to recover the outstanding balance."],    ["9b. Asset Acquisition Request Support","Asset Acquisition Request Support is a CoFundBills cooperative benefit through which an eligible member may receive support toward the acquisition of an approved essential or productive asset. It is not a loan and does not create a repayment obligation to CoFundBills. Eligibility is restricted to Tier 2, Tier 3 and Tier 4 members who have achieved the Standard Performance credit score category or above. Asset Acquisition Support and Essential Bill Support are mutually exclusive — a member may access one or the other per 10-month cycle, never both. The support amount is determined by the member's contribution tier, credit score category and the cooperative's live Bill Support Fund capacity at the time of application. Eligibility to apply does not constitute automatic entitlement. Approval depends on cooperative funding capacity, the nature of the asset, intended use verification and administrative discretion. Where approved, CoFundBills pays the dealer or vendor directly — no cash is released to the member. The member is required to provide asset documentation for inclusion in the cooperative's asset register. Insurance is at the member's discretion. The same Support Priority system that governs Bill Support applies to Asset Acquisition Support: Highest Priority — never received support; Next in Priority — received support more than 10 months ago; Least on Priority — received support within the last 10 months."],
     ["10. Payout Protection","The Contingency Reserve (5% of every contribution) exists to cover any member's missed contribution immediately, ensuring all other cell members receive their full cycle payout on time. Defaulting members face credit score deductions and cooperative disciplinary action. No other member's payout is ever reduced due to another member's default."],
     ["11. Suspension of Rights & Escalating Default Penalty","Failure to contribute by the last day of any month triggers an immediate credit score deduction (Tier 1: −30 pts · Tier 2: −150 pts · Tier 3: −300 pts · Tier 4: −600 pts) and a 14-day extension to clear the arrears. Should the default persist at the end of the 14-day extension, the same deduction repeats and a further 14-day extension is granted. Should a new monthly contribution deadline fall due while a prior default remains unpaid, the deduction rate doubles (Tier 1: −60 pts per 14-day cycle, scaling with tier) for every 14-day cycle thereafter. This escalating pattern continues until the member clears the arrears or their credit score reaches −400 pts or below. A credit score of −400 pts or below constitutes grounds for expulsion from the cooperative — the member's active cell participation is terminated and all accumulated contributions from that cycle are forfeited. The member's cycle benefit is never dependent on other members' contributions; the penalty framework applies solely to the defaulting member."],
     ["12. No Guaranteed Returns","CoFundBills does not guarantee any return on contributions. Cycle payouts depend on the successful completion of a full 10-month contribution cycle by the member. The cooperative makes no investment promises, yield projections or fixed return commitments of any kind."],
@@ -1971,8 +1976,8 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     return(
                       <tr key={t.id} style={{background:i%2===0?C.white:C.bg,borderBottom:`1px solid ${C.border}`}}>
                         <td style={{padding:"10px 12px",fontWeight:800,color:t.color}}>{t.label}</td>
-                        <td style={{padding:"10px 12px",color:C.navy,fontWeight:700}}>{(t.loanRate*100).toFixed(1)}% simple interest/month</td>
-                        <td style={{padding:"10px 12px",color:C.muted}}>{t.loanTerm} months</td>
+                        <td style={{padding:"10px 12px",color:C.navy,fontWeight:700}}>{t.loanRates ? `${(t.loanRates[0].rate*100).toFixed(1)}%–${(t.loanRates[t.loanRates.length-1].rate*100).toFixed(1)}%/month` : (t.loanRate*100).toFixed(1)+"%/month"}</td>
+                        <td style={{padding:"10px 12px",color:C.muted}}>{t.loanTermMax ? `${t.loanTermMin}–${t.loanTermMax} months` : `${t.loanTerm} months`}</td>
                         <td style={{padding:"10px 12px",color:C.navy}}>{fmtNGN(maxLoan)}</td>
                         <td style={{padding:"10px 12px",fontWeight:700,color:C.green}}>{fmtNGN(monthlyInstalment)}</td>
                         <td style={{padding:"10px 12px",color:C.navy}}>{fmtNGN(totalRepayable)}</td>
@@ -2011,7 +2016,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {[
                 {icon:"🏦",label:"No cash released",desc:"CoFundBills pays the dealer directly. The member never handles the loan cash."},
                 {icon:"📋",label:"Asset registered",desc:"Assets above ₦1M are formally registered in the cooperative name before handover."},
-                {icon:"🔄",label:"Repay from income",desc:"Monthly repayments from the income the asset generates — not from savings."},
+                {icon:"🔄",label:"Repay from income — plus savings",desc:"Monthly repayments from the income the asset generates, plus the member's continued cooperative savings. Members on asset loan repayments must remain in their contribution cells throughout the repayment period."},
                 {icon:"🔑",label:"Ownership on completion",desc:"Full legal ownership transfers to the member on complete loan repayment."},
               ].map(f=>(
                 <div key={f.label} style={{textAlign:"center"}}>
@@ -2046,7 +2051,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div>
                     <div style={{color:C.white,fontWeight:900,fontSize:15}}>{t.label} — Asset Loan Access</div>
                     <div style={{color:"rgba(255,255,255,.8)",fontSize:12,marginTop:2}}>
-                      {(t.loanRate*100).toFixed(1)}% simple interest/month · {t.loanTerm}-month term · Max {fmtNGN(maxLoan)} (Excellent Performance)
+                      {t.loanRates ? `${(t.loanRates[0].rate*100).toFixed(1)}%–${(t.loanRates[t.loanRates.length-1].rate*100).toFixed(1)}%/month` : (t.loanRate*100).toFixed(1)+"%/month"} · {t.loanTerm}-month term · Max {fmtNGN(maxLoan)} (Excellent Performance)
                     </div>
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
@@ -2538,7 +2543,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               <div className="card" style={{marginBottom:14}}>
                 <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:14}}>🏍️ Co-Fund Asset Loan</div>
                 <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:14,fontSize:12,color:C.blue,lineHeight:1.8}}>
-                  <strong>CoFundBills does not disburse cash loans.</strong> Instead, the cooperative purchases your approved productive asset in its registered name and hands it to you for income-generating use. You repay monthly from the income the asset generates. On full repayment, ownership transfers to you.
+                  <strong>CoFundBills does not disburse cash loans.</strong> Instead, the cooperative purchases your approved productive asset in its registered name and hands it to you for income-generating use. You repay monthly from the income the asset generates plus your continued cooperative savings. Remaining in your contribution cell throughout the repayment period is mandatory — your end-of-cycle benefit is committed as part of the loan repayment. On full repayment, ownership transfers to you.
                 </div>
                 {m.creditScore < mTier.unlockScore ? (
                   <>
@@ -2580,8 +2585,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   const cat = scoreCategory(m.creditScore||0, mTier, m.memberType==="founding");
                   const isFounding = m.memberType==="founding";
                   const principal = Number(loanForm.amount||0);
-                  const totalRepayable = principal*(1+(isFounding?0:mTier.loanRate)*mTier.loanTerm);
-                  const monthlyPayment = mTier.loanTerm>0?totalRepayable/mTier.loanTerm:0;
+                  const selTermPrev=loanForm.termMonths||mTier.loanTermMin||mTier.loanTerm;
+                  const selRatePrev=isFounding?0:getAssetLoanRate(mTier,selTermPrev);
+                  const totalRepayable = principal*(1+selRatePrev*selTermPrev);
+                  const monthlyPayment = selTermPrev>0?totalRepayable/selTermPrev:0;
                   return(
                     <div>
                       {/* Score category */}
@@ -2621,13 +2628,33 @@ Answer warmly, concisely and accurately. Never invent information.`;
                         <input className="input" placeholder="Asset description (make, model, specification)" value={loanForm.assetDesc||""} onChange={e=>setLoanForm(f=>({...f,assetDesc:e.target.value}))}/>
                         <input className="input" placeholder="Dealer name and location" value={loanForm.dealer||""} onChange={e=>setLoanForm(f=>({...f,dealer:e.target.value}))}/>
                         <input className="input" type="number" placeholder={`Asset value / loan amount (max ${fmtNGN(cat.limit)})`} value={loanForm.amount||""} onChange={e=>setLoanForm(f=>({...f,amount:e.target.value}))}/>
+                        {mTier.loanTermMax&&mTier.loanTermMax>mTier.loanTermMin&&(
+                          <div>
+                            <label style={{fontSize:12,color:C.muted,display:"block",marginBottom:4}}>Repayment term (months): <strong>{loanForm.termMonths||mTier.loanTermMin} months</strong></label>
+                            <input type="range" min={mTier.loanTermMin} max={mTier.loanTermMax} step={1}
+                              value={loanForm.termMonths||mTier.loanTermMin}
+                              onChange={e=>setLoanForm(f=>({...f,termMonths:Number(e.target.value)}))}
+                              style={{width:"100%",accentColor:C.blue}}/>
+                            <div style={{display:"flex",justifyContent:"space-between",fontSize:10,color:C.muted}}>
+                              <span>{mTier.loanTermMin} months (min)</span>
+                              <span>{mTier.loanTermMax} months (max)</span>
+                            </div>
+                            {(()=>{
+                              const term = loanForm.termMonths||mTier.loanTermMin;
+                              const rate = getAssetLoanRate(mTier, term);
+                              return <div style={{fontSize:11,color:C.blue,marginTop:4,fontWeight:700}}>
+                                Rate for {term}-month term: {isFounding?"0%":(rate*100).toFixed(1)+"% simple interest/month"}
+                              </div>;
+                            })()}
+                          </div>
+                        )}
                         <input className="input" placeholder="How will this asset generate your repayment income?" value={loanForm.repayPlan||""} onChange={e=>setLoanForm(f=>({...f,repayPlan:e.target.value}))}/>
 
                         {/* Live repayment schedule */}
                         {loanForm.amount&&Number(loanForm.amount)>0&&Number(loanForm.amount)<=cat.limit&&(()=>{
                           const p=Number(loanForm.amount);
-                          const term=mTier.loanTerm;
-                          const rate=isFounding?0:mTier.loanRate;
+                          const term=loanForm.termMonths||mTier.loanTermMin||mTier.loanTerm;
+                          const rate=isFounding?0:getAssetLoanRate(mTier,term);
                           const total=p*(1+rate*term);
                           const monthly=total/term;
                           const today=new Date();
@@ -2663,8 +2690,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
                           );
                         })()}
 
-                        <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:10,fontSize:11,color:"#92400E",lineHeight:1.7}}>
+                        <div style={{background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,padding:10,fontSize:11,color:"#92400E",lineHeight:1.7,marginBottom:8}}>
                           ⚠️ <strong>Important:</strong> CoFundBills purchases the asset in the cooperative registered name and pays the dealer directly. No cash is released to the member. Ownership transfers only on full repayment. Default triggers asset recall by the cooperative.
+                        </div>
+                        <div style={{background:"#FEE2E2",border:"1.5px solid #FCA5A5",borderRadius:8,padding:10,fontSize:11,color:C.burg,lineHeight:1.7}}>
+                          🔴 <strong>Mandatory:</strong> Members on an active asset loan must not exit their contribution cell. Your end-of-cycle benefit is automatically committed as part of your loan repayment. Exiting your cell during an active loan will trigger immediate default declaration.
                         </div>
 
                         <button className="btn btn-green" onClick={async()=>{
@@ -2673,15 +2703,17 @@ Answer warmly, concisely and accurately. Never invent information.`;
                           }
                           const amt=Number(loanForm.amount);
                           if(amt>cat.limit){showToast(`Max asset value: ${fmtNGN(cat.limit)}`,"error");return;}
-                          const total=amt*(1+(isFounding?0:mTier.loanRate)*mTier.loanTerm);
+                          const selTerm=loanForm.termMonths||mTier.loanTermMin||mTier.loanTerm;
+                          const selRate=isFounding?0:getAssetLoanRate(mTier,selTerm);
+                          const total=amt*(1+selRate*selTerm);
                           await supabase.from("cfb_loans").insert({
                             link_code:m.linkCode, amount:amt,
                             bill_type:loanForm.assetType,
                             description:loanForm.assetDesc,
                             dealer:loanForm.dealer,
                             repayment_plan:loanForm.repayPlan,
-                            interest_rate:isFounding?0:mTier.loanRate*100,
-                            months_term:mTier.loanTerm,
+                            interest_rate:selRate*100,
+                            months_term:selTerm,
                             total_repayable:total,
                             credit_category:cat.label,
                             status:"pending",
