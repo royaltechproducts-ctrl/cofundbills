@@ -1775,7 +1775,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div style={{background:"#F0FDF4",border:"1.5px solid #BBF7D0",borderRadius:14,padding:22,marginBottom:20}}>
               <div style={{fontWeight:900,color:"#166534",fontSize:15,marginBottom:10}}>🔄 Support Is Shared. Opportunity Rotates.</div>
               <div style={{color:"#166534",fontSize:13,lineHeight:1.9,marginBottom:16}}>
-                Receiving Bill Support does not affect your Credit Score. After benefiting, your Support Priority is temporarily adjusted so eligible members who have not recently received support get priority next.
+                Receiving approved Bill Support resets your Credit Score to zero — a Bill Support Qualification Reset. You remain a full cooperative member but must rebuild your credit standing before your next application. Once you re-qualify, the Support Priority system then gives advantage to members who have never received support or received it longest ago.
               </div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10,marginBottom:18}}>
                 {[
@@ -3331,9 +3331,18 @@ CoFundBills Cooperative
                               approved_at:new Date().toISOString(),
                               priority_reset_at:new Date().toISOString(),
                             }).eq("id",b.id);
-                            // No credit score deduction -- Support Priority system handles queue position
+                            // Reset member credit score to 0 — Bill Support Qualification Reset
+                            const bMem = members[b.link_code];
+                            if(bMem){
+                              await supabase.from("cfb_members").update({credit_score:0}).eq("link_code",b.link_code);
+                              await supabase.from("cfb_credit_events").insert({
+                                link_code:b.link_code, event_type:"bill_support_reset",
+                                points:-(bMem.creditScore||0),
+                                description:"Bill Support Qualification Reset — score reset to 0 on approved claim",
+                              });
+                            }
                             await loadBillApps();await loadMembers();
-                            showToast("Bill support approved. Member's Support Priority reset.");
+                            showToast("Bill support approved. Credit score reset to 0. Support Priority reset.");
                           }}>✅ Approve</button>
                           <button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={async()=>{await supabase.from("cfb_bill_support").update({status:"rejected"}).eq("id",b.id);await loadBillApps();showToast("Application rejected.");}}>✗ Reject</button>
                         </>
