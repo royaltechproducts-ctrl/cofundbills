@@ -1910,47 +1910,93 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {/* Missing the Deadline */}
           <div style={{background:"#FFF5F5",border:`1.5px solid #FCA5A5`,borderRadius:14,marginBottom:24,overflow:"hidden"}}>
-            {/* Header — always visible, clickable */}
-            <div onClick={()=>setExpandedTier(expandedTier==="deadline"?null:"deadline")}
-              style={{padding:"16px 22px",display:"flex",justifyContent:"space-between",
-              alignItems:"center",cursor:"pointer",gap:8}}>
-              <div style={{display:"flex",alignItems:"center",gap:12}}>
-                <span style={{fontSize:24}}>⚠️</span>
-                <div>
-                  <div style={{fontWeight:900,color:C.burg,fontSize:15}}>Missing the Deadline</div>
-                  <div style={{fontSize:12,color:C.muted,marginTop:2}}>A missed payment triggers an escalating penalty framework — click to expand</div>
-                </div>
+            {/* Static header */}
+            <div style={{padding:"16px 22px",display:"flex",alignItems:"center",gap:12,borderBottom:"1px solid #FCA5A5"}}>
+              <span style={{fontSize:24}}>⚠️</span>
+              <div>
+                <div style={{fontWeight:900,color:C.burg,fontSize:15}}>Missing the Deadline</div>
+                <div style={{fontSize:12,color:C.muted,marginTop:2}}>An escalating penalty framework — click any stage to expand</div>
               </div>
-              <span style={{color:C.burg,fontSize:18,fontWeight:900}}>{expandedTier==="deadline"?"▲":"▼"}</span>
             </div>
-            {/* Body — collapsible */}
-            {expandedTier==="deadline"&&(
-              <div style={{padding:"0 22px 20px"}}>
-                <div style={{fontSize:13,color:C.dark,lineHeight:1.8,marginBottom:18}}>
-                  A missed monthly payment triggers an immediate credit score deduction and a <strong>14-day extension</strong> to clear the arrears. Should the default persist, the penalty cycle repeats and escalates. If a new monthly contribution deadline falls due while a prior default is still unpaid, the deduction rate doubles every 14-day cycle. A credit score of <strong>−400 pts or below</strong> constitutes grounds for expulsion and forfeiture of that cycle's contributions.
+            {/* Four accordion rows */}
+            {[
+              {
+                key:"s1", icon:"🟡", color:"#FEF3C7", border:"#FCD34D", tc:"#92400E",
+                heading:"Stage 1 Penalty — Missed Deadline",
+                detail:<>
+                  <p style={{marginBottom:10}}>A missed monthly contribution deadline triggers an immediate credit score deduction. The deduction varies by tier:</p>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                    {[["Tier 1","−30 pts"],["Tier 2","−150 pts"],["Tier 3","−300 pts"],["Tier 4","−600 pts"]].map(([t,p])=>(
+                      <div key={t} style={{background:"rgba(255,255,255,.7)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                        <div style={{fontWeight:800,color:"#92400E",fontSize:12}}>{t}</div>
+                        <div style={{fontWeight:900,color:"#92400E",fontSize:15}}>{p}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p>A <strong>14-day extension</strong> is granted to allow the member to clear the arrears. Payment within this window stops the escalation. No further penalty is applied if cleared before Day 14.</p>
+                </>
+              },
+              {
+                key:"s2", icon:"🟠", color:"#FED7AA", border:"#FB923C", tc:"#9A3412",
+                heading:"Stage 2 Penalty — Default Unpaid at 14 Days",
+                detail:<>
+                  <p style={{marginBottom:10}}>If the default remains unpaid at the end of the 14-day extension, the <strong>same credit score deduction repeats</strong> — Tier 1: −30 pts, Tier 2: −150 pts, Tier 3: −300 pts, Tier 4: −600 pts.</p>
+                  <p>A further <strong>14-day extension</strong> is granted. The member now owes two months of arrears. If cleared within this second window, escalation stops and no further deduction applies until the next missed deadline.</p>
+                </>
+              },
+              {
+                key:"s3", icon:"🔴", color:"#FEE2E2", border:"#FCA5A5", tc:C.burg,
+                heading:"Stage 3 Penalty — New Deadline Falls While Old Default Remains Unpaid",
+                detail:<>
+                  <p style={{marginBottom:10}}>If a new monthly contribution deadline falls due while a prior default is still outstanding, the situation escalates. The deduction rate <strong>doubles every 14-day cycle</strong> from this point:</p>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:8,marginBottom:10}}>
+                    {[["Tier 1","−60 pts/cycle"],["Tier 2","−300 pts/cycle"],["Tier 3","−600 pts/cycle"],["Tier 4","−1,200 pts/cycle"]].map(([t,p])=>(
+                      <div key={t} style={{background:"rgba(255,255,255,.7)",borderRadius:8,padding:"8px 10px",textAlign:"center"}}>
+                        <div style={{fontWeight:800,color:C.burg,fontSize:12}}>{t}</div>
+                        <div style={{fontWeight:900,color:C.burg,fontSize:14}}>{p}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <p>Each 14-day cycle without full clearance continues the escalating deduction pattern until all arrears are cleared or the member's score reaches the expulsion threshold.</p>
+                </>
+              },
+              {
+                key:"s4", icon:"💀", color:"#1F2937", border:"#374151", tc:"#F9FAFB",
+                heading:"Stage 4 Penalty — Expulsion Threshold",
+                detail:<div style={{color:"#F9FAFB"}}>
+                  <p style={{marginBottom:10}}>When a member's credit score falls to <strong>−400 points or below</strong>, the cooperative declares formal expulsion.</p>
+                  <ul style={{paddingLeft:18,lineHeight:2}}>
+                    <li>Membership is terminated with immediate effect</li>
+                    <li>Active cell participation is ended</li>
+                    <li>All accumulated contributions from that cycle are forfeited</li>
+                    <li>Any active asset loan triggers immediate asset recall by the cooperative</li>
+                    <li>The member's cooperative record is permanently marked as expelled</li>
+                  </ul>
+                  <p style={{marginTop:10,fontSize:12,opacity:.8}}>Your cycle benefit is built from your own qualifying contributions. Another member's default cannot affect your earned benefit. This escalating framework applies solely to the defaulting member.</p>
                 </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr 1fr",gap:10}}>
-                  {[
-                    {stage:"Stage 1 Penalty",icon:"🟡",title:"Missed Deadline",trigger:"Missed deadline",penalty:"−30 pts (Tier 1) · −150 pts (Tier 2) · −300 pts (Tier 3) · −600 pts (Tier 4)",ext:"+ 14-day extension",color:"#FEF3C7",border:"#FCD34D",tc:"#92400E"},
-                    {stage:"Stage 2 Penalty",icon:"🟠",title:"Default Unpaid at 14 Days",trigger:"Default unpaid at Day 14",penalty:"Same deduction repeats",ext:"+ another 14 days",color:"#FED7AA",border:"#FB923C",tc:"#9A3412"},
-                    {stage:"Stage 3 Penalty",icon:"🔴",title:"New Deadline Falls While Old Default Remains Unpaid",trigger:"New deadline falls while old default remains unpaid",penalty:"Doubles every 14-day cycle",ext:"Escalates each cycle",color:"#FEE2E2",border:"#FCA5A5",tc:C.burg},
-                    {stage:"Stage 4 Penalty",icon:"💀",title:"Expulsion Threshold",trigger:"Credit score reaches −400 pts",penalty:"Membership terminated",ext:"All cycle contributions forfeited",color:"#1F2937",border:"#374151",tc:"#F9FAFB"},
-                  ].map(s=>(
-                    <div key={s.stage} style={{background:s.color,border:`1.5px solid ${s.border}`,borderRadius:10,padding:12,textAlign:"center"}}>
-                      <div style={{fontSize:20,marginBottom:4}}>{s.icon}</div>
-                      <div style={{fontWeight:900,color:s.tc,fontSize:10,marginBottom:2,textTransform:"uppercase",letterSpacing:1}}>{s.stage}</div>
-                      <div style={{fontWeight:800,color:s.tc,fontSize:11,marginBottom:6}}>{s.title}</div>
-                      <div style={{fontSize:10,color:s.tc,opacity:.8,lineHeight:1.6,marginBottom:6}}>{s.trigger}</div>
-                      <div style={{fontWeight:900,color:s.tc,fontSize:12,marginBottom:4}}>{s.penalty}</div>
-                      <div style={{fontSize:10,color:s.tc,opacity:.75,lineHeight:1.5}}>{s.ext}</div>
+              },
+            ].map(s=>{
+              const isOpen = expandedTier===s.key;
+              return(
+                <div key={s.key} style={{borderBottom:`1px solid #FCA5A5`}}>
+                  <div onClick={()=>setExpandedTier(isOpen?null:s.key)}
+                    style={{background:s.color,padding:"14px 22px",display:"flex",
+                    justifyContent:"space-between",alignItems:"center",cursor:"pointer",gap:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <span style={{fontSize:18}}>{s.icon}</span>
+                      <span style={{fontWeight:800,color:s.tc,fontSize:13}}>{s.heading}</span>
                     </div>
-                  ))}
+                    <span style={{color:s.tc,fontWeight:900,fontSize:15}}>{isOpen?"▲":"▼"}</span>
+                  </div>
+                  {isOpen&&(
+                    <div style={{background:s.color,padding:"14px 22px 20px",borderTop:`1px solid ${s.border}`,
+                      fontSize:13,color:s.tc,lineHeight:1.9}}>
+                      {s.detail}
+                    </div>
+                  )}
                 </div>
-                <div style={{marginTop:14,fontSize:11,color:C.muted,lineHeight:1.7,borderTop:`1px solid #FCA5A5`,paddingTop:10}}>
-                  Your cycle benefit is built from your own qualifying contributions — another member's default cannot affect yours. This escalating framework applies solely to the defaulting member.
-                </div>
-              </div>
-            )}
+              );
+            })}
           </div>
 
           {/* Example timeline */}
