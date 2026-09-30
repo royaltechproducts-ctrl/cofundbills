@@ -2091,10 +2091,46 @@ Answer warmly, concisely and accurately. Never invent information.`;
 
           {Object.values(TIERS).map(t=>{
             const assetsByTier = {
-              1:["Sewing machine","Barbering equipment","Catering equipment","Basic carpentry tools","Tyre pumping and vulcanizing equipment","Smartphone for business use"],
-              2:["All Tier 1 assets","Dispatch motorcycle","Keke NAPEP (commercial tricycle)","Car wash setup equipment","Coin-operated pool/snooker board (4x7 marble top)","Welding equipment","Laptop and tablet","Printer and office equipment","Solar/inverter system (small scale)","Water pump","Basic agricultural equipment"],
-              3:["All Tier 2 assets","Korope / mini-bus","Industrial sewing machine","Professional welding and fabrication equipment","Solar/inverter system (large scale)","Agricultural machinery","Water storage and distribution systems","Technology bundles (laptop + printer + accessories)"],
-              4:["All Tier 3 assets","Full commercial bus / larger transport vehicles","Industrial/commercial kitchen equipment","Full agricultural machinery (tractors, harvesters)","Heavy-duty generator","Commercial cold storage equipment","Any other cooperative-approved productive asset"],
+              1:[
+                "Sewing machine — ₦180,000–₦600,000",
+                "Barbering equipment set (chair + 2 clippers + accessories) — ₦250,000–₦600,000",
+                "Catering equipment starter set — ₦300,000–₦800,000",
+                "Basic carpentry tools set — ₦150,000–₦400,000",
+                "Tyre pumping and vulcanizing equipment set — ₦150,000–₦300,000",
+                "Smartphone for business use — ₦80,000–₦250,000",
+              ],
+              2:[
+                "All Tier 1 assets, plus:",
+                "Dispatch motorcycle (Bajaj/TVS/Qlink 200cc) — ₦1,000,000–₦1,700,000",
+                "Keke NAPEP (TVS/Bajaj/Piaggio brand new) — ₦1,500,000–₦3,000,000",
+                "Car wash setup (basic mobile unit) — ₦500,000–₦1,500,000",
+                "Coin-operated pool/snooker board (7ft marble top) — ₦700,000–₦1,600,000",
+                "Welding machine + accessories set — ₦120,000–₦500,000",
+                "Laptop (budget to mid-range) — ₦280,000–₦600,000",
+                "Printer and office equipment — ₦150,000–₦400,000",
+                "Solar/inverter system small scale (1.5–3.5kVA) — ₦350,000–₦900,000",
+                "Water pump — ₦80,000–₦250,000",
+                "Basic agricultural equipment — ₦200,000–₦600,000",
+              ],
+              3:[
+                "All Tier 2 assets, plus:",
+                "Korope / mini-bus (Tokunbo Toyota Hiace) — ₦7,000,000–₦9,000,000",
+                "Industrial sewing machine (Jack/Emel/Two Lion) — ₦350,000–₦780,000",
+                "Professional welding and fabrication equipment set — ₦500,000–₦2,000,000",
+                "Solar/inverter system large scale (5–10kVA + battery bank) — ₦1,200,000–₦4,000,000",
+                "Agricultural machinery (tractor attachments, irrigation) — ₦1,000,000–₦5,000,000",
+                "Water storage and distribution systems — ₦500,000–₦2,000,000",
+                "Technology bundle (laptop + printer + accessories) — ₦600,000–₦1,200,000",
+              ],
+              4:[
+                "All Tier 3 assets, plus:",
+                "Full commercial bus / larger transport vehicle (foreign used) — ₦8,000,000–₦12,000,000",
+                "Industrial/commercial kitchen equipment set — ₦1,500,000–₦5,000,000",
+                "Full agricultural machinery (tractors, harvesters) — ₦5,000,000–₦12,000,000",
+                "Heavy-duty generator (20kVA+) — ₦2,000,000–₦8,000,000",
+                "Commercial cold storage equipment — ₦2,000,000–₦6,000,000",
+                "Any other cooperative-approved productive asset",
+              ],
             };
             const assets = assetsByTier[t.id]||[];
             const maxLoan = t.loanLimits?.excellent||0;
@@ -2122,15 +2158,26 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 {isOpen&&(
                   <div style={{background:C.white,padding:20}}>
                     <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(200px,1fr))",gap:10,marginBottom:14}}>
-                      {assets.map(a=>(
-                        <div key={a} style={{display:"flex",alignItems:"center",gap:8,
-                          background:a.startsWith("All")?`${t.color}11`:C.bg,
-                          border:`1px solid ${a.startsWith("All")?t.color:C.border}`,
-                          borderRadius:8,padding:"8px 12px"}}>
-                          <span style={{fontSize:14}}>{a.startsWith("All")?"✅":"🔹"}</span>
-                          <span style={{fontSize:12,color:a.startsWith("All")?t.color:C.dark,
-                            fontWeight:a.startsWith("All")?800:400,lineHeight:1.5}}>{a}</span>
-                        </div>
+                      {assets.map((a,ai)=>(
+                        <div key={ai}>{(()=>{
+                          const isInherited = a.startsWith("All");
+                          const dashIdx = a.lastIndexOf(" — ");
+                          const assetName = dashIdx>0 ? a.slice(0,dashIdx) : a;
+                          const assetPrice = dashIdx>0 ? a.slice(dashIdx+3) : null;
+                          return(
+                            <div key={a} style={{display:"flex",alignItems:"flex-start",gap:8,
+                              background:isInherited?`${t.color}11`:C.bg,
+                              border:`1px solid ${isInherited?t.color:C.border}`,
+                              borderRadius:8,padding:"8px 12px"}}>
+                              <span style={{fontSize:14,marginTop:1}}>{isInherited?"✅":"🔹"}</span>
+                              <div>
+                                <div style={{fontSize:12,color:isInherited?t.color:C.dark,
+                                  fontWeight:isInherited?800:600,lineHeight:1.5}}>{assetName}</div>
+                                {assetPrice&&<div style={{fontSize:11,color:C.muted,marginTop:1}}>{assetPrice}</div>}
+                              </div>
+                            </div>
+                          );
+                        })()}</div>
                       ))}
                     </div>
                     <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,
