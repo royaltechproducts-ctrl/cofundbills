@@ -313,7 +313,7 @@ export default function App() {
   const [chatMsgs,    setChatMsgs]    = useState([{role:"assistant",content:"👋 Hi! I am the CoFundBills Assistant. Ask me anything about contribution cells, credit scores, loans or bill support!"}]);
   const [chatInput,   setChatInput]   = useState("");
   const [chatLoading, setChatLoading] = useState(false);
-  const [regForm,     setRegForm]     = useState({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1});
+  const [regForm,     setRegForm]     = useState({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1,photoId:""});
   const [regErrors,   setRegErrors]   = useState({});
   const [loginForm,   setLoginForm]   = useState({email:"",linkCode:""});
   const [loanForm,    setLoanForm]    = useState({amount:"",billType:"",purpose:"",assetType:"",assetDesc:"",dealer:"",repayPlan:""});
@@ -828,7 +828,7 @@ CoFundBills Cooperative`});
       message: `Dear ${regForm.fullName.trim()},\n\nThank you for registering with CoFundBills Cooperative. Your registration has been received and is currently pending activation.\n\nYou registered under the ${mTierData.label} Contribution Group (${fmtNGN(mTierData.monthly)}/month). To activate your membership, please make your first monthly contribution of ${fmtNGN(mTierData.monthly)} to the details below:\n\nAccount Name: Royal Tech Partnership & Investment Limited\nBank: Zenith Bank\nAccount Number: 1016621205\nReference: ${linkCode}\n\nAfter payment, send your proof of payment via WhatsApp to +234 909 999 4816. Your membership will be activated within 24 hours.\n\nEvery ${fmtNGN(mTierData.monthly)} you contribute splits into two halves — the first half (${halfOne}) accumulates within your contribution cell and is returned to you as ${fmtNGN(mTierData.cyclePayout)} cash at the end of your 10-month cycle. The second half (${halfTwo}) merges with the second halves from all other contribution cells across the cooperative into a massive shared pool — half of which funds Approved Bill Support Requests (house rent, school fees, medical bills, etc.), and the other half caters for Approved Loan Requests, Operations and Reserve.\n\nOnce activated:\n— You will be placed in the ${mTierData.label} queue alongside other ${mTierData.label} members\n— A contribution cell of 10 members forms automatically when the queue reaches 10 registrants\n— You will begin earning CoFund Credit Score points everytime you pay your monthly contribution on time\n— Your unique Co-Fund Invite Link will go live for sharing — and you earn extra points with referral credits\n— You can change your tier any time before your cell activates\n\nAs a ${mTierData.label} member:\n— Cycle payout at end of 10 months: ${fmtNGN(mTierData.cyclePayout)} cash\n— Your bill support contribution over the cycle: ${fmtNGN(mTierData.billSupport*10)} — with up to ${fmtNGN(mTierData.billCaps[mTierData.billCaps.length-1].cap)} accessible once your credit score meets the minimum threshold\n— Loan access unlocks at a minimum of ${mTierData.unlockScore.toLocaleString()} credit points\n\nFor any questions, reply to this email or WhatsApp +234 909 999 4816.\n\nWarm regards,\nErnest Igbinoba\nPresident — CoFundBills Cooperative\ncofundbills@gmail.com\n+234 806 163 1222 | +234 909 999 4816\ncofundbills.vercel.app`,
     });
     setRegForm({fullName:"",email:"",phone:"",occupation:"",address:"",state:"",country:"Nigeria",
-      nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1});
+      nokName:"",nokPhone:"",nokRelationship:"",bankName:"",accountName:"",accountNumber:"",contributionTier:1,photoId:""});
     setRegErrors({});
     await loadMembers();
     setModal({type:"regSuccess", ...saved});
@@ -3657,9 +3657,9 @@ CoFundBills Cooperative`,
               </select>
             </div>
             <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:12,fontSize:12,lineHeight:1.9}}>
-              <strong style={{color:C.navy,display:"block",marginBottom:4}}>Where your contributions go:</strong>
+              <strong style={{color:C.navy,display:"block",marginBottom:4}}>How your contribution works</strong>
               💰 <strong>First Half — {fmtNGN(getTier(regForm.contributionTier||1).benefitPool)}/month</strong> stays in your cell → returned as <strong>{fmtNGN(getTier(regForm.contributionTier||1).cyclePayout)} cash</strong> at the end of your 10-month cycle<br/>
-              🌊 <strong>Second Half — {fmtNGN(getTier(regForm.contributionTier||1).monthly - getTier(regForm.contributionTier||1).benefitPool)}/month</strong> merges with all other cells into the cooperative pool → funds Bill Support requests, Loan requests, Operations and Reserve
+              🌊 <strong>Second Half — {fmtNGN(getTier(regForm.contributionTier||1).monthly - getTier(regForm.contributionTier||1).benefitPool)}/month</strong> goes into a deeper layer of savings by merging with the 50% from all other contribution cells across the cooperative into a massive shared pool — half of which funds Your Approved Bill Support Requests (house rent, school fees, medical bills, etc.), and the other half caters for Approved Loan Requests, Operations and Reserve
             </div>
             <div className="sec-div">Personal Information</div>
             {[["fullName","Full Name","text"],["email","Email Address (gmail address preferably)","email"],["phone","Phone Number","tel"],["occupation","Occupation","text"]].map(([k,l,t])=>(
@@ -3685,6 +3685,13 @@ CoFundBills Cooperative`,
                 {regErrors[k]&&<div className="err-msg">{regErrors[k]}</div>}
               </div>
             ))}
+            <div className="sec-div">Identity Verification <span style={{color:"#EF4444",fontSize:11,fontWeight:400}}>— Required</span></div>
+            <div className="field" style={{gridColumn:"1/-1"}}>
+              <label>Valid Government-Issued Photo ID <span style={{color:"#EF4444"}}>*</span></label>
+              <input type="url" placeholder="Paste link to your uploaded ID (Google Drive / Dropbox — set to Anyone with link)" className={regErrors.photoId?"field-err":""} value={regForm.photoId||""} onChange={e=>setRegForm({...regForm,photoId:e.target.value})}/>
+              {regErrors.photoId&&<div className="err-msg">{regErrors.photoId}</div>}
+              <div style={{fontSize:11,color:"#6B7280",marginTop:4,lineHeight:1.7}}>Accepted: National ID card, Voter's Card, Driver's Licence, International Passport or NIN slip. Upload to Google Drive or Dropbox, share as "Anyone with link can view", then paste the link here. Used for identity verification only.</div>
+            </div>
             <div className="sec-div">Bank Account</div>
             {[["bankName","Bank Name","text"],["accountName","Account Name","text"],["accountNumber","Account Number","text"]].map(([k,l,t])=>(
               <div className="field" key={k}>
@@ -3716,9 +3723,9 @@ CoFundBills Cooperative`,
               Pay your first monthly contribution of <strong>{fmtNGN(getTier(modal.tier||1).monthly)}</strong> ({getTier(modal.tier||1).label}) to activate and join the queue. This is the only payment required until your contribution cell activates.
             </div>
             <div style={{background:"#EFF6FF",border:"1.5px solid #BFDBFE",borderRadius:10,padding:12,marginBottom:12,fontSize:12,lineHeight:1.9}}>
-              <strong style={{color:C.navy,display:"block",marginBottom:4}}>Where your contributions go:</strong>
+              <strong style={{color:C.navy,display:"block",marginBottom:4}}>How your contribution works</strong>
               💰 <strong>First Half — {fmtNGN(getTier(modal.tier||1).benefitPool)}/month</strong> stays in your cell → returned as <strong>{fmtNGN(getTier(modal.tier||1).cyclePayout)} cash</strong> at the end of your 10-month cycle<br/>
-              🌊 <strong>Second Half — {fmtNGN(getTier(modal.tier||1).monthly - getTier(modal.tier||1).benefitPool)}/month</strong> merges with all other cells into the cooperative pool → funds Bill Support requests, Loan requests, Operations and Reserve
+              🌊 <strong>Second Half — {fmtNGN(getTier(modal.tier||1).monthly - getTier(modal.tier||1).benefitPool)}/month</strong> goes into a deeper layer of savings by merging with the 50% from all other contribution cells across the cooperative into a massive shared pool — half of which funds Your Approved Bill Support Requests (house rent, school fees, medical bills, etc.), and the other half caters for Approved Loan Requests, Operations and Reserve
             </div>
             <div style={{background:C.white,border:`1.5px solid ${C.gold}`,borderRadius:10,padding:14,fontSize:13,lineHeight:1.9}}>
               <strong style={{color:C.navy}}>Payment Details</strong><br/>
