@@ -2092,43 +2092,53 @@ Answer warmly, concisely and accurately. Never invent information.`;
           {Object.values(TIERS).map(t=>{
             const assetsByTier = {
               1:[
-                "Sewing machine — ₦180,000–₦600,000",
-                "Barbering equipment set (chair + 2 clippers + accessories) — ₦250,000–₦600,000",
-                "Catering equipment starter set — ₦300,000–₦800,000",
-                "Basic carpentry tools set — ₦150,000–₦400,000",
+                "Sewing machine (domestic/electric — Butterfly/Two Lion/Singer) — ₦180,000–₦600,000",
+                "Barbering equipment set (chair + 2 clippers + accessories) — ₦250,000–₦500,000",
+                "Basic carpentry tools set (drill + saw + hand tools) — ₦150,000–₦400,000",
                 "Tyre pumping and vulcanizing equipment set — ₦150,000–₦300,000",
-                "Smartphone for business use — ₦80,000–₦250,000",
+                "Smartphone for business use (Tecno/Infinix/itel) — ₦80,000–₦250,000",
+                "Welding machine + basic accessories — ₦120,000–₦500,000",
+                "Budget laptop (entry-level, basic tasks) — ₦150,000–₦350,000",
+                "Printer and basic office equipment — ₦150,000–₦400,000",
+                "Water pump — ₦80,000–₦250,000",
+                "Basic agricultural hand tools and sprayer — ₦100,000–₦400,000",
+                "Solar/inverter 1.5kVA unit only — ₦259,000–₦550,000",
               ],
               2:[
                 "All Tier 1 assets, plus:",
+                "Catering equipment starter set (gas cooker + pots + accessories) — ₦300,000–₦800,000",
                 "Dispatch motorcycle (Bajaj/TVS/Qlink 200cc) — ₦1,000,000–₦1,700,000",
                 "Keke NAPEP (TVS/Bajaj/Piaggio brand new) — ₦1,500,000–₦3,000,000",
-                "Car wash setup (basic mobile unit) — ₦500,000–₦1,500,000",
-                "Coin-operated pool/snooker board (7ft marble top) — ₦700,000–₦1,600,000",
-                "Welding machine + accessories set — ₦120,000–₦500,000",
-                "Laptop (budget to mid-range) — ₦280,000–₦600,000",
-                "Printer and office equipment — ₦150,000–₦400,000",
-                "Solar/inverter system small scale (1.5–3.5kVA) — ₦350,000–₦900,000",
-                "Water pump — ₦80,000–₦250,000",
-                "Basic agricultural equipment — ₦200,000–₦600,000",
+                "Car wash setup (pressure washer + generator + accessories) — ₦500,000–₦1,500,000",
+                "Coin-operated snooker board (7ft marble top) — ₦700,000–₦1,600,000",
+                "Mid-range laptop (Core i5/Ryzen 5, 8-16GB RAM) — ₦450,000–₦780,000",
+                "Industrial sewing machine (Jack/Emel/Two Lion) — ₦350,000–₦780,000",
+                "Professional welding and fabrication equipment set — ₦500,000–₦2,000,000",
+                "Water storage and distribution systems — ₦500,000–₦2,000,000",
+                "Technology bundle (laptop + printer + accessories) — ₦600,000–₦1,200,000",
+                "Solar/inverter 3.5kVA system (unit + battery) — ₦700,000–₦1,500,000",
+                "Ladies hair salon set (2 chairs + dryer + steamer + wash basin) — ₦600,000–₦1,800,000",
+                "Commercial juice extractor / blender set — ₦250,000–₦700,000",
               ],
               3:[
                 "All Tier 2 assets, plus:",
-                "Korope / mini-bus (Tokunbo Toyota Hiace) — ₦7,000,000–₦9,000,000",
-                "Industrial sewing machine (Jack/Emel/Two Lion) — ₦350,000–₦780,000",
-                "Professional welding and fabrication equipment set — ₦500,000–₦2,000,000",
-                "Solar/inverter system large scale (5–10kVA + battery bank) — ₦1,200,000–₦4,000,000",
-                "Agricultural machinery (tractor attachments, irrigation) — ₦1,000,000–₦5,000,000",
-                "Water storage and distribution systems — ₦500,000–₦2,000,000",
-                "Technology bundle (laptop + printer + accessories) — ₦600,000–₦1,200,000",
+                "Gaming/professional laptop (Core i7+, 16GB RAM, dedicated GPU) — ₦800,000–₦3,000,000",
+                "Industrial/commercial kitchen equipment set — ₦1,500,000–₦5,000,000",
+                "Professional catering setup (full commercial gas cooker + oven) — ₦1,500,000–₦4,000,000",
+                "Commercial cold storage equipment (chest freezer / display fridge bank) — ₦2,000,000–₦6,000,000",
+                "Heavy-duty generator (20kVA+) — ₦2,000,000–₦6,000,000",
+                "Solar/inverter large scale (5-10kVA + battery bank) — ₦1,200,000–₦4,000,000",
+                "Agricultural machinery (tractor attachments, irrigation systems) — ₦1,000,000–₦5,000,000",
+                "Photography/videography starter kit (DSLR + lenses + tripod + lighting) — ₦800,000–₦2,500,000",
+                "Industrial BBQ grill + shawarma machine set — ₦500,000–₦1,500,000",
               ],
               4:[
                 "All Tier 3 assets, plus:",
+                "Korope/mini-bus (Tokunbo Toyota Hiace) — ₦7,000,000–₦9,000,000",
                 "Full commercial bus / larger transport vehicle (foreign used) — ₦8,000,000–₦12,000,000",
-                "Industrial/commercial kitchen equipment set — ₦1,500,000–₦5,000,000",
                 "Full agricultural machinery (tractors, harvesters) — ₦5,000,000–₦12,000,000",
-                "Heavy-duty generator (20kVA+) — ₦2,000,000–₦8,000,000",
-                "Commercial cold storage equipment — ₦2,000,000–₦6,000,000",
+                "High-end workstation / professional broadcast studio equipment — ₦3,000,000–₦8,000,000",
+                "Large-scale cold chain / refrigeration plant — ₦5,000,000–₦10,000,000",
                 "Any other cooperative-approved productive asset",
               ],
             };
@@ -2150,7 +2160,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
                     <span style={{background:"rgba(255,255,255,.15)",borderRadius:20,
                       padding:"5px 12px",color:C.white,fontSize:11,fontWeight:700}}>
-                      {(()=>{const counts={1:6,2:16,3:23,4:29};return counts[t.id]||assets.length;})()}{" "}assets accessible
+                      {(()=>{const counts={1:11,2:24,3:33,4:39};return counts[t.id]||assets.length;})()}{" "}assets accessible
                     </span>
                     <span style={{color:C.white,fontSize:16,fontWeight:900}}>{isOpen?"▲":"▼"}</span>
                   </div>
@@ -2663,12 +2673,14 @@ Answer warmly, concisely and accurately. Never invent information.`;
                     <div style={{fontWeight:700,color:C.navy,fontSize:13,marginBottom:10}}>What you can apply for once you qualify:</div>
                     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
                       {[
-                        {icon:"🏍️",label:"Mobility & Transport",desc:"Dispatch motorcycle, Keke NAPEP, Korope/Minibus"},
-                        {icon:"🔧",label:"Work & Trade Equipment",desc:"Sewing, welding, barbering, carpentry tools"},
-                        {icon:"💻",label:"Technology & Education",desc:"Laptop, tablet, printer, work devices"},
-                        {icon:"⚡",label:"Energy & Utilities",desc:"Solar/inverter, batteries, water pump"},
-                        {icon:"🌾",label:"Agriculture",desc:"Farm equipment, irrigation machinery"},
-                        {icon:"🏠",label:"Essential Household",desc:"Selected appliances and approved essentials"},
+                        {icon:"🏍️",label:"Mobility & Transport",desc:"Dispatch motorcycle, Keke NAPEP, Korope/Minibus, commercial bus"},
+                        {icon:"🔧",label:"Work & Trade Equipment",desc:"Sewing, welding, barbering, carpentry, vulcanizing tools"},
+                        {icon:"💻",label:"Technology & Education",desc:"Budget to gaming laptop, printer, studio equipment"},
+                        {icon:"⚡",label:"Energy & Utilities",desc:"Solar/inverter 1.5-10kVA, generators, water pump"},
+                        {icon:"🌾",label:"Agriculture",desc:"Hand tools, irrigation, tractors, harvesters"},
+                        {icon:"🍽️",label:"Food & Hospitality",desc:"Catering, shawarma grill, BBQ, juice extractor, cold storage"},
+                        {icon:"💇",label:"Beauty & Salon",desc:"Ladies hair salon set, barbering equipment"},
+                        {icon:"📷",label:"Photography & Media",desc:"DSLR kit, lighting, broadcast studio equipment"},
                       ].map(cat=>(
                         <div key={cat.label} style={{background:C.bg,borderRadius:8,padding:10,display:"flex",gap:8,alignItems:"flex-start"}}>
                           <span style={{fontSize:20,flexShrink:0}}>{cat.icon}</span>
@@ -2720,13 +2732,17 @@ Answer warmly, concisely and accurately. Never invent information.`;
                       <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
                         <select className="input" value={loanForm.assetType||""} onChange={e=>setLoanForm(f=>({...f,assetType:e.target.value}))}>
                           <option value="">Select asset category</option>
-                          <option value="Mobility - Dispatch Motorcycle">🏍️ Mobility - Dispatch Motorcycle</option>
-                          <option value="Mobility - Keke NAPEP">🛺 Mobility - Keke NAPEP</option>
-                          <option value="Mobility - Korope / Minibus">🚌 Mobility - Korope / Minibus</option>
+                          <option value="Mobility - Dispatch Motorcycle">🏍️ Mobility — Dispatch Motorcycle</option>
+                          <option value="Mobility - Keke NAPEP">🛺 Mobility — Keke NAPEP</option>
+                          <option value="Mobility - Korope / Minibus">🚌 Mobility — Korope / Minibus</option>
+                          <option value="Mobility - Commercial Bus">🚌 Mobility — Commercial Bus / Transport Vehicle</option>
                           <option value="Work and Trade Equipment">🔧 Work and Trade Equipment</option>
                           <option value="Technology and Education">💻 Technology and Education</option>
                           <option value="Energy and Utilities">⚡ Energy and Utilities</option>
                           <option value="Agriculture">🌾 Agriculture</option>
+                          <option value="Food and Hospitality">🍽️ Food and Hospitality Equipment</option>
+                          <option value="Beauty and Salon">💇 Beauty and Salon Equipment</option>
+                          <option value="Photography and Media">📷 Photography and Videography Equipment</option>
                           <option value="Essential Household Asset">🏠 Essential Household Asset</option>
                         </select>
                         <input className="input" placeholder="Asset description (make, model, specification)" value={loanForm.assetDesc||""} onChange={e=>setLoanForm(f=>({...f,assetDesc:e.target.value}))}/>
