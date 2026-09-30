@@ -2276,7 +2276,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               ["✅ Contribution is the economic engine","A cell of 10 can complete a full 10-month cycle with zero new recruitments after activation. Every member's cycle benefit comes from their own qualifying contributions — not from recruiting others."],
               ["✅ No rotation of contributions","CoFundBills does not rotate one member's payment to another. Your cycle benefit accumulates independently from your own contributions. Another member's default cannot reduce what you have earned."],
               ["✅ Every naira documented","50% member benefit, 25% bill support, 15% asset loan fund, 7.5% administration, 2.5% contingency reserve — published, consistent and automatic across all tiers."],
-              ["✅ Behaviour-based creditworthiness","Your CoFund Credit Score is built through contribution discipline, cycle participation and loan repayment behaviour — not through who you recruit."],
+              ["✅ Behaviour-based creditworthiness","Your CoFund Credit Score is built through contribution discipline, cycle participation, loan repayment behaviour and direct referral credits — not through networking or pyramid structures."],
               ["✅ Cooperative registration in progress","CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State Cooperative Societies Law 2022. Cooperative activities are subject to registration, supervision and audit by the Lagos State Department of Cooperative Services."],
             ].map(([t,d])=>(
               <div key={t} className="card" style={{borderLeft:`3px solid ${C.green}`}}>
