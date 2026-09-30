@@ -3688,9 +3688,29 @@ CoFundBills Cooperative`,
             <div className="sec-div">Identity Verification <span style={{color:"#EF4444",fontSize:11,fontWeight:400}}>— Required</span></div>
             <div className="field" style={{gridColumn:"1/-1"}}>
               <label>Valid Government-Issued Photo ID <span style={{color:"#EF4444"}}>*</span></label>
-              <input type="url" placeholder="Paste link to your uploaded ID (Google Drive / Dropbox — set to Anyone with link)" className={regErrors.photoId?"field-err":""} value={regForm.photoId||""} onChange={e=>setRegForm({...regForm,photoId:e.target.value})}/>
-              {regErrors.photoId&&<div className="err-msg">{regErrors.photoId}</div>}
-              <div style={{fontSize:11,color:"#6B7280",marginTop:4,lineHeight:1.7}}>Accepted: National ID card, Voter's Card, Driver's Licence, International Passport or NIN slip. Upload to Google Drive or Dropbox, share as "Anyone with link can view", then paste the link here. Used for identity verification only.</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                <label style={{display:"flex",alignItems:"center",justifyContent:"center",gap:8,
+                  background:"#EFF6FF",border:"2px dashed #93C5FD",borderRadius:10,padding:"16px 12px",
+                  cursor:"pointer",fontSize:13,color:"#1D4ED8",fontWeight:600}}>
+                  <span style={{fontSize:20}}>📷</span>
+                  <span>{regForm.photoId?"✅ ID photo captured — tap to retake":"Tap here to snap your ID with your camera"}</span>
+                  <input type="file" accept="image/*" capture="environment" style={{display:"none"}}
+                    onChange={e=>{
+                      const file=e.target.files[0];
+                      if(!file) return;
+                      const reader=new FileReader();
+                      reader.onload=ev=>setRegForm({...regForm,photoId:ev.target.result});
+                      reader.readAsDataURL(file);
+                    }}/>
+                </label>
+                {regForm.photoId&&regForm.photoId.startsWith("data:")&&(
+                  <img src={regForm.photoId} alt="ID preview" style={{width:"100%",maxHeight:180,objectFit:"cover",borderRadius:8,border:"1.5px solid #BBF7D0"}}/>
+                )}
+                {regErrors.photoId&&<div className="err-msg">{regErrors.photoId}</div>}
+                <div style={{fontSize:11,color:"#6B7280",lineHeight:1.7}}>
+                  Accepted: National ID card, Voter's Card, Driver's Licence, International Passport or NIN slip. Take a clear photo of your ID in good lighting. Used for identity verification only — never shared publicly.
+                </div>
+              </div>
             </div>
             <div className="sec-div">Bank Account</div>
             {[["bankName","Bank Name","text"],["accountName","Account Name","text"],["accountNumber","Account Number","text"]].map(([k,l,t])=>(
