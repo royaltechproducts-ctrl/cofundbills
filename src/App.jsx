@@ -2114,7 +2114,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                   <div style={{display:"flex",alignItems:"center",gap:10}}>
                     <span style={{background:"rgba(255,255,255,.15)",borderRadius:20,
                       padding:"5px 12px",color:C.white,fontSize:11,fontWeight:700}}>
-                      {assets.length} asset{assets.length!==1?"s":""} accessible
+                      {(()=>{const counts={1:6,2:16,3:23,4:29};return counts[t.id]||assets.length;})()}{" "}assets accessible
                     </span>
                     <span style={{color:C.white,fontSize:16,fontWeight:900}}>{isOpen?"▲":"▼"}</span>
                   </div>
