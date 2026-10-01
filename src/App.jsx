@@ -879,10 +879,62 @@ CoFundBills Cooperative`});
         activated.contributionTier||1
       );
     }
-    // Activation email sent manually from cofundbills@gmail.com
     const allM = await loadMembers();
+    const mem = allM[code];
+    const mTier = getTier(mem?.contributionTier||1);
+
+    // Email to member — activation confirmation
+    await sendEmail({
+      to_email: mem?.email,
+      to_name: mem?.fullName||"Member",
+      subject: "Your CoFundBills Membership is Now Active!",
+      message: `Dear ${mem?.fullName||"Member"},
+
+Your CoFundBills Cooperative membership has been activated. Welcome to the cooperative!
+
+Your Membership Details:
+- Member ID: ${code}
+- Contribution Tier: ${mTier.label} (${fmtNGN(mTier.monthly)}/month)
+- Member Type: ${mem?.memberType==="founding"?"Founding Member":"Regular Member"}
+- Credit Score: ${mem?.creditScore||0} pts
+
+Your first monthly contribution of ${fmtNGN(mTier.monthly)} is due by the last day of this month.
+
+Payment Details:
+Account Name: Royal Tech Partnership & Investment Limited
+Bank: Zenith Bank
+Account Number: 1016621205
+Reference: ${code}
+
+After payment, send your proof of payment via WhatsApp to +234 909 999 4816.
+
+Thank you for joining CoFundBills Cooperative.
+
+CoFundBills Cooperative
+cofundbills@gmail.com | +234 909 999 4816`,
+    });
+
+    // Email to admin — activation notification
+    await sendEmail({
+      to_email: ADMIN_EMAIL,
+      to_name: "CoFundBills Admin",
+      subject: `Member Activated — ${mem?.fullName||code} (${code})`,
+      message: `A member has been successfully activated on CoFundBills.
+
+Member Details:
+- Name: ${mem?.fullName||"Unknown"}
+- Email: ${mem?.email||"—"}
+- Phone: ${mem?.phone||"—"}
+- Member ID: ${code}
+- Tier: ${mTier.label}
+- Member Type: ${mem?.memberType==="founding"?"Founding Member":"Regular Member"}
+- Activated At: ${new Date().toLocaleString("en-NG")}
+
+The member has been notified by email to make their first contribution of ${fmtNGN(mTier.monthly)} to Zenith Bank 1016621205.`,
+    });
+
     await tryFormCell(allM);
-    showToast(`${allM[code]?.fullName||code} activated.`);
+    showToast(`${mem?.fullName||code} activated. Notification emails sent.`);
   };
 
   // = Make founding member =
@@ -2471,7 +2523,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {/* Stats */}
               <div className="grid-3" style={{marginBottom:16}}>
                 {[
-                  {l:"Contribution Balance",v:fmtNGN(m.contributionBalance),c:C.blue},
+                  {l:"Accumulated Payout Balance",v:fmtNGN(m.contributionBalance),c:C.blue},
                   {l:"Credit Score",v:fmtPts(m.creditScore),c:C.gold},
                   {l:"Cycles Completed",v:m.cyclesCompleted,c:C.green},
                   {l:"Months Contributed",v:m.monthsContributed,c:C.purple},
