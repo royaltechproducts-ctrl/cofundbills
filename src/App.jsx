@@ -284,11 +284,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.da
 // GA4 Analytics Panel — standalone component
 // ============================================================
 function Ga4Panel() {
-  const [data,    setData]    = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
-  const [errMsg,  setErrMsg]  = React.useState(null);
+  const [data,    setData]    = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [errMsg,  setErrMsg]  = useState(null);
 
-  React.useEffect(()=>{
+  useEffect(()=>{
     fetch('/api/analytics')
       .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d=>{ if(d.error) setErrMsg(d.error); else setData(d); })
