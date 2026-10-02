@@ -279,6 +279,119 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.da
 `;
 
 // =
+
+// ============================================================
+// GA4 Analytics Panel — standalone component
+// ============================================================
+function Ga4Panel() {
+  const [data,    setData]    = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error,   setError]   = React.useState(null);
+
+  React.useEffect(()=>{
+    fetch('/api/analytics')
+      .then(r=>r.json())
+      .then(d=>{ if(d.error) setError(d.error); else setData(d); })
+      .catch(e=>setError(e.message))
+      .finally(()=>setLoading(false));
+  },[]);
+
+  const navy="#1A3A5C", blue="#1D4ED8", muted="#6B7280",
+        bg="#F9FAFB", dark="#1F2937", green="#16A34A",
+        errColor="#EF4444", amber="#D97706";
+
+  if(loading) return(
+    <div style={{textAlign:"center",padding:24,color:muted,fontSize:13}}>
+      Loading visitor data...
+    </div>
+  );
+  if(error) return(
+    <div style={{padding:12,background:"#FEE2E2",borderRadius:8,fontSize:12,color:errColor}}>
+      Could not load analytics: {error}
+    </div>
+  );
+  if(!data) return null;
+
+  const totalSessions = data.devices.reduce((s,d)=>s+d.sessions,0)||1;
+
+  return(
+    <div>
+      {/* Visitor counts */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginBottom:16}}>
+        {[
+          {label:"Today",        value:data.visitors.today,    icon:"👤"},
+          {label:"This Week",    value:data.visitors.week,     icon:"📅"},
+          {label:"This Month",   value:data.visitors.month,    icon:"📆"},
+          {label:"Sessions (30d)",value:data.visitors.sessions,icon:"🔄"},
+        ].map(s=>(
+          <div key={s.label} style={{background:bg,borderRadius:10,padding:12,textAlign:"center"}}>
+            <div style={{fontSize:22,marginBottom:4}}>{s.icon}</div>
+            <div style={{fontWeight:900,color:navy,fontSize:20}}>{s.value.toLocaleString()}</div>
+            <div style={{fontSize:10,color:muted,marginTop:3}}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Device + Sources */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
+        <div>
+          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>📱 Device Breakdown</div>
+          {data.devices.map(d=>{
+            const pct=Math.round((d.sessions/totalSessions)*100);
+            const icon=d.device==="mobile"?"📱":d.device==="desktop"?"🖥️":"📟";
+            return(
+              <div key={d.device} style={{marginBottom:8}}>
+                <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
+                  <span style={{textTransform:"capitalize"}}>{icon} {d.device}</span>
+                  <span style={{fontWeight:700}}>{pct}% ({d.sessions.toLocaleString()})</span>
+                </div>
+                <div style={{background:"#E5E7EB",borderRadius:4,height:6}}>
+                  <div style={{background:blue,borderRadius:4,height:6,width:pct+"%"}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div>
+          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>🔗 Traffic Sources</div>
+          {data.sources.slice(0,5).map(s=>(
+            <div key={s.source} style={{display:"flex",justifyContent:"space-between",
+              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:dark}}>{s.source}</span>
+              <span style={{fontWeight:700,color:navy}}>{s.sessions.toLocaleString()}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pages + Cities */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+        <div>
+          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>📄 Top Pages (30 days)</div>
+          {data.pages.map(p=>(
+            <div key={p.path} style={{display:"flex",justifyContent:"space-between",
+              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:dark,overflow:"hidden",textOverflow:"ellipsis",
+                whiteSpace:"nowrap",maxWidth:"65%"}}>{p.path}</span>
+              <span style={{fontWeight:700,color:navy}}>{p.views.toLocaleString()} views</span>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>🌍 Top Cities</div>
+          {data.cities.map(c=>(
+            <div key={c.city} style={{display:"flex",justifyContent:"space-between",
+              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:dark}}>{c.city}</span>
+              <span style={{fontWeight:700,color:navy}}>{c.users.toLocaleString()} visitors</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view,        setView]        = useState("landing");
   const [ajoView,     setAjoView]     = useState("landing"); // landing | create | portal
@@ -3598,8 +3711,16 @@ CoFundBills Cooperative
                   ℹ️ <strong>Fund balance note:</strong> Cooperative funds are credited from the contribution split when monthly contributions are recorded against active cells (from Month 2 onwards). First activation payments join the queue and do not yet split into funds. Balances will grow once cells activate and monthly contributions begin.
                 </div>
               </div>
+              {/* Visitor Analytics */}
+              <div className="card" style={{marginBottom:14}}>
+                <div style={{fontWeight:800,color:C.navy,marginBottom:12,fontSize:13}}>
+                  🌐 Website Visitor Analytics
+                </div>
+                <Ga4Panel/>
+              </div>
             </div>
           )}
+
         </div>
       </div>
     );
