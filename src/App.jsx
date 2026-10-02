@@ -286,48 +286,52 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:${C.bg};color:${C.da
 function Ga4Panel() {
   const [data,    setData]    = React.useState(null);
   const [loading, setLoading] = React.useState(true);
-  const [error,   setError]   = React.useState(null);
+  const [errMsg,  setErrMsg]  = React.useState(null);
 
   React.useEffect(()=>{
     fetch('/api/analytics')
-      .then(r=>r.json())
-      .then(d=>{ if(d.error) setError(d.error); else setData(d); })
-      .catch(e=>setError(e.message))
+      .then(r=>{ if(!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d=>{ if(d.error) setErrMsg(d.error); else setData(d); })
+      .catch(e=>setErrMsg(e.message))
       .finally(()=>setLoading(false));
   },[]);
 
-  const navy="#1A3A5C", blue="#1D4ED8", muted="#6B7280",
-        bg="#F9FAFB", dark="#1F2937", green="#16A34A",
-        errColor="#EF4444", amber="#D97706";
-
   if(loading) return(
-    <div style={{textAlign:"center",padding:24,color:muted,fontSize:13}}>
-      Loading visitor data...
+    <div style={{textAlign:"center",padding:24,color:"#6B7280",fontSize:13}}>
+      Loading visitor data from Google Analytics...
     </div>
   );
-  if(error) return(
-    <div style={{padding:12,background:"#FEE2E2",borderRadius:8,fontSize:12,color:errColor}}>
-      Could not load analytics: {error}
-    </div>
-  );
-  if(!data) return null;
 
-  const totalSessions = data.devices.reduce((s,d)=>s+d.sessions,0)||1;
+  if(errMsg) return(
+    <div style={{padding:14,background:"#FEF3C7",border:"1.5px solid #FCD34D",borderRadius:8,fontSize:12,color:"#92400E",lineHeight:1.8}}>
+      <strong>Analytics unavailable</strong><br/>
+      {errMsg}<br/>
+      <span style={{fontSize:11,opacity:.8}}>Check that the GA4 credentials are set in Vercel environment variables and the service account has Viewer access to the GA4 property.</span>
+    </div>
+  );
+
+  if(!data) return(
+    <div style={{padding:14,background:"#F3F4F6",borderRadius:8,fontSize:12,color:"#6B7280"}}>
+      No analytics data returned.
+    </div>
+  );
+
+  const totalSessions = (data.devices||[]).reduce((s,d)=>s+(d.sessions||0),0)||1;
 
   return(
     <div>
       {/* Visitor counts */}
       <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(120px,1fr))",gap:10,marginBottom:16}}>
         {[
-          {label:"Today",        value:data.visitors.today,    icon:"👤"},
-          {label:"This Week",    value:data.visitors.week,     icon:"📅"},
-          {label:"This Month",   value:data.visitors.month,    icon:"📆"},
-          {label:"Sessions (30d)",value:data.visitors.sessions,icon:"🔄"},
+          {label:"Today",         value:(data.visitors?.today    ||0), icon:"👤"},
+          {label:"This Week",     value:(data.visitors?.week     ||0), icon:"📅"},
+          {label:"This Month",    value:(data.visitors?.month    ||0), icon:"📆"},
+          {label:"Sessions (30d)",value:(data.visitors?.sessions ||0), icon:"🔄"},
         ].map(s=>(
-          <div key={s.label} style={{background:bg,borderRadius:10,padding:12,textAlign:"center"}}>
+          <div key={s.label} style={{background:"#F9FAFB",borderRadius:10,padding:12,textAlign:"center"}}>
             <div style={{fontSize:22,marginBottom:4}}>{s.icon}</div>
-            <div style={{fontWeight:900,color:navy,fontSize:20}}>{s.value.toLocaleString()}</div>
-            <div style={{fontSize:10,color:muted,marginTop:3}}>{s.label}</div>
+            <div style={{fontWeight:900,color:"#1A3A5C",fontSize:20}}>{(s.value||0).toLocaleString()}</div>
+            <div style={{fontSize:10,color:"#6B7280",marginTop:3}}>{s.label}</div>
           </div>
         ))}
       </div>
@@ -335,30 +339,30 @@ function Ga4Panel() {
       {/* Device + Sources */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:12}}>
         <div>
-          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>📱 Device Breakdown</div>
-          {data.devices.map(d=>{
-            const pct=Math.round((d.sessions/totalSessions)*100);
+          <div style={{fontWeight:700,color:"#1A3A5C",fontSize:12,marginBottom:8}}>📱 Device Breakdown</div>
+          {(data.devices||[]).map(d=>{
+            const pct=Math.round(((d.sessions||0)/totalSessions)*100);
             const icon=d.device==="mobile"?"📱":d.device==="desktop"?"🖥️":"📟";
             return(
               <div key={d.device} style={{marginBottom:8}}>
                 <div style={{display:"flex",justifyContent:"space-between",fontSize:12,marginBottom:3}}>
                   <span style={{textTransform:"capitalize"}}>{icon} {d.device}</span>
-                  <span style={{fontWeight:700}}>{pct}% ({d.sessions.toLocaleString()})</span>
+                  <span style={{fontWeight:700}}>{pct}% ({(d.sessions||0).toLocaleString()})</span>
                 </div>
                 <div style={{background:"#E5E7EB",borderRadius:4,height:6}}>
-                  <div style={{background:blue,borderRadius:4,height:6,width:pct+"%"}}/>
+                  <div style={{background:"#1D4ED8",borderRadius:4,height:6,width:pct+"%"}}/>
                 </div>
               </div>
             );
           })}
         </div>
         <div>
-          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>🔗 Traffic Sources</div>
-          {data.sources.slice(0,5).map(s=>(
+          <div style={{fontWeight:700,color:"#1A3A5C",fontSize:12,marginBottom:8}}>🔗 Traffic Sources</div>
+          {(data.sources||[]).slice(0,5).map(s=>(
             <div key={s.source} style={{display:"flex",justifyContent:"space-between",
-              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
-              <span style={{color:dark}}>{s.source}</span>
-              <span style={{fontWeight:700,color:navy}}>{s.sessions.toLocaleString()}</span>
+              padding:"5px 8px",background:"#F9FAFB",borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:"#1F2937"}}>{s.source}</span>
+              <span style={{fontWeight:700,color:"#1A3A5C"}}>{(s.sessions||0).toLocaleString()}</span>
             </div>
           ))}
         </div>
@@ -367,23 +371,23 @@ function Ga4Panel() {
       {/* Pages + Cities */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
         <div>
-          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>📄 Top Pages (30 days)</div>
-          {data.pages.map(p=>(
+          <div style={{fontWeight:700,color:"#1A3A5C",fontSize:12,marginBottom:8}}>📄 Top Pages (30 days)</div>
+          {(data.pages||[]).map(p=>(
             <div key={p.path} style={{display:"flex",justifyContent:"space-between",
-              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
-              <span style={{color:dark,overflow:"hidden",textOverflow:"ellipsis",
+              padding:"5px 8px",background:"#F9FAFB",borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:"#1F2937",overflow:"hidden",textOverflow:"ellipsis",
                 whiteSpace:"nowrap",maxWidth:"65%"}}>{p.path}</span>
-              <span style={{fontWeight:700,color:navy}}>{p.views.toLocaleString()} views</span>
+              <span style={{fontWeight:700,color:"#1A3A5C"}}>{(p.views||0).toLocaleString()} views</span>
             </div>
           ))}
         </div>
         <div>
-          <div style={{fontWeight:700,color:navy,fontSize:12,marginBottom:8}}>🌍 Top Cities</div>
-          {data.cities.map(c=>(
+          <div style={{fontWeight:700,color:"#1A3A5C",fontSize:12,marginBottom:8}}>🌍 Top Cities</div>
+          {(data.cities||[]).map(c=>(
             <div key={c.city} style={{display:"flex",justifyContent:"space-between",
-              padding:"5px 8px",background:bg,borderRadius:6,fontSize:11,marginBottom:4}}>
-              <span style={{color:dark}}>{c.city}</span>
-              <span style={{fontWeight:700,color:navy}}>{c.users.toLocaleString()} visitors</span>
+              padding:"5px 8px",background:"#F9FAFB",borderRadius:6,fontSize:11,marginBottom:4}}>
+              <span style={{color:"#1F2937"}}>{c.city}</span>
+              <span style={{fontWeight:700,color:"#1A3A5C"}}>{(c.users||0).toLocaleString()} visitors</span>
             </div>
           ))}
         </div>
@@ -391,6 +395,7 @@ function Ga4Panel() {
     </div>
   );
 }
+
 
 export default function App() {
   const [view,        setView]        = useState("landing");
