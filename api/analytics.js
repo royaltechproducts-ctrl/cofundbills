@@ -3,7 +3,11 @@ export default async function handler(req, res) {
   try {
     const propertyId  = process.env.GA4_PROPERTY_ID;
     const clientEmail = process.env.GA4_CLIENT_EMAIL;
-    const privateKey  = (process.env.GA4_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+    let   privateKey  = process.env.GA4_PRIVATE_KEY || '';
+
+    // Clean up the key however Vercel stored it
+    privateKey = privateKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '').trim();
+
     if (!propertyId || !clientEmail || !privateKey)
       return res.status(500).json({ error: 'Missing GA4 credentials' });
 
@@ -26,7 +30,7 @@ export default async function handler(req, res) {
     const sig = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(input));
     const jwt = `${input}.${Buffer.from(sig).toString('base64url')}`;
 
-    const tokenRes  = await fetch('https://oauth2.googleapis.com/token', {
+    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`,
