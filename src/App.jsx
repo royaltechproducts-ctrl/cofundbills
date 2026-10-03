@@ -1016,7 +1016,9 @@ Your Membership Details:
 - Member Type: ${mem?.memberType==="founding"?"Founding Member":"Regular Member"}
 - Credit Score: ${mem?.creditScore||0} pts
 
-Your first monthly contribution of ${fmtNGN(mTier.monthly)} is due by the last day of this month.
+Your first monthly contribution of ${fmtNGN(mTier.monthly)} has been received.
+
+Your next monthly contribution of ${fmtNGN(mTier.monthly)} is due by the last day of every month.
 
 Payment Details:
 Account Name: Royal Tech Partnership & Investment Limited
@@ -1024,7 +1026,7 @@ Bank: Zenith Bank
 Account Number: 1016621205
 Reference: ${code}
 
-After payment, send your proof of payment via WhatsApp to +234 909 999 4816.
+After each payment, send your proof of payment via WhatsApp to +234 909 999 4816.
 
 Thank you for joining CoFundBills Cooperative.
 
