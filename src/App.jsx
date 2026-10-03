@@ -3662,7 +3662,7 @@ CoFundBills Cooperative
                     {l:"Total Seats Filled",v:cells.reduce((a,c)=>(a+(c.seats||[]).filter(s=>s.seat_type==="contributing").length),0),c:C.purple},
                     {l:"Queue T1",v:Object.values(members).filter(m=>m.status==="active"&&(m.contributionTier||1)===1&&!cells.some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).length+" waiting",c:C.amber},
                   ].map(s=>(
-                    <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`}}>
+                    <div key={s.l} style={{padding:12,background:s.bold?C.navy+"11":C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`,outline:s.bold?`1.5px solid ${C.navy}`:undefined}}>
                       <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
                       <div style={{fontWeight:900,color:s.c,fontSize:16}}>{s.v}</div>
                     </div>
@@ -3705,8 +3705,14 @@ CoFundBills Cooperative
                     {l:"Loan Fund — Tier 4",v:fmtNGN(funds.loan_fund_t4||0),c:C.blue},
                     {l:"Administration Fund",v:fmtNGN(funds.administration||0),c:C.amber},
                     {l:"Contingency Reserve",v:fmtNGN(funds.contingency||0),c:C.burg},
+                    {l:"Queue Fund Balance",v:fmtNGN(
+                      Object.values(members).filter(m=>m.status==="active"&&!(cells||[]).some(c=>c.status==="active"&&(c.seats||[]).some(s=>s.link_code===m.linkCode))).reduce((sum,m)=>{
+                        const t=getTier(m.contributionTier||1);
+                        return sum + (Number(m.monthsContributed||0)*t.monthly);
+                      },0)
+                    ),c:C.navy,bold:true},
                   ].map(s=>(
-                    <div key={s.l} style={{padding:12,background:C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`}}>
+                    <div key={s.l} style={{padding:12,background:s.bold?C.navy+"11":C.bg,borderRadius:8,borderLeft:`3px solid ${s.c}`,outline:s.bold?`1.5px solid ${C.navy}`:undefined}}>
                       <div style={{fontSize:11,color:C.muted,marginBottom:2}}>{s.l}</div>
                       <div style={{fontWeight:900,color:s.c,fontSize:15}}>{s.v}</div>
                     </div>
