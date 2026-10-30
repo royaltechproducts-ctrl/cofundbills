@@ -450,6 +450,40 @@ export default function App() {
     setTimeout(()=>setToast(null), 4000);
   };
 
+  // = Confirmation dialog =
+  const [confirm, setConfirm] = useState(null);
+  // Usage: await showConfirm("Are you sure?") returns true/false
+  const showConfirm = (msg) => new Promise(resolve => {
+    setConfirm({msg, resolve});
+  });
+  const ConfirmDialog = () => {
+    if(!confirm) return null;
+    return(
+      <div style={{position:"fixed",inset:0,background:"rgba(13,33,55,.72)",zIndex:2000,
+        display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+        <div style={{background:"#fff",borderRadius:16,width:"100%",maxWidth:380,
+          boxShadow:"0 8px 40px rgba(13,33,55,.3)",overflow:"hidden"}}>
+          <div style={{background:`linear-gradient(135deg,${C.navy},${C.blue})`,
+            padding:"18px 22px",color:"#fff"}}>
+            <div style={{fontWeight:900,fontSize:16}}>⚠️ Confirm Action</div>
+          </div>
+          <div style={{padding:"22px",fontSize:14,color:C.dark,lineHeight:1.7}}>
+            {confirm.msg}
+          </div>
+          <div style={{padding:"14px 22px",borderTop:`1px solid ${C.border}`,
+            display:"flex",gap:10,justifyContent:"flex-end",background:C.bg}}>
+            <button className="btn btn-ghost" onClick={()=>{
+              confirm.resolve(false); setConfirm(null);
+            }}>Cancel</button>
+            <button className="btn btn-green" onClick={()=>{
+              confirm.resolve(true); setConfirm(null);
+            }}>✅ Yes, Proceed</button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // = Data loaders =
   const loadMembers = useCallback(async () => {
     const {data} = await supabase.from("cfb_members").select("*");
@@ -787,6 +821,8 @@ NOK: ${mem.nokName} — ${mem.nokPhone}`});
     if(!loan) return;
     const mem = members[loan.link_code];
     const mTier = getTier(mem?.contributionTier||1);
+    const ok = await showConfirm(`Declare LOAN DEFAULT for ${mem?.fullName||loan.link_code}?\n\nLoan: ${fmtNGN(loan.amount)}\n\nConsequences:\n• Credit score −${Math.abs(mTier.pts.loanDefault)} pts\n• Bill support suspended\n• Next of Kin notified\n\n⚠️ This is a serious action and cannot be undone.`);
+    if(!ok) return;
     // Update loan status
     await supabase.from("cfb_loans").update({status:"defaulted",
       defaulted_at:new Date().toISOString()}).eq("id",loanId);
@@ -899,6 +935,12 @@ CoFundBills Cooperative`});
   };
 
   const handleSuspendMember = async (code, suspend=true) => {
+    const mem = members[code];
+    const ok = await showConfirm(suspend
+      ? `Suspend ${mem?.fullName||code}?\n\nThis will block their access to all CoFundBills services until reinstated.`
+      : `Reinstate ${mem?.fullName||code}?\n\nThis will restore their full access to CoFundBills services.`
+    );
+    if(!ok) return;
     await supabase.from("cfb_members").update({
       status: suspend?"suspended":"active"
     }).eq("link_code",code);
@@ -975,6 +1017,10 @@ CoFundBills Cooperative`});
     const mem = members[linkCode];
     if(!mem) return;
     const t = getTier(mem.contributionTier||1);
+    const monthNum = (mem.monthsContributed||0)+1;
+    const ok = await showConfirm(`Record Month ${monthNum} payment of ${fmtNGN(t.monthly)} for ${mem.fullName} (${linkCode})?\n\nThis will:\n• Add 1 month to their record (Month ${monthNum})\n• Credit ${fmtNGN(t.benefitPool)} to their benefit pool\n• Award ${t.pts.contribution} credit score points\n• Send them a confirmation email`);
+    if(!ok) return;
+    const t = getTier(mem.contributionTier||1);
     await supabase.from("cfb_members").update({
       months_contributed:(mem.monthsContributed||0)+1,
       contribution_balance:(mem.contributionBalance||0)+t.benefitPool,
@@ -1007,6 +1053,9 @@ CoFundBills Cooperative`});
 
   // = Admin activate =
   const handleActivate = async code => {
+    const mem = members[code];
+    const ok = await showConfirm(`Activate ${mem?.fullName||code} as a CoFundBills member?\n\nTier: ${getTier(mem?.contributionTier||1).label}\nThis will record their Month 1 contribution and send activation emails.`);
+    if(!ok) return;
     await supabase.from("cfb_members").update({
       status:"active", activated_at:new Date().toISOString()
     }).eq("link_code",code);
@@ -1094,6 +1143,9 @@ The member has been notified by email to make their first contribution of ${fmtN
 
   // = Make founding member =
   const handleMakeFounding = async code => {
+    const mem = members[code];
+    const ok = await showConfirm(`Upgrade ${mem?.fullName||code} to Founding Member status?\n\nThis gives them founding member privileges and cannot be undone easily.`);
+    if(!ok) return;
     await supabase.from("cfb_members").update({member_type:"founding"}).eq("link_code",code);
     await loadMembers();
     showToast("Upgraded to Founding Member.");
@@ -1103,6 +1155,10 @@ The member has been notified by email to make their first contribution of ${fmtN
   const handleRecordContrib = async (cellCode, linkCode) => {
     const cell = cells.find(c=>c.cell_code===cellCode);
     if(!cell) return;
+    const mem = members[linkCode];
+    const mTier = getTier(mem?.contributionTier||1);
+    const ok = await showConfirm(`Record Month ${cell.month_number||1} contribution for ${mem?.fullName||linkCode}?\n\nAmount: ${fmtNGN(mTier.monthly)}\nCell: ${cellCode}\n\nThis action cannot be undone.`);
+    if(!ok) return;
     const monthNum = cell.month_number||1;
     await supabase.from("cfb_contributions").insert({
       cell_code:cellCode, link_code:linkCode, month_number:monthNum,
@@ -1153,6 +1209,8 @@ The member has been notified by email to make their first contribution of ${fmtN
   };
 
   const completeCycle = async (cellCode, seats) => {
+    const ok = await showConfirm(`Complete the 10-month cycle for Cell ${cellCode}?\n\nThis will:\n• Queue payouts for all ${seats.filter(s=>s.seat_type==="contributing").length} contributing members\n• Mark the cell as completed\n• Award cycle completion credit points\n\nThis cannot be undone.`);
+    if(!ok) return;
     const contributors = seats.filter(s=>s.seat_type==="contributing");
     for(const c of contributors) {
       // Each member gets payout based on their own tier (mixed-tier cells use member's tier)
@@ -4124,6 +4182,7 @@ CoFundBills Cooperative`,
   return (
     <>
       <style>{CSS}</style>
+      <ConfirmDialog />
 
       {/* Navbar */}
       <nav className="nav">
