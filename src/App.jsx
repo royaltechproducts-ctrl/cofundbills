@@ -970,6 +970,41 @@ CoFundBills Cooperative`});
     setModal(null);
   };
 
+  // = Record pre-cell queue payment =
+  const handleRecordQueuePayment = async (linkCode) => {
+    const mem = members[linkCode];
+    if(!mem) return;
+    const t = getTier(mem.contributionTier||1);
+    await supabase.from("cfb_members").update({
+      months_contributed:(mem.monthsContributed||0)+1,
+      contribution_balance:(mem.contributionBalance||0)+t.benefitPool,
+      credit_score:(mem.creditScore||0)+t.pts.contribution,
+    }).eq("link_code",linkCode);
+    await supabase.from("cfb_credit_events").insert({
+      link_code:linkCode, event_type:"contribution",
+      points:t.pts.contribution,
+      description:`Pre-cell Month ${(mem.monthsContributed||0)+1} payment received — ${t.label} (queue)`,
+    });
+    await supabase.from("cfb_funds").update({
+      balance:(funds.bill_support||0)+t.billSupport
+    }).eq("fund_type","bill_support");
+    await supabase.from("cfb_funds").update({
+      balance:(funds.administration||0)+t.admin
+    }).eq("fund_type","administration");
+    await supabase.from("cfb_funds").update({
+      balance:(funds.contingency||0)+t.contingency
+    }).eq("fund_type","contingency");
+    if(mem.email) {
+      await sendEmail({
+        to_email:mem.email, to_name:mem.fullName,
+        subject:"CoFundBills — Monthly Payment Received (Queue)",
+        message:`Dear ${mem.fullName},\n\nYour Month ${(mem.monthsContributed||0)+1} contribution of ${fmtNGN(t.monthly)} has been received and credited to your account.\n\nYour cell is still forming. This payment is counted as your Month ${(mem.monthsContributed||0)+1} contribution — when your cell activates, your next payment due will be Month ${(mem.monthsContributed||0)+2}.\n\nCurrent contributions recorded: ${(mem.monthsContributed||0)+1} month(s)\nBenefit pool balance: ${fmtNGN((mem.contributionBalance||0)+t.benefitPool)}\n\nLog in to check your status: cofundbills.vercel.app\nQuestions? WhatsApp +234 909 999 4816\n\nWarm regards,\nCoFundBills Cooperative`,
+      });
+    }
+    await loadMembers(); await loadFunds();
+    showToast(`Month ${(mem.monthsContributed||0)+1} payment recorded for ${mem.fullName}`);
+  };
+
   // = Admin activate =
   const handleActivate = async code => {
     await supabase.from("cfb_members").update({
@@ -1118,28 +1153,27 @@ The member has been notified by email to make their first contribution of ${fmtN
   };
 
   const completeCycle = async (cellCode, seats) => {
-    const {data:cellData} = await supabase.from("cfb_cells").select("contribution_tier").eq("cell_code",cellCode).single();
-    const cellTierNum = cellData?.contribution_tier||1;
-    const cellTier = getTier(cellTierNum);
     const contributors = seats.filter(s=>s.seat_type==="contributing");
     for(const c of contributors) {
-      await supabase.from("cfb_payouts").insert({
-        cell_code:cellCode, link_code:c.link_code, amount:cellTier.cyclePayout, status:"pending"
-      });
+      // Each member gets payout based on their own tier (mixed-tier cells use member's tier)
       const m = members[c.link_code];
+      const mTierNum = m?.contributionTier||1;
+      const mTier = getTier(mTierNum);
+      await supabase.from("cfb_payouts").insert({
+        cell_code:cellCode, link_code:c.link_code, amount:mTier.cyclePayout, status:"pending"
+      });
       await supabase.from("cfb_members").update({
         cycles_completed:(m?.cyclesCompleted||0)+1
       }).eq("link_code",c.link_code);
-      // Cycle completion credit
+      // Cycle completion credit — based on member's own tier
       await supabase.from("cfb_credit_events").insert({
         link_code:c.link_code, event_type:"cycle_complete",
-        points:cellTier.pts.cycleContrib, cell_code:cellCode,
-        description:`Cycle completed — ${cellTier.label}`,
+        points:mTier.pts.cycleContrib, cell_code:cellCode,
+        description:`Cycle completed — ${mTier.label}`,
       });
       await supabase.from("cfb_members").update({
-        credit_score:Math.max(0,(m?.creditScore||0)+cellTier.pts.cycleContrib)
+        credit_score:Math.max(0,(m?.creditScore||0)+mTier.pts.cycleContrib)
       }).eq("link_code",c.link_code);
-
     }
     await supabase.from("cfb_cells").update({
       status:"completed", completed_at:new Date().toISOString()
@@ -3451,6 +3485,37 @@ CoFundBills Cooperative
                         </div>
                       );
                     })()}
+                  </div>
+                );
+              })()}
+
+              {(()=>{
+                const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
+                const queueMembers = Object.values(members).filter(m=>
+                  m.status==="active" && m.memberType!=="admin" && !seatedCodes.has(m.linkCode)
+                ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
+                if(queueMembers.length===0) return null;
+                return(
+                  <div style={{marginBottom:18}}>
+                    <div className="table-head">In Queue — Awaiting Cell ({queueMembers.length})</div>
+                    {queueMembers.map(m=>{
+                      const t = getTier(m.contributionTier||1);
+                      return(
+                        <div key={m.linkCode} className="table-row">
+                          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                            <div>
+                              <div style={{fontWeight:700,color:C.navy}}>{m.fullName}</div>
+                              <div style={{fontSize:11,color:C.muted}}>{m.linkCode} · {t.label} · {fmtNGN(t.monthly)}/mo</div>
+                              <div style={{fontSize:11,color:C.muted}}>{m.monthsContributed||0} month(s) recorded · Balance: {fmtNGN(m.contributionBalance)}</div>
+                            </div>
+                            <button className="btn btn-sm btn-green"
+                              onClick={()=>handleRecordQueuePayment(m.linkCode)}>
+                              ✅ Record Month {(m.monthsContributed||0)+1} Payment
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 );
               })()}
