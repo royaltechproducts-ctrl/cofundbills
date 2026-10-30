@@ -96,7 +96,7 @@ const getAssetLoanRate = (tier, termMonths) => {
   const bracket = tier.loanRates.find(r => termMonths <= r.maxTerm);
   return bracket ? bracket.rate : tier.loanRates[tier.loanRates.length-1].rate;
 };
-const getEffectiveTier = (memberTierNum, cellTierNum) => Math.min(memberTierNum||1, cellTierNum||1);
+const getEffectiveTier = (memberTierNum, cellTierNum) => memberTierNum||1;
 
 // Legacy constants (Tier 1 defaults)
 const MONTHLY_CONTRIB  = 10000;
@@ -1391,7 +1391,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
     ["What is the CoFund Credit Score?","Your credit score is built from your cooperative behaviour: +20 per monthly contribution (contributing members), +5 per active cell month equally across all seat types, +100 for a completed cycle (contributing members) and +50 flat for all network seat holders at cycle end. Deductions for missed contributions (−30), loan defaults (−100) and bill support claims (−500). A higher score gives better loan access, lower interest rates and unlocks bill support eligibility at 1,000+ points."],
     ["What loan can I access?","Based on your CoFund Credit Score: Loan and bill support services unlock at a minimum credit score per tier: Tier 1 at 400 pts, Tier 2 at 2,000 pts, Tier 3 at 4,000 pts, Tier 4 at 8,000 pts. Once unlocked, your interest rate and loan limit are determined by your credit score category — Excellent Performance (lowest risk): 1%/month · Strong Performance: 2%/month · Standard Performance: 3%/month · Minimal Performance: 4%/month. Loan limits scale with your contribution tier and credit category. Approval is subject to available fund liquidity, repayment capacity and cooperative credit policy."],
     ["What is the Bill Support Fund?","25% of every contribution (₦2,500 per ₦10,000 paid) funds the cooperative's Bill Support Fund. Active members can apply for support for house rent, school fees, medical bills, electricity, water and household essentials. Applications are reviewed by admin."],
-    ["How do contribution cells form?","When you activate your membership, you join your tier's queue — Tier 1 with Tier 1, Tier 2 with Tier 2, and so on. The moment 10 members are in the queue, a new contribution cell forms instantly and automatically. First activated, first placed. Tiers never mix. There are no mergers, no timers and no complicated arrangements."],
+    ["How do contribution cells form?","When you activate your membership, you join the shared queue alongside members from all tiers. The moment 10 members are in the queue, a new contribution cell forms instantly and automatically. First activated, first placed. There are no mergers, no timers and no complicated arrangements."],
     ["Is CoFundBills a Pyramid Scheme?","No — CoFundBills is not a pyramid scheme. Invite links earn Referral Bonus points only — never cash. The cooperative functions with zero new members. Earnings come from cycle completion — not from recruiting others. The credit score rewards contribution discipline and repayment history. CoFundBills is being registered as a Multi-Purpose Cooperative Society under Lagos State law. Every naira has a documented destination."],
     ["What contribution tiers are available?","CoFundBills offers four contribution tiers. Tier 1 (₦10,000/month) — cycle payout ₦50,000, bill support up to ₦500,000. Tier 2 (₦50,000/month) — cycle payout ₦250,000, bill support up to ₦2,500,000. Tier 3 (₦100,000/month) — cycle payout ₦500,000, bill support up to ₦5,000,000. Tier 4 (₦200,000/month) — cycle payout ₦1,000,000, bill support up to ₦10,000,000. You choose your tier at registration and can change it any time before your cell activates."],
     ["What if a member in my cell defaults on their contribution?","Your payout is fully protected. The cooperative's dedicated Contingency Reserve covers any member's missed contribution immediately — you will never be shortchanged because of someone else's default. Defaulting members face a credit score deduction of 30 points per missed month and are subject to cooperative disciplinary action. Their failure never reaches you. This is why the Contingency Reserve exists — to absorb shocks so the cooperative's promises to you are always kept."],
@@ -1827,10 +1827,10 @@ Answer warmly, concisely and accurately. Never invent information.`;
         <div className="section-inner">
           <span className="section-tag" style={{background:"#FEF3C7",color:C.amber}}>How Your Cell Forms</span>
           <h2 className="section-title">Simple. Fair. Automatic.</h2>
-          <p className="section-sub">There are no complex group arrangements or network chains. When you activate your membership, you simply join your tier's queue. The moment 10 members are in the queue — a new contribution cell forms instantly. First activated, first placed.</p>
+          <p className="section-sub">There are no complex group arrangements or network chains. When you activate your membership, you join the shared queue. The moment 10 members are in the queue — a new contribution cell forms instantly. First activated, first placed.</p>
           <div className="grid-2">
             {[
-              {icon:"🎯",title:"Four Independent Queues",desc:"One queue per contribution tier. Tier 1 members form Tier 1 cells. Tier 2 members form Tier 2 cells. Tiers never mix. You always contribute alongside members at the same level.",color:C.blue},
+              {icon:"🎯",title:"One Shared Queue",desc:"All members — across all contribution tiers — join the same queue. The first 10 activated members form a cell together, regardless of tier. First activated, first placed.",color:C.blue},
               {icon:"⚡",title:"Instant Cell Formation",desc:"The moment 10 activated members are in a tier's queue, a new contribution cell forms automatically — no waiting, no admin intervention, no complicated arrangements.",color:C.green},
               {icon:"🔄",title:"Tier Flexibility",desc:"You can change your contribution tier any time before your cell forms. Switch up or down — you simply move to the back of your new tier's queue.",color:C.amber},
               {icon:"🛡️",title:"Your Payout is Protected",desc:"If any cell member defaults, the effect affects only that cell member. No cycle payout rotation. No member's contribution dependencies. Your cycle payout is guaranteed regardless of fellow members' behaviour.",color:C.burg},
@@ -2660,47 +2660,38 @@ Answer warmly, concisely and accurately. Never invent information.`;
               {/* Invite link */}
               {/* Queue Status — all tiers */}
               <div className="card" style={{marginBottom:14}}>
-                <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>📊 Live Queue Status — All Tiers</div>
-                <div style={{fontSize:11,color:C.muted,marginBottom:12,lineHeight:1.6}}>
-                  Each tier queue forms a new contribution cell automatically when 10 members are waiting. Choose a tier that suits your financial capacity — a fuller queue means a faster cell activation.
-                </div>
-                {Object.values(TIERS).map(t=>{
-                  const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
-                  const queueCount = Object.values(members).filter(mx=>
-                    mx.status==="active" && (mx.contributionTier||1)===t.id &&
-                    !seatedCodes.has(mx.linkCode)
-                  ).length;
-                  const pct = Math.round((queueCount/10)*100);
-                  const barColor = queueCount>=8?C.green:queueCount>=5?C.amber:C.blue;
-                  const isMyTier = (m.contributionTier||1)===t.id;
-                  return(
-                    <div key={t.id} style={{marginBottom:12,padding:10,borderRadius:10,
-                      background:isMyTier?`${t.color}0D`:C.bg,
-                      border:`1.5px solid ${isMyTier?t.color:C.border}`}}>
-                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,flexWrap:"wrap",gap:4}}>
-                        <div>
-                          <span style={{fontWeight:800,color:t.color,fontSize:12}}>{t.label}</span>
-                          {isMyTier&&<span style={{background:t.color,color:C.white,borderRadius:20,
-                            padding:"1px 7px",fontSize:9,fontWeight:700,marginLeft:6}}>YOUR TIER</span>}
-                          <span style={{color:C.muted,fontSize:11,marginLeft:6}}>{t.name} · {fmtNGN(t.cyclePayout)} payout</span>
-                        </div>
-                        <span style={{fontWeight:900,color:barColor,fontSize:13}}>{queueCount}/10</span>
-                      </div>
-                      <div className="score-bar">
-                        <div className="score-fill" style={{width:pct+"%",background:barColor}}/>
-                      </div>
-                      <div style={{fontSize:10,color:C.muted,marginTop:4}}>
-                        {queueCount===0?"No members waiting yet"
-                          :queueCount<5?`${queueCount} member${queueCount!==1?"s":""} waiting — early stage`
-                          :queueCount<8?`${queueCount} members — growing queue`
-                          :queueCount<10?`${10-queueCount} more needed — cell forming soon!`
-                          :"Cell forming now!"}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
+  <div style={{fontWeight:800,color:C.navy,marginBottom:4,fontSize:13}}>📊 Live Queue Status</div>
+  <div style={{fontSize:11,color:C.muted,marginBottom:12,lineHeight:1.6}}>
+    All members share one queue regardless of contribution tier. The first 10 activated members form a cell together — first activated, first placed.
+  </div>
+  {(()=>{
+    const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
+    const queueCount = Object.values(members).filter(mx=>
+      mx.status==="active" && mx.memberType!=="admin" &&
+      !seatedCodes.has(mx.linkCode)
+    ).length;
+    const pct = Math.round((queueCount/10)*100);
+    const barColor = queueCount>=8?C.green:queueCount>=5?C.amber:C.blue;
+    return(
+      <div style={{padding:10,borderRadius:10,background:C.bg,border:`1.5px solid ${C.border}`}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
+          <span style={{fontWeight:800,color:C.navy,fontSize:12}}>Shared Queue — All Tiers</span>
+          <span style={{fontWeight:900,color:barColor,fontSize:13}}>{queueCount}/10</span>
+        </div>
+        <div className="score-bar">
+          <div className="score-fill" style={{width:pct+"%",background:barColor}}/>
+        </div>
+        <div style={{fontSize:10,color:C.muted,marginTop:4}}>
+          {queueCount===0?"No members waiting yet"
+            :queueCount<5?`${queueCount} member${queueCount!==1?"s":""} waiting — early stage`
+            :queueCount<8?`${queueCount} members — growing queue`
+            :queueCount<10?`${10-queueCount} more needed — cell forming soon!`
+            :"Cell forming now!"}
+        </div>
+      </div>
+    );
+  })()}
+</div>
               <div className="card">
                 <div style={{fontWeight:800,color:C.navy,marginBottom:8,fontSize:13}}>Your Co-Fund Invite Link</div>
                 <div style={{fontSize:12,color:C.muted,marginBottom:10,lineHeight:1.7}}>
@@ -3759,48 +3750,46 @@ CoFundBills Cooperative
 
   // = Try to form a cell =
   const tryFormCell = async (allMembers) => {
-    for(const tierNum of [1,2,3,4]) {
-      const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
-      const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
-      const queue = Object.values(allMembers).filter(m=>
-        m.status==="active" &&
-        m.memberType!=="admin" &&
-        (m.contributionTier||1)===tierNum &&
-        !seatedCodes.has(m.linkCode)
-      ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
+  const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
+  const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
+  const queue = Object.values(allMembers).filter(m=>
+    m.status==="active" &&
+    m.memberType!=="admin" &&
+    !seatedCodes.has(m.linkCode)
+  ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
 
-      if(queue.length>=10){
-        const ten = queue.slice(0,10);
-        const cellCode = genCode("CELL-");
-        const now = new Date();
-        const activationMonth = now.toISOString().slice(0,7);
-        const nextDeadline = new Date(now.getFullYear(), now.getMonth()+2, 0);
-        const nextDeadlineStr = nextDeadline.toISOString().slice(0,10);
-        await supabase.from("cfb_cells").insert({
-          cell_code:cellCode, status:"active",
-          contribution_tier:tierNum,
-          started_at:now.toISOString(), month_number:1,
-          activation_month:activationMonth,
-          next_payment_deadline:nextDeadlineStr,
-        });
-        for(const m of ten){
-          await supabase.from("cfb_cell_members").insert({
-            cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
-          });
-        }
-        const t = getTier(tierNum);
-        for(const m of ten){
-          if(m.email) {
-            await sendEmail({
-              to_email:m.email, to_name:m.fullName,
-              subject:`CoFundBills — Your Contribution Cell is Now Active!`,
-              message:`Dear ${m.fullName},
+  if(queue.length>=10){
+    const ten = queue.slice(0,10);
+    const cellCode = genCode("CELL-");
+    const now = new Date();
+    const activationMonth = now.toISOString().slice(0,7);
+    const nextDeadline = new Date(now.getFullYear(), now.getMonth()+2, 0);
+    const nextDeadlineStr = nextDeadline.toISOString().slice(0,10);
+    await supabase.from("cfb_cells").insert({
+      cell_code:cellCode, status:"active",
+      contribution_tier:0,
+      started_at:now.toISOString(), month_number:1,
+      activation_month:activationMonth,
+      next_payment_deadline:nextDeadlineStr,
+    });
+    for(const m of ten){
+      await supabase.from("cfb_cell_members").insert({
+        cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
+      });
+    }
+    for(const m of ten){
+      const t = getTier(m.contributionTier||1);
+      if(m.email) {
+        await sendEmail({
+          to_email:m.email, to_name:m.fullName,
+          subject:`CoFundBills — Your Contribution Cell is Now Active!`,
+          message:`Dear ${m.fullName},
 
-Great news! Your CoFundBills ${t.label} contribution cell has been formed and is now active.
+Great news! Your CoFundBills contribution cell has been formed and is now active.
 
 Cell Code: ${cellCode}
-Tier: ${t.label} (${t.name})
-Cell Members: 10 contributing members
+Your Tier: ${t.label} (${t.name})
+Cell Members: 10 contributing members (mixed tiers)
 
 YOUR PAYMENT SCHEDULE:
 Month 1 (your activation payment) — Already paid ✅
@@ -3815,15 +3804,13 @@ Questions? WhatsApp +234 909 999 4816
 
 Warm regards,
 CoFundBills Cooperative`,
-            });
-          }
-        }
-        await loadCells();
-        showToast(`Tier ${tierNum} cell ${cellCode} formed with 10 members!`);
+        });
       }
     }
-  };
-
+    await loadCells();
+    showToast(`Cell ${cellCode} formed with 10 members!`);
+  }
+};
   // = Modal renderer =
   const renderModal = () => {
     if(!modal) return null;
