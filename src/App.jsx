@@ -1209,9 +1209,11 @@ The member has been notified by email to make their first contribution of ${fmtN
   };
 
   const completeCycle = async (cellCode, seats) => {
-    const ok = await showConfirm(`Complete the 10-month cycle for Cell ${cellCode}?\n\nThis will:\n• Queue payouts for all ${seats.filter(s=>s.seat_type==="contributing").length} contributing members\n• Mark the cell as completed\n• Award cycle completion credit points\n\nThis cannot be undone.`);
+    const realContribs = seats.filter(s=>s.seat_type==="contributing"&&s.link_code!=="AVATAR");
+    const avatarCount = seats.filter(s=>s.link_code==="AVATAR").length;
+    const ok = await showConfirm(`Complete the 10-month cycle for Cell ${cellCode}?\n\nThis will:\n• Queue payouts for ${realContribs.length} real contributing members${avatarCount>0?`\n• Skip ${avatarCount} avatar seat${avatarCount!==1?"s":""} (no payout)`:""}\n• Mark the cell as completed\n• Award cycle completion credit points\n\nThis cannot be undone.`);
     if(!ok) return;
-    const contributors = seats.filter(s=>s.seat_type==="contributing");
+    const contributors = realContribs;
     for(const c of contributors) {
       // Each member gets payout based on their own tier (mixed-tier cells use member's tier)
       const m = members[c.link_code];
@@ -1418,18 +1420,30 @@ Answer warmly, concisely and accurately. Never invent information.`;
   };
 
   // = Cell Visual Component =
-  const CellVisual = ({cell}) => {
+  const maskName = (fullName) => {
+    if(!fullName) return "?";
+    const parts = fullName.trim().split(" ");
+    const first = parts[0]||"";
+    const last = parts.slice(1).join(" ");
+    if(!last) return first;
+    return `${first} ${last[0]}${"*".repeat(Math.min(last.length-1,4))}.`;
+  };
+
+  const CellVisual = ({cell, viewerLinkCode}) => {
     const seats = cell.seats||[];
-    const contribs  = seats.filter(s=>s.seat_type==="contributing");
-    const netSeats  = seats.filter(s=>s.seat_type!=="contributing");
-    const empty     = Math.max(0, 10-contribs.length);
+    const contribs  = seats.filter(s=>s.seat_type==="contributing"&&s.link_code!=="AVATAR");
+    const avatarSeats = seats.filter(s=>s.link_code==="AVATAR");
+    const netSeats  = seats.filter(s=>s.seat_type!=="contributing"&&s.link_code!=="AVATAR");
+    const totalFilled = contribs.length + avatarSeats.length + netSeats.length;
+    const empty     = Math.max(0, 10-totalFilled);
     const pct       = Math.round((cell.month_number||0)/CYCLE_MONTHS*100);
+    const tierColors = {1:C.blue,2:C.green,3:"#7C3AED",4:"#B45309"};
     return(
       <div className="card" style={{marginBottom:14}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
           <div>
             <div style={{fontWeight:800,color:C.navy,fontSize:13}}>{cell.cell_code}</div>
-            <div style={{fontSize:11,color:C.muted}}>{seats.length} members · Month {cell.month_number||0}/{CYCLE_MONTHS}</div>
+            <div style={{fontSize:11,color:C.muted}}>{totalFilled}/10 seats · Month {cell.month_number||0}/{CYCLE_MONTHS}</div>
           </div>
           <span className="pill" style={{
             background:cell.status==="active"?"#BBF7D0":cell.status==="completed"?"#BFDBFE":"#FEF3C7",
@@ -1445,28 +1459,73 @@ Answer warmly, concisely and accurately. Never invent information.`;
             <div className="score-bar"><div className="score-fill" style={{width:pct+"%",background:C.blue}}/></div>
           </div>
         )}
-        {/* Seat dots */}
-        <div className="cell-vis">
+        {/* Member list */}
+        <div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:10}}>
           {contribs.map((s,i)=>{
-            const col = SEAT.contributing;
-            const name = (members[s.link_code]?.fullName||"?").split(" ").map(w=>w[0]).join("").slice(0,2);
-            return <div key={i} className="seat-dot" style={{background:col.bg}} title={`${members[s.link_code]?.fullName||s.link_code} (Contributing)`}>{name}</div>;
+            const mem = members[s.link_code];
+            const isMe = viewerLinkCode && s.link_code===viewerLinkCode;
+            const tierNum = mem?.contributionTier||1;
+            const tierColor = tierColors[tierNum]||C.blue;
+            const initials = (mem?.fullName||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            return(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:8,
+                background:isMe?"#EFF6FF":"#F9FAFB",borderRadius:8,padding:"7px 10px",
+                border:isMe?`1.5px solid ${C.blue}`:"1.5px solid #E5E7EB"}}>
+                <div style={{width:32,height:32,borderRadius:"50%",background:tierColor,
+                  color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:11,fontWeight:800,flexShrink:0}}>{initials}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:12,color:C.navy}}>
+                    {isMe?"You — "+maskName(mem?.fullName):maskName(mem?.fullName)}
+                  </div>
+                  <div style={{fontSize:10,color:C.muted}}>T{tierNum} · {getTier(tierNum).label}</div>
+                </div>
+                <span style={{fontSize:10,background:tierColor+"22",color:tierColor,
+                  borderRadius:20,padding:"2px 7px",fontWeight:700,flexShrink:0}}>T{tierNum}</span>
+              </div>
+            );
           })}
-          {Array.from({length:empty}).map((_,i)=>(
-            <div key={"e"+i} className="seat-dot" style={{background:"#E5E7EB",border:"2px dashed #9CA3AF",color:C.muted}}>?</div>
+          {avatarSeats.map((_,i)=>(
+            <div key={"av"+i} style={{display:"flex",alignItems:"center",gap:8,
+              background:"#F5F3FF",borderRadius:8,padding:"7px 10px",
+              border:"1.5px dashed #C4B5FD"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"#DDD6FE",
+                color:"#7C3AED",display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:14,flexShrink:0}}>🤖</div>
+              <div style={{flex:1}}>
+                <div style={{fontWeight:700,fontSize:12,color:"#7C3AED"}}>Reserved Seat</div>
+                <div style={{fontSize:10,color:C.muted}}>Awaiting new member · No payout</div>
+              </div>
+              <span style={{fontSize:10,background:"#EDE9FE",color:"#7C3AED",
+                borderRadius:20,padding:"2px 7px",fontWeight:700}}>Avatar</span>
+            </div>
           ))}
           {netSeats.map((s,i)=>{
+            const mem = members[s.link_code];
             const col = SEAT[s.seat_type]||SEAT.founding;
-            const name = (members[s.link_code]?.fullName||"?").split(" ").map(w=>w[0]).join("").slice(0,2);
-            return <div key={"n"+i} className="seat-dot" style={{background:col.bg,border:`2px solid ${C.gold}`}} title={`${members[s.link_code]?.fullName||s.link_code} (${col.label})`}>{name}</div>;
+            const initials = (mem?.fullName||"?").split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            return(
+              <div key={"n"+i} style={{display:"flex",alignItems:"center",gap:8,
+                background:"#FFFBEB",borderRadius:8,padding:"7px 10px",border:`1.5px solid ${C.gold}`}}>
+                <div style={{width:32,height:32,borderRadius:"50%",background:col.bg,
+                  color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:11,fontWeight:800,flexShrink:0}}>{initials}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontWeight:700,fontSize:12,color:C.navy}}>{maskName(mem?.fullName)}</div>
+                  <div style={{fontSize:10,color:C.muted}}>{col.label}</div>
+                </div>
+              </div>
+            );
           })}
-        </div>
-        {/* Legend */}
-        <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center",marginTop:6}}>
-          {Object.entries(SEAT).map(([k,v])=>(
-            <span key={k} style={{fontSize:10,display:"flex",alignItems:"center",gap:3,color:C.muted}}>
-              <span style={{width:8,height:8,borderRadius:"50%",background:v.bg,display:"inline-block"}}/>{v.label}
-            </span>
+          {Array.from({length:empty}).map((_,i)=>(
+            <div key={"e"+i} style={{display:"flex",alignItems:"center",gap:8,
+              background:"#F9FAFB",borderRadius:8,padding:"7px 10px",
+              border:"1.5px dashed #D1D5DB"}}>
+              <div style={{width:32,height:32,borderRadius:"50%",background:"#E5E7EB",
+                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:16,flexShrink:0}}>·</div>
+              <div style={{fontSize:12,color:C.muted}}>Open seat</div>
+            </div>
           ))}
         </div>
       </div>
@@ -2843,7 +2902,7 @@ Answer warmly, concisely and accurately. Never invent information.`;
                         </div>
                       </div>
                     )}
-                    <CellVisual cell={c}/>
+                    <CellVisual cell={c} viewerLinkCode={m.linkCode}/>
                   </div>
                 );
               })}
@@ -3353,7 +3412,7 @@ ${inviteLink}`;
               let sent = 0;
               for(const cell of cells.filter(c=>c.status==="active")){
                 const t = getTier(cell.contribution_tier||1);
-                for(const seat of (cell.seats||[]).filter(s=>s.seat_type==="contributing")){
+                for(const seat of (cell.seats||[]).filter(s=>s.seat_type==="contributing"&&s.link_code!=="AVATAR")){
                   const mem = members[seat.link_code];
                   if(mem?.email){
                     await sendEmail({
@@ -3611,6 +3670,28 @@ CoFundBills Cooperative
           {/* Cells tab */}
           {adminTab==="cells"&&(
             <div>
+              {/* Manual cell activation with avatars */}
+              {(()=>{
+                const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
+                const queueCount = Object.values(members).filter(m=>
+                  m.status==="active" && m.memberType!=="admin" && !seatedCodes.has(m.linkCode)
+                ).length;
+                if(queueCount>0 && queueCount<10) return(
+                  <div style={{background:"#F5F3FF",border:"1.5px solid #C4B5FD",borderRadius:12,padding:16,marginBottom:16}}>
+                    <div style={{fontWeight:800,color:"#7C3AED",marginBottom:4,fontSize:13}}>🤖 Activate Cell with Avatar Seats</div>
+                    <div style={{fontSize:12,color:"#5B21B6",marginBottom:12,lineHeight:1.7}}>
+                      You have <strong>{queueCount} real member{queueCount!==1?"s":""}</strong> in the queue — {10-queueCount} short of a full cell.
+                      You can activate a cell now using <strong>{10-queueCount} avatar placeholder seat{10-queueCount!==1?"s":""}</strong> to get things started.
+                      Avatars don't pay or receive payouts. Real members' benefits are fully preserved.
+                    </div>
+                    <button className="btn btn-sm" style={{background:"#7C3AED",color:"#fff"}}
+                      onClick={handleForceFormCell}>
+                      🚀 Activate Cell Now ({queueCount} real + {10-queueCount} avatars)
+                    </button>
+                  </div>
+                );
+                return null;
+              })()}
               {cells.length===0&&<div style={{padding:24,textAlign:"center",color:C.muted}}>No cells yet</div>}
               {cells.map(c=>(
                 <div key={c.cell_code} style={{marginBottom:16}}>
@@ -3883,6 +3964,12 @@ CoFundBills Cooperative
 
   if(queue.length>=10){
     const ten = queue.slice(0,10);
+    await _formCellWithMembers(ten);
+  }
+};
+
+  // Internal cell formation helper (used by auto and manual avatar-fill)
+  const _formCellWithMembers = async (realMembers, avatarCount=0) => {
     const cellCode = genCode("CELL-");
     const now = new Date();
     const activationMonth = now.toISOString().slice(0,7);
@@ -3895,12 +3982,18 @@ CoFundBills Cooperative
       activation_month:activationMonth,
       next_payment_deadline:nextDeadlineStr,
     });
-    for(const m of ten){
+    for(const m of realMembers){
       await supabase.from("cfb_cell_members").insert({
         cell_code:cellCode, link_code:m.linkCode, seat_type:"contributing"
       });
     }
-    for(const m of ten){
+    // Insert avatar placeholder seats
+    for(let i=0;i<avatarCount;i++){
+      await supabase.from("cfb_cell_members").insert({
+        cell_code:cellCode, link_code:"AVATAR", seat_type:"contributing"
+      });
+    }
+    for(const m of realMembers){
       const t = getTier(m.contributionTier||1);
       if(m.email) {
         await sendEmail({
@@ -3912,7 +4005,7 @@ Great news! Your CoFundBills contribution cell has been formed and is now active
 
 Cell Code: ${cellCode}
 Your Tier: ${t.label} (${t.name})
-Cell Members: 10 contributing members (mixed tiers)
+Cell Members: ${realMembers.length} contributing members${avatarCount>0?` + ${avatarCount} reserved seat${avatarCount!==1?"s":""} (awaiting new members)`:""}
 
 YOUR PAYMENT SCHEDULE:
 Month 1 (your activation payment) — Already paid ✅
@@ -3931,9 +4024,32 @@ CoFundBills Cooperative`,
       }
     }
     await loadCells();
-    showToast(`Cell ${cellCode} formed with 10 members!`);
-  }
-};
+    showToast(`Cell ${cellCode} formed with ${realMembers.length} members${avatarCount>0?` + ${avatarCount} avatar seat${avatarCount!==1?"s":""}` : ""}!`);
+    return cellCode;
+  };
+
+  // = Admin: manually activate cell with avatars =
+  const handleForceFormCell = async () => {
+    const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
+    const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
+    const queue = Object.values(members).filter(m=>
+      m.status==="active" && m.memberType!=="admin" && !seatedCodes.has(m.linkCode)
+    ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
+
+    if(queue.length===0){showToast("No active members in queue","error");return;}
+    if(queue.length>=10){await tryFormCell(members);return;}
+
+    const avatarCount = 10-queue.length;
+    const ok = await showConfirm(
+      `Activate a cell now with ${queue.length} real member${queue.length!==1?"s":""} + ${avatarCount} avatar seat${avatarCount!==1?"s":""}?\n\n` +
+      `Avatar seats are reserved placeholders — they contribute nothing and receive no payout.\n` +
+      `Real members still complete 10 months and receive their full cycle payout.\n\n` +
+      `Members in this cell:\n${queue.map(m=>`• ${m.fullName} (${getTier(m.contributionTier||1).label})`).join("\n")}\n\n` +
+      `This cannot be undone.`
+    );
+    if(!ok) return;
+    await _formCellWithMembers(queue, avatarCount);
+  };
   // = Modal renderer =
   const renderModal = () => {
     if(!modal) return null;
