@@ -1020,7 +1020,6 @@ CoFundBills Cooperative`});
     const monthNum = (mem.monthsContributed||0)+1;
     const ok = await showConfirm(`Record Month ${monthNum} payment of ${fmtNGN(t.monthly)} for ${mem.fullName} (${linkCode})?\n\nThis will:\n• Add 1 month to their record (Month ${monthNum})\n• Credit ${fmtNGN(t.benefitPool)} to their benefit pool\n• Award ${t.pts.contribution} credit score points\n• Send them a confirmation email`);
     if(!ok) return;
-    const t = getTier(mem.contributionTier||1);
     await supabase.from("cfb_members").update({
       months_contributed:(mem.monthsContributed||0)+1,
       contribution_balance:(mem.contributionBalance||0)+t.benefitPool,
@@ -1082,23 +1081,23 @@ CoFundBills Cooperative`});
       );
     }
     const allM = await loadMembers();
-    const mem = allM[code];
-    const mTier = getTier(mem?.contributionTier||1);
+    const activatedMem = allM[code];
+    const mTier = getTier(activatedMem?.contributionTier||1);
 
     // Email to member — activation confirmation
     await sendEmail({
-      to_email: mem?.email,
-      to_name: mem?.fullName||"Member",
+      to_email: activatedMem?.email,
+      to_name: activatedMem?.fullName||"Member",
       subject: "Your CoFundBills Membership is Now Active!",
-      message: `Dear ${mem?.fullName||"Member"},
+      message: `Dear ${activatedMem?.fullName||"Member"},
 
 Your CoFundBills Cooperative membership has been activated. Welcome to the cooperative!
 
 Your Membership Details:
 - Member ID: ${code}
 - Contribution Tier: ${mTier.label} (${fmtNGN(mTier.monthly)}/month)
-- Member Type: ${mem?.memberType==="founding"?"Founding Member":"Regular Member"}
-- Credit Score: ${mem?.creditScore||0} pts
+- Member Type: ${activatedMem?.memberType==="founding"?"Founding Member":"Regular Member"}
+- Credit Score: ${activatedMem?.creditScore||0} pts
 
 Your first monthly contribution of ${fmtNGN(mTier.monthly)} has been received.
 
@@ -1122,23 +1121,23 @@ cofundbills@gmail.com | +234 909 999 4816`,
     await sendEmail({
       to_email: ADMIN_EMAIL,
       to_name: "CoFundBills Admin",
-      subject: `Member Activated — ${mem?.fullName||code} (${code})`,
+      subject: `Member Activated — ${activatedMem?.fullName||code} (${code})`,
       message: `A member has been successfully activated on CoFundBills.
 
 Member Details:
-- Name: ${mem?.fullName||"Unknown"}
-- Email: ${mem?.email||"—"}
-- Phone: ${mem?.phone||"—"}
+- Name: ${activatedMem?.fullName||"Unknown"}
+- Email: ${activatedMem?.email||"—"}
+- Phone: ${activatedMem?.phone||"—"}
 - Member ID: ${code}
 - Tier: ${mTier.label}
-- Member Type: ${mem?.memberType==="founding"?"Founding Member":"Regular Member"}
+- Member Type: ${activatedMem?.memberType==="founding"?"Founding Member":"Regular Member"}
 - Activated At: ${new Date().toLocaleString("en-NG")}
 
 The member has been notified by email to make their first contribution of ${fmtNGN(mTier.monthly)} to Zenith Bank 1016621205.`,
     });
 
     await tryFormCell(allM);
-    showToast(`${mem?.fullName||code} activated. Notification emails sent.`);
+    showToast(`${activatedMem?.fullName||code} activated. Notification emails sent.`);
   };
 
   // = Make founding member =
