@@ -1493,11 +1493,11 @@ Answer warmly, concisely and accurately. Never invent information.`;
                 color:"#7C3AED",display:"flex",alignItems:"center",justifyContent:"center",
                 fontSize:14,flexShrink:0}}>🤖</div>
               <div style={{flex:1}}>
-                <div style={{fontWeight:700,fontSize:12,color:"#7C3AED"}}>Reserved Seat</div>
-                <div style={{fontSize:10,color:C.muted}}>Awaiting new member · No payout</div>
+                <div style={{fontWeight:700,fontSize:12,color:"#7C3AED"}}>Cooperative Reserve Seat</div>
+                <div style={{fontSize:10,color:C.muted}}>Runs full cycle · Cooperative contribution · No individual payout</div>
               </div>
               <span style={{fontSize:10,background:"#EDE9FE",color:"#7C3AED",
-                borderRadius:20,padding:"2px 7px",fontWeight:700}}>Avatar</span>
+                borderRadius:20,padding:"2px 7px",fontWeight:700}}>Reserve</span>
             </div>
           ))}
           {netSeats.map((s,i)=>{
@@ -3678,11 +3678,11 @@ CoFundBills Cooperative
                 ).length;
                 if(queueCount>0 && queueCount<10) return(
                   <div style={{background:"#F5F3FF",border:"1.5px solid #C4B5FD",borderRadius:12,padding:16,marginBottom:16}}>
-                    <div style={{fontWeight:800,color:"#7C3AED",marginBottom:4,fontSize:13}}>🤖 Activate Cell with Avatar Seats</div>
+                    <div style={{fontWeight:800,color:"#7C3AED",marginBottom:4,fontSize:13}}>🚀 Activate Cell with Cooperative Reserve Seats</div>
                     <div style={{fontSize:12,color:"#5B21B6",marginBottom:12,lineHeight:1.7}}>
                       You have <strong>{queueCount} real member{queueCount!==1?"s":""}</strong> in the queue — {10-queueCount} short of a full cell.
-                      You can activate a cell now using <strong>{10-queueCount} avatar placeholder seat{10-queueCount!==1?"s":""}</strong> to get things started.
-                      Avatars don't pay or receive payouts. Real members' benefits are fully preserved.
+                      Activate now with <strong>{10-queueCount} cooperative reserve seat{10-queueCount!==1?"s":""}</strong> to run the full 10-month cycle at a common pace.
+                      Reserve seats are permanent for this cell. New members joining later will start their own fresh cell.
                     </div>
                     <button className="btn btn-sm" style={{background:"#7C3AED",color:"#fff"}}
                       onClick={handleForceFormCell}>
@@ -4005,7 +4005,7 @@ Great news! Your CoFundBills contribution cell has been formed and is now active
 
 Cell Code: ${cellCode}
 Your Tier: ${t.label} (${t.name})
-Cell Members: ${realMembers.length} contributing members${avatarCount>0?` + ${avatarCount} reserved seat${avatarCount!==1?"s":""} (awaiting new members)`:""}
+Cell Members: ${realMembers.length} contributing members${avatarCount>0?` + ${avatarCount} cooperative reserve seat${avatarCount!==1?"s":""}`:""}
 
 YOUR PAYMENT SCHEDULE:
 Month 1 (your activation payment) — Already paid ✅
