@@ -1208,8 +1208,9 @@ The member has been notified by email to make their first contribution of ${fmtN
   };
 
   const completeCycle = async (cellCode, seats) => {
-    const realContribs = seats.filter(s=>s.seat_type==="contributing"&&s.link_code!=="AVATAR");
-    const avatarCount = seats.filter(s=>s.link_code==="AVATAR").length;
+    const AVATAR_CODES = new Set(["CFB-RVZYUB","CFB-T9Y6JP","CFB-BNAH26","CFB-B83MYM","CFB-MQUVPZ"]);
+    const realContribs = seats.filter(s=>s.seat_type==="contributing"&&!AVATAR_CODES.has(s.link_code));
+    const avatarCount = seats.filter(s=>AVATAR_CODES.has(s.link_code)).length;
     const ok = await showConfirm(`Complete the 10-month cycle for Cell ${cellCode}?\n\nThis will:\n• Queue payouts for ${realContribs.length} real contributing members${avatarCount>0?`\n• Skip ${avatarCount} avatar seat${avatarCount!==1?"s":""} (no payout)`:""}\n• Mark the cell as completed\n• Award cycle completion credit points\n\nThis cannot be undone.`);
     if(!ok) return;
     const contributors = realContribs;
@@ -3411,7 +3412,8 @@ ${inviteLink}`;
               let sent = 0;
               for(const cell of cells.filter(c=>c.status==="active")){
                 const t = getTier(cell.contribution_tier||1);
-                for(const seat of (cell.seats||[]).filter(s=>s.seat_type==="contributing"&&s.link_code!=="AVATAR")){
+                const AVATAR_CODES_REM = new Set(["CFB-RVZYUB","CFB-T9Y6JP","CFB-BNAH26","CFB-B83MYM","CFB-MQUVPZ"]);
+                for(const seat of (cell.seats||[]).filter(s=>s.seat_type==="contributing"&&!AVATAR_CODES_REM.has(s.link_code))){
                   const mem = members[seat.link_code];
                   if(mem?.email){
                     await sendEmail({
@@ -3657,7 +3659,13 @@ CoFundBills Cooperative
                         ?<button className="btn btn-sm btn-green" onClick={()=>handleSuspendMember(m.linkCode,false)}>🔓 Reinstate</button>
                         :m.status==="active"&&<button className="btn btn-sm" style={{background:"#FEE2E2",color:C.error}} onClick={()=>handleSuspendMember(m.linkCode,true)}>🔒 Suspend</button>
                       }
-                      <button className="btn-danger" onClick={async()=>{await supabase.from("cfb_members").delete().eq("link_code",m.linkCode);await loadMembers();showToast("Member deleted.");}}>🗑</button>
+                      <button className="btn-danger" onClick={async()=>{
+                        const ok = await showConfirm(`Delete registration for ${m.fullName} (${m.linkCode})?\n\nThis permanently removes their record and cannot be undone.`);
+                        if(!ok) return;
+                        await supabase.from("cfb_members").delete().eq("link_code",m.linkCode);
+                        await loadMembers();
+                        showToast(`${m.fullName} registration deleted.`);
+                      }}>🗑 Delete</button>
                     </div>
                   </div>
                 </div>
