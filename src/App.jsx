@@ -4002,6 +4002,12 @@ CoFundBills Cooperative
         cell_code:cellCode, link_code:"AVATAR", seat_type:"contributing"
       });
     }
+    // Build full 10-member name list (real + avatar names from members object)
+    const AVATAR_CODES_EMAIL = new Set(["CFB-RVZYUB","CFB-T9Y6JP","CFB-BNAH26","CFB-B83MYM","CFB-MQUVPZ"]);
+    const avatarMembers = Object.values(members).filter(m=>AVATAR_CODES_EMAIL.has(m.linkCode));
+    const allCellMembers = [...realMembers, ...avatarMembers.slice(0,avatarCount)];
+    const memberFirstNames = allCellMembers.map(m=>m.fullName.split(" ")[0]).join(", ");
+
     for(const m of realMembers){
       const t = getTier(m.contributionTier||1);
       if(m.email) {
@@ -4014,7 +4020,7 @@ Great news! Your CoFundBills contribution cell has been formed and is now active
 
 Cell Code: ${cellCode}
 Your Tier: ${t.label} (${t.name})
-Cell Members: ${realMembers.length} contributing members${avatarCount>0?` + ${avatarCount} cooperative reserve seat${avatarCount!==1?"s":""}`:""}
+Cell Members (10): ${memberFirstNames}
 
 YOUR PAYMENT SCHEDULE:
 Month 1 (your activation payment) — Already paid ✅
@@ -4039,10 +4045,13 @@ CoFundBills Cooperative`,
 
   // = Admin: manually activate cell with avatars =
   const handleForceFormCell = async () => {
+    const AVATAR_CODES_FC = new Set(["CFB-RVZYUB","CFB-T9Y6JP","CFB-BNAH26","CFB-B83MYM","CFB-MQUVPZ"]);
     const {data:seated} = await supabase.from("cfb_cell_members").select("link_code");
     const seatedCodes = new Set((seated||[]).map(s=>s.link_code));
+    // Only real (non-avatar) members in the queue
     const queue = Object.values(members).filter(m=>
-      m.status==="active" && m.memberType!=="admin" && !seatedCodes.has(m.linkCode)
+      m.status==="active" && m.memberType!=="admin" &&
+      !seatedCodes.has(m.linkCode) && !AVATAR_CODES_FC.has(m.linkCode)
     ).sort((a,b)=>new Date(a.activatedAt)-new Date(b.activatedAt));
 
     if(queue.length===0){showToast("No active members in queue","error");return;}
