@@ -3679,21 +3679,23 @@ CoFundBills Cooperative
             <div>
               {/* Manual cell activation with avatars */}
               {(()=>{
+                const AVATAR_CODES_UI = new Set(["CFB-RVZYUB","CFB-T9Y6JP","CFB-BNAH26","CFB-B83MYM","CFB-MQUVPZ"]);
                 const seatedCodes = new Set(cells.flatMap(c=>(c.seats||[]).map(s=>s.link_code)));
-                const queueCount = Object.values(members).filter(m=>
-                  m.status==="active" && m.memberType!=="admin" && !seatedCodes.has(m.linkCode)
+                const realQueueCount = Object.values(members).filter(m=>
+                  m.status==="active" && m.memberType!=="admin" &&
+                  !seatedCodes.has(m.linkCode) && !AVATAR_CODES_UI.has(m.linkCode)
                 ).length;
-                if(queueCount>0 && queueCount<10) return(
+                if(realQueueCount>0 && realQueueCount<10) return(
                   <div style={{background:"#F5F3FF",border:"1.5px solid #C4B5FD",borderRadius:12,padding:16,marginBottom:16}}>
                     <div style={{fontWeight:800,color:"#7C3AED",marginBottom:4,fontSize:13}}>🚀 Activate Cell with Cooperative Reserve Seats</div>
                     <div style={{fontSize:12,color:"#5B21B6",marginBottom:12,lineHeight:1.7}}>
-                      You have <strong>{queueCount} real member{queueCount!==1?"s":""}</strong> in the queue — {10-queueCount} short of a full cell.
-                      Activate now with <strong>{10-queueCount} cooperative reserve seat{10-queueCount!==1?"s":""}</strong> to run the full 10-month cycle at a common pace.
+                      You have <strong>{realQueueCount} real member{realQueueCount!==1?"s":""}</strong> in the queue — {10-realQueueCount} short of a full cell.
+                      Activate now with <strong>{10-realQueueCount} cooperative reserve seat{10-realQueueCount!==1?"s":""}</strong> to run the full 10-month cycle at a common pace.
                       Reserve seats are permanent for this cell. New members joining later will start their own fresh cell.
                     </div>
                     <button className="btn btn-sm" style={{background:"#7C3AED",color:"#fff"}}
                       onClick={handleForceFormCell}>
-                      🚀 Activate Cell Now ({queueCount} real + {10-queueCount} avatars)
+                      🚀 Activate Cell Now ({realQueueCount} real + {10-realQueueCount} avatars)
                     </button>
                   </div>
                 );
